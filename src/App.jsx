@@ -145,6 +145,27 @@ function getMeetingDataFromUrl() {
   return encoded ? decodeMeetingData(encoded) : null;
 }
 
+function clearMeetingDataFromUrl() {
+  const url = new URL(window.location.href);
+  if (!url.searchParams.has("meeting")) return;
+  url.searchParams.delete("meeting");
+  window.history.replaceState(
+    null,
+    "",
+    `${url.pathname}${url.search}${url.hash}`
+  );
+}
+
+function formatWeekDay(weekStart, dayOffset) {
+  const {year, month, day} = getDateParts(weekStart, dayOffset);
+  return new Intl.DateTimeFormat("en-US", {
+    weekday: "long",
+    month: "short",
+    day: "numeric",
+    timeZone: "UTC"
+  }).format(new Date(Date.UTC(year, month - 1, day)));
+}
+
 function getZonedParts(date, timeZone) {
   const parts = new Intl.DateTimeFormat("en-US", {
     timeZone,
@@ -467,10 +488,10 @@ function ExperimentAccordion({
   index,
   title,
   summary,
-  defaultOpen = false,
+  isOpen,
+  onToggle,
   children
 }) {
-  const [isOpen, setIsOpen] = useState(defaultOpen);
   const contentId = `experiment-${index}-content`;
 
   return (
@@ -480,7 +501,7 @@ function ExperimentAccordion({
         type="button"
         aria-expanded={isOpen}
         aria-controls={contentId}
-        onClick={() => setIsOpen(open => !open)}
+        onClick={onToggle}
       >
         <span className="experiment-index">{index}</span>
         <span>
@@ -504,6 +525,137 @@ function ExperimentAccordion({
   );
 }
 
+function ClockIcon() {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <circle cx="12" cy="12" r="8.5" />
+      <path d="M12 7.5v5l3.25 2" />
+    </svg>
+  );
+}
+
+function TimePicker({value, onChange, label}) {
+  const [isOpen, setIsOpen] = useState(false);
+  const [stage, setStage] = useState("hour");
+  const pickerRef = useRef(null);
+  const [hour24, minute] = value.split(":").map(Number);
+  const period = hour24 >= 12 ? "PM" : "AM";
+  const hour12 = hour24 % 12 || 12;
+
+  useEffect(() => {
+    if (!isOpen) return undefined;
+
+    const handlePointerDown = event => {
+      if (!pickerRef.current?.contains(event.target)) setIsOpen(false);
+    };
+
+    document.addEventListener("pointerdown", handlePointerDown);
+    return () => document.removeEventListener("pointerdown", handlePointerDown);
+  }, [isOpen]);
+
+  const setTime = (nextHour, nextMinute, nextPeriod = period) => {
+    const normalizedHour = (nextHour % 12) + (nextPeriod === "PM" ? 12 : 0);
+    onChange(
+      `${String(normalizedHour).padStart(2, "0")}:${String(nextMinute).padStart(
+        2,
+        "0"
+      )}`
+    );
+  };
+
+  const formatDisplayTime = () =>
+    `${hour12}:${String(minute).padStart(2, "0")} ${period}`;
+
+  return (
+    <div className="time-picker" ref={pickerRef}>
+      <button
+        className="time-picker-trigger"
+        type="button"
+        aria-label={`${label}: ${formatDisplayTime()}`}
+        aria-expanded={isOpen}
+        onClick={() => {
+          setStage("hour");
+          setIsOpen(open => !open);
+        }}
+      >
+        <span>{formatDisplayTime()}</span>
+        <ClockIcon />
+      </button>
+      {isOpen ? (
+        <div className="time-picker-popover" role="dialog" aria-label={label}>
+          <div className="time-picker-display">
+            <button
+              className={stage === "hour" ? "active" : ""}
+              type="button"
+              onClick={() => setStage("hour")}
+            >
+              {hour12}
+            </button>
+            <span>:</span>
+            <button
+              className={stage === "minute" ? "active" : ""}
+              type="button"
+              onClick={() => setStage("minute")}
+            >
+              {String(minute).padStart(2, "0")}
+            </button>
+            <div className="period-toggle">
+              {["AM", "PM"].map(item => (
+                <button
+                  className={period === item ? "active" : ""}
+                  type="button"
+                  key={item}
+                  onClick={() => setTime(hour12, minute, item)}
+                >
+                  {item}
+                </button>
+              ))}
+            </div>
+          </div>
+          <div className="clock-face">
+            {stage === "hour"
+              ? Array.from({length: 12}, (_, index) => index + 1).map(
+                  (hour, index) => (
+                    <button
+                      className={hour12 === hour ? "selected" : ""}
+                      type="button"
+                      key={hour}
+                      style={{"--clock-index": index}}
+                      onClick={() => {
+                        setTime(hour, minute);
+                        setStage("minute");
+                      }}
+                    >
+                      {hour}
+                    </button>
+                  )
+                )
+              : Array.from({length: 12}, (_, index) => index * 5).map(
+                  (nextMinute, index) => (
+                    <button
+                      className={minute === nextMinute ? "selected" : ""}
+                      type="button"
+                      key={nextMinute}
+                      style={{"--clock-index": index}}
+                      onClick={() => {
+                        setTime(hour12, nextMinute);
+                        setIsOpen(false);
+                      }}
+                    >
+                      {String(nextMinute).padStart(2, "0")}
+                    </button>
+                  )
+                )}
+          </div>
+          <p className="time-picker-hint">
+            {stage === "hour" ? "Choose an hour" : "Choose minutes"}
+          </p>
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
 function HomePage() {
   return (
     <section className="page hero section-shell">
@@ -517,10 +669,10 @@ function HomePage() {
           calculations and machine-learned interatomic potentials.
         </p>
         <div className="hero-actions">
-          <a className="button primary" href="#/research">
+          <a className="button primary" href="/#/research">
             View research <span aria-hidden="true">→</span>
           </a>
-          <a className="button secondary" href="#/fun">
+          <a className="button secondary" href="/#/fun">
             Try caffeine model <span aria-hidden="true">↗</span>
           </a>
         </div>
@@ -715,6 +867,7 @@ function MeetingPlanner() {
   const [slots, setSlots] = useState([
     {id: 1, day: 0, start: "09:00", end: "17:00"}
   ]);
+  const [editingParticipantId, setEditingParticipantId] = useState(null);
   const [copyState, setCopyState] = useState("Copy updated link");
 
   const commonIntervals = useMemo(
@@ -728,11 +881,6 @@ function MeetingPlanner() {
     url.hash = "/fun";
     return url.toString();
   }, [meeting]);
-
-  useEffect(() => {
-    const url = new URL(shareUrl);
-    window.history.replaceState(null, "", `${url.pathname}${url.search}#/fun`);
-  }, [shareUrl]);
 
   const updateSlot = (id, field, value) => {
     setSlots(current =>
@@ -757,20 +905,49 @@ function MeetingPlanner() {
     const trimmedName = name.trim();
     if (!trimmedName || slots.length === 0) return;
 
+    const participant = {
+      id:
+        editingParticipantId ??
+        `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+      name: trimmedName,
+      timeZone,
+      slots: slots.map(({day, start, end}) => ({day, start, end}))
+    };
+
     setMeeting(current => ({
       ...current,
-      participants: [
-        ...current.participants,
-        {
-          id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
-          name: trimmedName,
-          timeZone,
-          slots: slots.map(({day, start, end}) => ({day, start, end}))
-        }
-      ]
+      participants: editingParticipantId
+        ? current.participants.map(item =>
+            item.id === editingParticipantId ? participant : item
+          )
+        : [...current.participants, participant]
     }));
     setName("");
+    setEditingParticipantId(null);
+    setSlots([{id: Date.now(), day: 0, start: "09:00", end: "17:00"}]);
     setCopyState("Copy updated link");
+  };
+
+  const editParticipant = participant => {
+    setEditingParticipantId(participant.id);
+    setName(participant.name);
+    setTimeZone(participant.timeZone);
+    setSlots(
+      participant.slots.map((slot, index) => ({
+        ...slot,
+        id: `${participant.id}-${index}`
+      }))
+    );
+    document
+      .querySelector(".availability-form")
+      ?.scrollIntoView({behavior: "smooth", block: "start"});
+  };
+
+  const cancelEditing = () => {
+    setEditingParticipantId(null);
+    setName("");
+    setTimeZone(localTimeZone);
+    setSlots([{id: Date.now(), day: 0, start: "09:00", end: "17:00"}]);
   };
 
   const copyShareLink = async () => {
@@ -788,6 +965,8 @@ function MeetingPlanner() {
       weekStart: getNextMonday(),
       participants: []
     });
+    cancelEditing();
+    clearMeetingDataFromUrl();
     setCopyState("Copy updated link");
   };
 
@@ -808,14 +987,14 @@ function MeetingPlanner() {
   return (
     <>
       <p className="experiment-description">
-        Pick a reference week, add your available times in your own time zone,
+        Choose a meeting week, add your available times in your own time zone,
         then send the updated URL. Each person adds another layer; common times
         are shown in the viewer&apos;s local time.
       </p>
 
       <div className="meeting-toolbar">
         <label>
-          Week starting
+          Meeting week
           <input
             type="date"
             value={meeting.weekStart}
@@ -846,7 +1025,9 @@ function MeetingPlanner() {
           <div className="control-heading">
             <div>
               <p className="eyebrow">Your availability</p>
-              <h2>Add your times</h2>
+              <h2>
+                {editingParticipantId ? "Edit your times" : "Add your times"}
+              </h2>
             </div>
             <button className="add-button" type="button" onClick={addSlot}>
               + Time
@@ -895,29 +1076,25 @@ function MeetingPlanner() {
                   >
                     {weekDays.map((day, dayIndex) => (
                       <option value={dayIndex} key={day}>
-                        {day}
+                        {formatWeekDay(meeting.weekStart, dayIndex)}
                       </option>
                     ))}
                   </select>
                 </label>
                 <label>
                   From
-                  <input
-                    type="time"
+                  <TimePicker
+                    label={`${formatWeekDay(meeting.weekStart, slot.day)} from`}
                     value={slot.start}
-                    onChange={event =>
-                      updateSlot(slot.id, "start", event.target.value)
-                    }
+                    onChange={value => updateSlot(slot.id, "start", value)}
                   />
                 </label>
                 <label>
                   To
-                  <input
-                    type="time"
+                  <TimePicker
+                    label={`${formatWeekDay(meeting.weekStart, slot.day)} to`}
                     value={slot.end}
-                    onChange={event =>
-                      updateSlot(slot.id, "end", event.target.value)
-                    }
+                    onChange={value => updateSlot(slot.id, "end", value)}
                   />
                 </label>
                 {slots.length > 1 && (
@@ -938,9 +1115,25 @@ function MeetingPlanner() {
             ))}
           </div>
 
-          <button className="button primary submit-availability" type="submit">
-            Add availability to link
-          </button>
+          <div className="availability-submit-actions">
+            <button
+              className="button primary submit-availability"
+              type="submit"
+            >
+              {editingParticipantId
+                ? "Save updated availability"
+                : "Add availability to link"}
+            </button>
+            {editingParticipantId ? (
+              <button
+                className="text-button"
+                type="button"
+                onClick={cancelEditing}
+              >
+                Cancel editing
+              </button>
+            ) : null}
+          </div>
         </form>
 
         <div className="meeting-results">
@@ -985,14 +1178,24 @@ function MeetingPlanner() {
               <ul className="participant-list">
                 {meeting.participants.map(participant => (
                   <li key={participant.id}>
-                    <div>
-                      <strong>{participant.name}</strong>
-                      <span>{participant.timeZone.replaceAll("_", " ")}</span>
-                    </div>
-                    <span>
-                      {participant.slots.length} time
-                      {participant.slots.length === 1 ? "" : "s"}
-                    </span>
+                    <button
+                      className={
+                        participant.id === editingParticipantId
+                          ? "participant-button active"
+                          : "participant-button"
+                      }
+                      type="button"
+                      onClick={() => editParticipant(participant)}
+                    >
+                      <div>
+                        <strong>{participant.name}</strong>
+                        <span>{participant.timeZone.replaceAll("_", " ")}</span>
+                      </div>
+                      <span>
+                        {participant.slots.length} time
+                        {participant.slots.length === 1 ? "" : "s"} · Edit
+                      </span>
+                    </button>
                   </li>
                 ))}
               </ul>
@@ -1009,6 +1212,10 @@ function MeetingPlanner() {
 }
 
 function ForFunPage() {
+  const hasSharedMeeting = useMemo(() => Boolean(getMeetingDataFromUrl()), []);
+  const [openExperiment, setOpenExperiment] = useState(
+    hasSharedMeeting ? "02" : null
+  );
   const [intakes, setIntakes] = useState(defaultIntakes);
   const [eliminationHalfLife, setEliminationHalfLife] = useState(6);
   const [halfLifeRange, setHalfLifeRange] = useState(1);
@@ -1098,6 +1305,13 @@ function ForFunPage() {
     ]);
   };
 
+  const toggleExperiment = experimentId => {
+    clearMeetingDataFromUrl();
+    setOpenExperiment(current =>
+      current === experimentId ? null : experimentId
+    );
+  };
+
   return (
     <section className="page fun-page section-shell">
       <PageIntro eyebrow="For Fun" title="Small experiments">
@@ -1110,7 +1324,8 @@ function ForFunPage() {
           index="01"
           title="Caffeine curve"
           summary="Estimate active caffeine remaining throughout the day"
-          defaultOpen
+          isOpen={openExperiment === "01"}
+          onToggle={() => toggleExperiment("01")}
         >
           <p className="experiment-description">
             A browser version of the two-compartment model in{" "}
@@ -1317,6 +1532,8 @@ function ForFunPage() {
           index="02"
           title="Across time"
           summary="Find a meeting time across time zones and share it by URL"
+          isOpen={openExperiment === "02"}
+          onToggle={() => toggleExperiment("02")}
         >
           <MeetingPlanner />
         </ExperimentAccordion>
@@ -1374,7 +1591,7 @@ function App() {
   return (
     <div className="app-shell">
       <header className="site-header">
-        <a className="logo" href="#/home" onClick={() => setMenuOpen(false)}>
+        <a className="logo" href="/#/home" onClick={() => setMenuOpen(false)}>
           Seungchang Han
         </a>
         <button
@@ -1391,7 +1608,7 @@ function App() {
           {pages.map(item => (
             <a
               className={page === item.id ? "active" : ""}
-              href={`#/${item.id}`}
+              href={`/#/${item.id}`}
               onClick={() => setMenuOpen(false)}
               aria-current={page === item.id ? "page" : undefined}
               key={item.id}
@@ -1417,7 +1634,7 @@ function App() {
       <footer>
         <span>© {new Date().getFullYear()} Seungchang Han</span>
         <span>
-          <a href="#/fun">For Fun: caffeine model</a>
+          <a href="/#/fun">For Fun: experiments</a>
         </span>
       </footer>
     </div>

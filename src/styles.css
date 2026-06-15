@@ -1068,9 +1068,169 @@ input[type="range"] {
   background: var(--surface);
 }
 
-.submit-availability {
+.time-picker {
+  position: relative;
+  min-width: 0;
+}
+
+.time-picker-trigger {
+  display: flex;
   width: 100%;
+  height: 38px;
+  padding: 0 9px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  background: var(--paper);
+  color: var(--ink);
+  font-size: 0.77rem;
+  font-weight: 650;
+}
+
+.time-picker-trigger:hover,
+.time-picker-trigger[aria-expanded="true"] {
+  border-color: var(--accent);
+}
+
+.time-picker-trigger:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--accent) 28%, transparent);
+  outline-offset: 1px;
+}
+
+.time-picker-trigger svg {
+  width: 15px;
+  height: 15px;
+  fill: none;
+  flex: 0 0 auto;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 1.8;
+}
+
+.time-picker-popover {
+  position: absolute;
+  z-index: 30;
+  top: calc(100% + 8px);
+  left: 50%;
+  width: 250px;
+  padding: 14px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: var(--paper);
+  box-shadow: var(--shadow);
+  transform: translateX(-50%);
+}
+
+.time-picker-display {
+  display: flex;
+  margin-bottom: 12px;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  font-size: 1.2rem;
+  font-weight: 750;
+}
+
+.time-picker-display > button {
+  min-width: 42px;
+  padding: 6px 8px;
+  border: 0;
+  border-radius: 7px;
+  background: var(--surface);
+}
+
+.time-picker-display > button.active {
+  background: var(--accent);
+  color: #fff;
+}
+
+.period-toggle {
+  display: grid;
+  margin-left: 5px;
+  grid-template-columns: 1fr 1fr;
+  gap: 2px;
+}
+
+.period-toggle button {
+  padding: 5px 6px;
+  border: 1px solid var(--line);
+  background: var(--paper);
+  color: var(--muted);
+  font-size: 0.62rem;
+  font-weight: 750;
+}
+
+.period-toggle button:first-child {
+  border-radius: 6px 0 0 6px;
+}
+
+.period-toggle button:last-child {
+  border-radius: 0 6px 6px 0;
+}
+
+.period-toggle button.active {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: #fff;
+}
+
+.clock-face {
+  position: relative;
+  width: 200px;
+  height: 200px;
+  margin-inline: auto;
+  border: 1px solid var(--line);
+  border-radius: 50%;
+  background:
+    radial-gradient(circle, var(--surface-strong) 0 4px, transparent 5px),
+    var(--surface);
+}
+
+.clock-face button {
+  --clock-angle: calc(var(--clock-index) * 30deg);
+  position: absolute;
+  top: calc(50% - 16px);
+  left: calc(50% - 16px);
+  display: grid;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: var(--paper);
+  font-size: 0.68rem;
+  font-weight: 720;
+  place-items: center;
+  transform: rotate(var(--clock-angle)) translateY(-78px)
+    rotate(calc(var(--clock-angle) * -1));
+}
+
+.clock-face button:hover,
+.clock-face button.selected {
+  background: var(--accent);
+  color: #fff;
+}
+
+.time-picker-hint {
+  margin: 10px 0 0;
+  color: var(--muted);
+  font-size: 0.62rem;
+  text-align: center;
+}
+
+.availability-submit-actions {
+  display: flex;
   margin-top: 18px;
+  align-items: center;
+  gap: 16px;
+}
+
+.submit-availability {
+  flex: 1;
+  width: 100%;
   justify-content: center;
 }
 
@@ -1153,7 +1313,39 @@ input[type="range"] {
   gap: 8px;
 }
 
-.participant-list li > div {
+.participant-list li {
+  padding: 0;
+  overflow: hidden;
+}
+
+.participant-button {
+  display: flex;
+  width: 100%;
+  padding: 13px 14px;
+  border: 0;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  background: transparent;
+  color: var(--ink);
+  text-align: left;
+  transition:
+    background 0.2s ease,
+    color 0.2s ease;
+}
+
+.participant-button:hover,
+.participant-button.active {
+  background: color-mix(in srgb, var(--accent) 10%, var(--surface));
+  color: var(--accent);
+}
+
+.participant-button:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -3px;
+}
+
+.participant-button > div {
   display: grid;
   min-width: 0;
   gap: 2px;
@@ -1163,7 +1355,7 @@ input[type="range"] {
   font-size: 0.82rem;
 }
 
-.participant-list li > div span {
+.participant-button > div span {
   overflow: hidden;
   text-overflow: ellipsis;
 }
@@ -1436,6 +1628,15 @@ footer a {
   .identity-fields,
   .availability-row {
     grid-template-columns: 1fr;
+  }
+
+  .availability-submit-actions {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .availability-submit-actions .text-button {
+    align-self: center;
   }
 
   .time-window,
