@@ -141,12 +141,9 @@ em {
 
 .logo {
   flex: 0 0 auto;
+  font-size: 1.08rem;
   font-weight: 720;
   letter-spacing: -0.025em;
-}
-
-.logo span {
-  color: var(--accent);
 }
 
 .site-nav {
@@ -287,15 +284,41 @@ em {
 }
 
 .atom-visual {
+  --electron-x: 0px;
+  --electron-y: 0px;
+  --electron-x-reverse: 0px;
+  --electron-y-reverse: 0px;
+  --nucleus-x: 0px;
+  --nucleus-y: 0px;
+  --electron-third-x: 0px;
+  --electron-third-y: 0px;
+  --tilt-x: 0deg;
+  --tilt-y: 0deg;
+  --glow-x: 50%;
+  --glow-y: 42%;
   position: relative;
   min-height: min(48vh, 440px);
   overflow: hidden;
   border: 1px solid var(--line);
   border-radius: 24px;
   background:
-    radial-gradient(circle at 50% 42%, rgba(169, 83, 44, 0.2), transparent 32%),
+    radial-gradient(
+      circle at var(--glow-x) var(--glow-y),
+      rgba(169, 83, 44, 0.23),
+      transparent 34%
+    ),
     var(--surface);
   box-shadow: var(--shadow);
+  perspective: 800px;
+  touch-action: pan-y;
+}
+
+.atom-scene {
+  position: absolute;
+  inset: 0;
+  transform: rotateX(var(--tilt-x)) rotateY(var(--tilt-y));
+  transform-style: preserve-3d;
+  transition: transform 0.16s ease-out;
 }
 
 .orbital {
@@ -335,21 +358,29 @@ em {
   left: calc(50% - 17px);
   width: 34px;
   height: 34px;
+  transform: translate(var(--nucleus-x), var(--nucleus-y));
+  transition: transform 0.2s ease-out;
 }
 
 .atom-one {
   top: 29%;
   left: 23%;
+  transform: translate(var(--electron-x), var(--electron-y));
+  transition: transform 0.12s ease-out;
 }
 
 .atom-two {
   top: 48%;
   right: 20%;
+  transform: translate(var(--electron-x-reverse), var(--electron-y-reverse));
+  transition: transform 0.18s ease-out;
 }
 
 .atom-three {
   top: 63%;
   left: 36%;
+  transform: translate(var(--electron-third-x), var(--electron-third-y));
+  transition: transform 0.24s ease-out;
 }
 
 .surface-grid {
@@ -364,6 +395,18 @@ em {
     linear-gradient(var(--line) 1px, transparent 1px),
     linear-gradient(90deg, var(--line) 1px, transparent 1px);
   background-size: 32px 32px;
+}
+
+.interaction-hint {
+  position: absolute;
+  right: 18px;
+  bottom: 15px;
+  color: var(--muted);
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  opacity: 0.65;
+  text-transform: uppercase;
 }
 
 .content-page,
@@ -479,6 +522,97 @@ em {
   margin-inline: auto;
 }
 
+.fun-experiment {
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  overflow: clip;
+  background: var(--surface);
+}
+
+.fun-experiment > summary {
+  display: grid;
+  min-height: 104px;
+  padding: 22px 28px;
+  grid-template-columns: 52px 1fr 32px;
+  gap: 18px;
+  align-items: center;
+  cursor: pointer;
+  list-style: none;
+}
+
+.fun-experiment > summary::-webkit-details-marker {
+  display: none;
+}
+
+.experiment-index {
+  color: var(--accent);
+  font-size: 0.72rem;
+  font-weight: 750;
+  letter-spacing: 0.1em;
+}
+
+.fun-experiment summary strong,
+.fun-experiment summary small {
+  display: block;
+}
+
+.fun-experiment summary strong {
+  margin-bottom: 4px;
+  font-size: clamp(1.2rem, 2vw, 1.65rem);
+  letter-spacing: -0.025em;
+}
+
+.fun-experiment summary small {
+  color: var(--muted);
+  font-size: 0.76rem;
+}
+
+.experiment-toggle {
+  position: relative;
+  width: 28px;
+  height: 28px;
+  border: 1px solid var(--line);
+  border-radius: 50%;
+}
+
+.experiment-toggle::before,
+.experiment-toggle::after {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 11px;
+  height: 1px;
+  content: "";
+  background: var(--ink);
+  transform: translate(-50%, -50%);
+  transition: transform 0.2s ease;
+}
+
+.experiment-toggle::after {
+  transform: translate(-50%, -50%) rotate(90deg);
+}
+
+.fun-experiment[open] .experiment-toggle::after {
+  transform: translate(-50%, -50%) rotate(0deg);
+}
+
+.experiment-body {
+  padding: 0 18px 18px;
+  border-top: 1px solid var(--line);
+}
+
+.experiment-description {
+  max-width: 760px;
+  margin: 18px 8px;
+  color: var(--muted);
+  font-size: 0.78rem;
+}
+
+.experiment-description code {
+  color: var(--accent);
+  font-size: 0.75rem;
+}
+
 .simulator-layout {
   display: grid;
   grid-template-columns: minmax(330px, 0.72fr) minmax(560px, 1.28fr);
@@ -491,7 +625,7 @@ em {
   padding: 26px;
   border: 1px solid var(--line);
   border-radius: 16px;
-  background: var(--surface);
+  background: var(--paper);
 }
 
 .control-heading {
@@ -538,7 +672,7 @@ em {
   border-radius: 10px;
   grid-template-columns: 1fr 1fr 1fr;
   gap: 9px;
-  background: var(--paper);
+  background: var(--surface);
 }
 
 .intake-row legend {
@@ -567,7 +701,7 @@ input[type="number"] {
   border: 1px solid var(--line);
   border-radius: 6px;
   outline: none;
-  background: var(--surface);
+  background: var(--paper);
   color: var(--ink);
   font-size: 0.77rem;
 }
@@ -645,7 +779,7 @@ input[type="range"] {
   padding: 14px;
   border: 1px solid var(--line);
   border-radius: 9px;
-  background: var(--paper);
+  background: var(--surface);
 }
 
 .result-stats span,
@@ -668,7 +802,7 @@ input[type="range"] {
   overflow-x: auto;
   border: 1px solid var(--line);
   border-radius: 10px;
-  background: var(--paper);
+  background: var(--surface);
 }
 
 .caffeine-chart {

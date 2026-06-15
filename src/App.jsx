@@ -1,4 +1,4 @@
-import {useEffect, useMemo, useState} from "react";
+import {useEffect, useMemo, useRef, useState} from "react";
 
 const pages = [
   {id: "home", label: "Home"},
@@ -53,7 +53,7 @@ const methods = [
   }
 ];
 
-const defaultIntakes = [{id: 1, start: "07:00", end: "10:00", dose: 180}];
+const defaultIntakes = [{id: 1, start: "07:00", end: "07:10", dose: 180}];
 
 function useDarkMode() {
   const getInitialTheme = () => {
@@ -128,7 +128,7 @@ function calculateCaffeineCurve({
     {length: count},
     (_, index) => startMinutes + index * stepMinutes
   );
-  const blood = new Array(count).fill(0);
+  const body = new Array(count).fill(0);
   let gut = 0;
 
   const parsedIntakes = intakes.map(intake => {
@@ -160,26 +160,80 @@ function calculateCaffeineCurve({
     gut += ingested;
     const absorbed = gut * (1 - Math.exp(-ka * deltaHours));
     gut -= absorbed;
-    blood[index] = blood[index - 1] * Math.exp(-ke * deltaHours) + absorbed;
+    const remainingFromPreviousBody =
+      body[index - 1] * Math.exp(-ke * deltaHours);
+    const remainingFromNewAbsorption =
+      absorbed * Math.exp((-ke * deltaHours) / 2);
+    body[index] = remainingFromPreviousBody + remainingFromNewAbsorption;
   }
 
-  return {times, blood};
+  return {times, body};
 }
 
 function AtomVisual() {
+  const visualRef = useRef(null);
+
+  const handlePointerMove = event => {
+    const visual = visualRef.current;
+    if (!visual) return;
+
+    const bounds = visual.getBoundingClientRect();
+    const x = (event.clientX - bounds.left) / bounds.width - 0.5;
+    const y = (event.clientY - bounds.top) / bounds.height - 0.5;
+
+    visual.style.setProperty("--electron-x", `${x * 34}px`);
+    visual.style.setProperty("--electron-y", `${y * 34}px`);
+    visual.style.setProperty("--electron-x-reverse", `${x * -25}px`);
+    visual.style.setProperty("--electron-y-reverse", `${y * -25}px`);
+    visual.style.setProperty("--nucleus-x", `${x * 4}px`);
+    visual.style.setProperty("--nucleus-y", `${y * 4}px`);
+    visual.style.setProperty("--electron-third-x", `${x * 20}px`);
+    visual.style.setProperty("--electron-third-y", `${y * -19}px`);
+    visual.style.setProperty("--tilt-x", `${y * -5}deg`);
+    visual.style.setProperty("--tilt-y", `${x * 7}deg`);
+    visual.style.setProperty("--glow-x", `${(x + 0.5) * 100}%`);
+    visual.style.setProperty("--glow-y", `${(y + 0.5) * 100}%`);
+  };
+
+  const resetPointer = () => {
+    const visual = visualRef.current;
+    if (!visual) return;
+
+    [
+      "--electron-x",
+      "--electron-y",
+      "--electron-x-reverse",
+      "--electron-y-reverse",
+      "--nucleus-x",
+      "--nucleus-y",
+      "--electron-third-x",
+      "--electron-third-y"
+    ].forEach(property => visual.style.setProperty(property, "0px"));
+    visual.style.setProperty("--tilt-x", "0deg");
+    visual.style.setProperty("--tilt-y", "0deg");
+    visual.style.setProperty("--glow-x", "50%");
+    visual.style.setProperty("--glow-y", "42%");
+  };
+
   return (
     <div
       className="atom-visual"
-      aria-label="Abstract atomistic interface illustration"
+      ref={visualRef}
+      onPointerMove={handlePointerMove}
+      onPointerLeave={resetPointer}
+      aria-label="Interactive abstract atomistic interface illustration"
     >
-      <div className="orbital orbital-one" />
-      <div className="orbital orbital-two" />
-      <div className="orbital orbital-three" />
-      <span className="atom atom-center" />
-      <span className="atom atom-one" />
-      <span className="atom atom-two" />
-      <span className="atom atom-three" />
-      <div className="surface-grid" />
+      <div className="atom-scene">
+        <div className="orbital orbital-one" />
+        <div className="orbital orbital-two" />
+        <div className="orbital orbital-three" />
+        <span className="atom atom-center" />
+        <span className="atom atom-one" />
+        <span className="atom atom-two" />
+        <span className="atom atom-three" />
+        <div className="surface-grid" />
+      </div>
+      <span className="interaction-hint">Move your cursor</span>
     </div>
   );
 }
@@ -268,7 +322,7 @@ function MethodsPage() {
   );
 }
 
-function CaffeineChart({curves, intakes}) {
+function CaffeineChart({curves, intakes, eliminationHalfLife, halfLifeRange}) {
   const width = 960;
   const height = 430;
   const padding = {top: 28, right: 24, bottom: 54, left: 64};
@@ -369,12 +423,18 @@ function CaffeineChart({curves, intakes}) {
           transform={`translate(18 ${height / 2}) rotate(-90)`}
           textAnchor="middle"
         >
-          Estimated caffeine (mg)
+          Estimated active caffeine remaining (mg)
         </text>
       </svg>
       <div className="chart-legend">
-        <span className="legend-line">Selected half-life</span>
-        <span className="legend-band">5–7 h range</span>
+        <span className="legend-line">
+          {Number(eliminationHalfLife).toFixed(1)} h half-life
+        </span>
+        <span className="legend-band">
+          {(Number(eliminationHalfLife) - Number(halfLifeRange)).toFixed(1)}–
+          {(Number(eliminationHalfLife) + Number(halfLifeRange)).toFixed(1)} h
+          range
+        </span>
         <span className="legend-threshold">20 mg reference</span>
       </div>
     </div>
@@ -384,9 +444,14 @@ function CaffeineChart({curves, intakes}) {
 function ForFunPage() {
   const [intakes, setIntakes] = useState(defaultIntakes);
   const [eliminationHalfLife, setEliminationHalfLife] = useState(6);
+  const [halfLifeRange, setHalfLifeRange] = useState(1);
   const [absorptionHalfLife, setAbsorptionHalfLife] = useState(30);
   const [plotStart, setPlotStart] = useState("06:00");
   const [plotEnd, setPlotEnd] = useState("24:00");
+  const effectiveHalfLifeRange = Math.min(
+    Number(halfLifeRange),
+    Number(eliminationHalfLife) - 0.5
+  );
 
   const validIntakes = intakes.filter(
     intake =>
@@ -408,29 +473,35 @@ function ForFunPage() {
       ...settings,
       eliminationHalfLife: Number(eliminationHalfLife)
     });
-    const fiveHour = calculateCaffeineCurve({
+    const lowerHalfLife = Math.max(
+      0.5,
+      Number(eliminationHalfLife) - effectiveHalfLifeRange
+    );
+    const upperHalfLife = Number(eliminationHalfLife) + effectiveHalfLifeRange;
+    const lowerSensitivity = calculateCaffeineCurve({
       ...settings,
-      eliminationHalfLife: 5
+      eliminationHalfLife: lowerHalfLife
     });
-    const sevenHour = calculateCaffeineCurve({
+    const upperSensitivity = calculateCaffeineCurve({
       ...settings,
-      eliminationHalfLife: 7
+      eliminationHalfLife: upperHalfLife
     });
 
     return {
       times: main.times,
-      main: main.blood,
-      lower: fiveHour.blood.map((value, index) =>
-        Math.min(value, sevenHour.blood[index])
+      main: main.body,
+      lower: lowerSensitivity.body.map((value, index) =>
+        Math.min(value, upperSensitivity.body[index])
       ),
-      upper: fiveHour.blood.map((value, index) =>
-        Math.max(value, sevenHour.blood[index])
+      upper: lowerSensitivity.body.map((value, index) =>
+        Math.max(value, upperSensitivity.body[index])
       ),
       stepMinutes: 1
     };
   }, [
     validIntakes,
     eliminationHalfLife,
+    effectiveHalfLifeRange,
     absorptionHalfLife,
     plotStart,
     plotEnd
@@ -462,171 +533,223 @@ function ForFunPage() {
 
   return (
     <section className="page fun-page section-shell">
-      <PageIntro eyebrow="For Fun · Interactive" title="Caffeine curve">
-        A browser version of my two-compartment absorption and elimination
-        model. Add what you drank and see an estimated caffeine curve update
-        instantly.
+      <PageIntro eyebrow="For Fun" title="Small experiments">
+        Interactive tools and side projects built from questions I wanted to
+        explore. Open an experiment to try it.
       </PageIntro>
 
-      <div className="simulator-layout">
-        <form
-          className="control-panel"
-          onSubmit={event => event.preventDefault()}
-        >
-          <div className="control-heading">
-            <div>
-              <p className="eyebrow">Your inputs</p>
-              <h2>Caffeine intake</h2>
-            </div>
-            <button className="add-button" type="button" onClick={addIntake}>
-              + Add
-            </button>
-          </div>
+      <details className="fun-experiment" open>
+        <summary>
+          <span className="experiment-index">01</span>
+          <span>
+            <strong>Caffeine curve</strong>
+            <small>Estimate active caffeine remaining throughout the day</small>
+          </span>
+          <span className="experiment-toggle" aria-hidden="true" />
+        </summary>
 
-          <div className="intake-list">
-            {intakes.map((intake, index) => (
-              <fieldset className="intake-row" key={intake.id}>
-                <legend>Intake {index + 1}</legend>
-                <label>
-                  Start
-                  <input
-                    type="time"
-                    value={intake.start}
-                    onChange={event =>
-                      updateIntake(intake.id, "start", event.target.value)
-                    }
-                  />
-                </label>
-                <label>
-                  End
-                  <input
-                    type="time"
-                    value={intake.end}
-                    onChange={event =>
-                      updateIntake(intake.id, "end", event.target.value)
-                    }
-                  />
-                </label>
-                <label>
-                  Dose (mg)
-                  <input
-                    type="number"
-                    min="1"
-                    max="1000"
-                    value={intake.dose}
-                    onChange={event =>
-                      updateIntake(intake.id, "dose", event.target.value)
-                    }
-                  />
-                </label>
-                {intakes.length > 1 && (
-                  <button
-                    className="remove-button"
-                    type="button"
-                    aria-label={`Remove intake ${index + 1}`}
-                    onClick={() =>
-                      setIntakes(current =>
-                        current.filter(item => item.id !== intake.id)
-                      )
-                    }
-                  >
-                    ×
-                  </button>
-                )}
-              </fieldset>
-            ))}
-          </div>
-
-          <div className="model-controls">
-            <label>
-              Elimination half-life
-              <span>{eliminationHalfLife} h</span>
-              <input
-                type="range"
-                min="3"
-                max="10"
-                step="0.5"
-                value={eliminationHalfLife}
-                onChange={event => setEliminationHalfLife(event.target.value)}
-              />
-            </label>
-            <label>
-              Absorption half-life
-              <span>{absorptionHalfLife} min</span>
-              <input
-                type="range"
-                min="5"
-                max="90"
-                step="5"
-                value={absorptionHalfLife}
-                onChange={event => setAbsorptionHalfLife(event.target.value)}
-              />
-            </label>
-            <div className="time-window">
-              <label>
-                Chart starts
-                <input
-                  type="time"
-                  value={plotStart}
-                  onChange={event => setPlotStart(event.target.value)}
-                />
-              </label>
-              <label>
-                Chart ends
-                <input
-                  type="time"
-                  value={plotEnd === "24:00" ? "00:00" : plotEnd}
-                  onChange={event =>
-                    setPlotEnd(
-                      event.target.value === "00:00"
-                        ? "24:00"
-                        : event.target.value
-                    )
-                  }
-                />
-              </label>
-            </div>
-          </div>
-          <p className="model-note">
-            Educational estimate only. Individual metabolism varies with health,
-            medication, pregnancy, genetics, and other factors.
+        <div className="experiment-body">
+          <p className="experiment-description">
+            A browser version of the two-compartment model in{" "}
+            <code>user-input/caffe.py</code>. Add what you drank and the
+            visualization updates instantly.
           </p>
-        </form>
 
-        <div className="results-panel">
-          <div className="result-stats">
-            <div>
-              <span>Peak estimate</span>
-              <strong>{peakValue.toFixed(1)} mg</strong>
+          <div className="simulator-layout">
+            <form
+              className="control-panel"
+              onSubmit={event => event.preventDefault()}
+            >
+              <div className="control-heading">
+                <div>
+                  <p className="eyebrow">Your inputs</p>
+                  <h2>Caffeine intake</h2>
+                </div>
+                <button
+                  className="add-button"
+                  type="button"
+                  onClick={addIntake}
+                >
+                  + Add
+                </button>
+              </div>
+
+              <div className="intake-list">
+                {intakes.map((intake, index) => (
+                  <fieldset className="intake-row" key={intake.id}>
+                    <legend>Intake {index + 1}</legend>
+                    <label>
+                      Start
+                      <input
+                        type="time"
+                        value={intake.start}
+                        onChange={event =>
+                          updateIntake(intake.id, "start", event.target.value)
+                        }
+                      />
+                    </label>
+                    <label>
+                      End
+                      <input
+                        type="time"
+                        value={intake.end}
+                        onChange={event =>
+                          updateIntake(intake.id, "end", event.target.value)
+                        }
+                      />
+                    </label>
+                    <label>
+                      Dose (mg)
+                      <input
+                        type="number"
+                        min="1"
+                        max="1000"
+                        value={intake.dose}
+                        onChange={event =>
+                          updateIntake(intake.id, "dose", event.target.value)
+                        }
+                      />
+                    </label>
+                    {intakes.length > 1 && (
+                      <button
+                        className="remove-button"
+                        type="button"
+                        aria-label={`Remove intake ${index + 1}`}
+                        onClick={() =>
+                          setIntakes(current =>
+                            current.filter(item => item.id !== intake.id)
+                          )
+                        }
+                      >
+                        ×
+                      </button>
+                    )}
+                  </fieldset>
+                ))}
+              </div>
+
+              <div className="model-controls">
+                <label>
+                  Elimination half-life
+                  <span>{eliminationHalfLife} h</span>
+                  <input
+                    type="range"
+                    min="3"
+                    max="10"
+                    step="0.5"
+                    value={eliminationHalfLife}
+                    onChange={event => {
+                      const nextHalfLife = Number(event.target.value);
+                      setEliminationHalfLife(nextHalfLife);
+                      setHalfLifeRange(current =>
+                        Math.min(Number(current), nextHalfLife - 0.5)
+                      );
+                    }}
+                  />
+                </label>
+                <label>
+                  Absorption half-life
+                  <span>{absorptionHalfLife} min</span>
+                  <input
+                    type="range"
+                    min="5"
+                    max="90"
+                    step="5"
+                    value={absorptionHalfLife}
+                    onChange={event =>
+                      setAbsorptionHalfLife(event.target.value)
+                    }
+                  />
+                </label>
+                <label>
+                  Half-life sensitivity range
+                  <span>±{effectiveHalfLifeRange} h</span>
+                  <input
+                    type="range"
+                    min="0"
+                    max={Math.max(0, Number(eliminationHalfLife) - 0.5)}
+                    step="0.5"
+                    value={halfLifeRange}
+                    onChange={event => setHalfLifeRange(event.target.value)}
+                  />
+                </label>
+                <div className="time-window">
+                  <label>
+                    Chart starts
+                    <input
+                      type="time"
+                      value={plotStart}
+                      onChange={event => setPlotStart(event.target.value)}
+                    />
+                  </label>
+                  <label>
+                    Chart ends
+                    <input
+                      type="time"
+                      value={plotEnd === "24:00" ? "00:00" : plotEnd}
+                      onChange={event =>
+                        setPlotEnd(
+                          event.target.value === "00:00"
+                            ? "24:00"
+                            : event.target.value
+                        )
+                      }
+                    />
+                  </label>
+                </div>
+              </div>
+              <p className="model-note">
+                Simplified visualization of estimated active caffeine remaining
+                in the body (mg). This is not a clinical blood concentration
+                (mg/L) estimate. Individual metabolism varies with health,
+                medication, pregnancy, genetics, and other factors.
+              </p>
+            </form>
+
+            <div className="results-panel">
+              <div className="result-stats">
+                <div>
+                  <span>Peak estimate</span>
+                  <strong>{peakValue.toFixed(1)} mg</strong>
+                </div>
+                <div>
+                  <span>Peak time</span>
+                  <strong>{formatTime(curves.times[peakIndex])}</strong>
+                </div>
+                <div>
+                  <span>At chart end</span>
+                  <strong>{finalValue.toFixed(1)} mg</strong>
+                </div>
+              </div>
+              <CaffeineChart
+                curves={curves}
+                intakes={validIntakes}
+                eliminationHalfLife={eliminationHalfLife}
+                halfLifeRange={effectiveHalfLifeRange}
+              />
+              <div className="model-explanation">
+                <p>
+                  <strong>Model:</strong> gut → active body compartment →
+                  eliminated
+                </p>
+                <p>
+                  Dose enters the gut evenly between each start and end time,
+                  then follows first-order absorption and elimination kinetics.
+                  Newly absorbed caffeine receives a midpoint elimination
+                  correction for each timestep.{" "}
+                  <a
+                    href="https://github.com/seungchanghan/seungchanghan.github.io/blob/main/user-input/caffe.py"
+                    target="_blank"
+                    rel="noreferrer"
+                  >
+                    View the original Python script ↗
+                  </a>
+                </p>
+              </div>
             </div>
-            <div>
-              <span>Peak time</span>
-              <strong>{formatTime(curves.times[peakIndex])}</strong>
-            </div>
-            <div>
-              <span>At chart end</span>
-              <strong>{finalValue.toFixed(1)} mg</strong>
-            </div>
-          </div>
-          <CaffeineChart curves={curves} intakes={validIntakes} />
-          <div className="model-explanation">
-            <p>
-              <strong>Model:</strong> gut → blood → eliminated
-            </p>
-            <p>
-              Dose enters the gut evenly between each start and end time, then
-              follows first-order absorption and elimination kinetics.{" "}
-              <a
-                href="https://github.com/seungchanghan/seungchanghan.github.io/blob/main/user-input/caffe.py"
-                target="_blank"
-                rel="noreferrer"
-              >
-                View the original Python script ↗
-              </a>
-            </p>
           </div>
         </div>
-      </div>
+      </details>
     </section>
   );
 }
@@ -681,7 +804,7 @@ function App() {
     <div className="app-shell">
       <header className="site-header">
         <a className="logo" href="#/home" onClick={() => setMenuOpen(false)}>
-          <span>&lt;</span> Seungchang Han <span>/&gt;</span>
+          Seungchang Han
         </a>
         <button
           className="menu-button"
