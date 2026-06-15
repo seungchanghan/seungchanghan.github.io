@@ -38,6 +38,7 @@ jobs:
         run: |
           test -f dist/index.html
           test -n "$(find dist/assets -type f -name '*.js' -print -quit)"
+          cmp dist/index.html index.html
 
       - name: Deploy
         uses: JamesIves/github-pages-deploy-action@v4
