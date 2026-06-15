@@ -8,10 +8,11 @@
   "scripts": {
     "start": "vite",
     "build": "vite build",
+    "sync-pages": "npm run build && cp -a dist/. .",
     "test": "vite build",
     "preview": "vite preview",
-    "format": "prettier --write \"src/**/*.{js,jsx,css}\" \"index.html\" \"package.json\"",
-    "check-format": "prettier --check \"src/**/*.{js,jsx,css}\" \"index.html\" \"package.json\""
+    "format": "prettier --write \"src/**/*.{html,js,jsx,css}\" \"package.json\"",
+    "check-format": "prettier --check \"src/**/*.{html,js,jsx,css}\" \"package.json\""
   },
   "dependencies": {
     "react": "19.2.7",

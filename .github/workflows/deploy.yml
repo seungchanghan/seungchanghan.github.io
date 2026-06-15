@@ -33,6 +33,12 @@ jobs:
         run: |
           npm ci
           npm run build
+
+      - name: Verify Pages bundle
+        run: |
+          test -f dist/index.html
+          test -n "$(find dist/assets -type f -name '*.js' -print -quit)"
+
       - name: Deploy
         uses: JamesIves/github-pages-deploy-action@v4
         with:
