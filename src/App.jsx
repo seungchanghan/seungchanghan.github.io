@@ -1,4 +1,5 @@
 import {useEffect, useMemo, useRef, useState} from "react";
+import {createPortal} from "react-dom";
 
 const pages = [
   {id: "home", label: "Home"},
@@ -54,15 +55,6 @@ const methods = [
 ];
 
 const defaultIntakes = [{id: 1, start: "07:00", end: "07:10", dose: 180}];
-const weekDays = [
-  "Monday",
-  "Tuesday",
-  "Wednesday",
-  "Thursday",
-  "Friday",
-  "Saturday",
-  "Sunday"
-];
 const fallbackTimeZones = [
   "UTC",
   "America/Los_Angeles",
@@ -128,13 +120,25 @@ function decodeMeetingData(value) {
     const bytes = Uint8Array.from(binary, character => character.charCodeAt(0));
     const parsed = JSON.parse(new TextDecoder().decode(bytes));
     if (
-      parsed?.version !== 1 ||
-      typeof parsed.weekStart !== "string" ||
+      ![1, 2].includes(parsed?.version) ||
       !Array.isArray(parsed.participants)
     ) {
       return null;
     }
-    return parsed;
+    if (parsed.version === 2) return parsed;
+    if (typeof parsed.weekStart !== "string") return null;
+
+    return {
+      version: 2,
+      participants: parsed.participants.map(participant => ({
+        ...participant,
+        slots: participant.slots.map(slot => ({
+          date: offsetDate(parsed.weekStart, Number(slot.day)),
+          start: slot.start,
+          end: slot.end
+        }))
+      }))
+    };
   } catch {
     return null;
   }
@@ -156,8 +160,9 @@ function clearMeetingDataFromUrl() {
   );
 }
 
-function formatWeekDay(weekStart, dayOffset) {
-  const {year, month, day} = getDateParts(weekStart, dayOffset);
+function formatCalendarDate(dateValue) {
+  if (!dateValue) return "Choose a date";
+  const {year, month, day} = parseDateValue(dateValue);
   return new Intl.DateTimeFormat("en-US", {
     weekday: "long",
     month: "short",
@@ -205,8 +210,23 @@ function zonedDateTimeToUtc({year, month, day, hour, minute}, timeZone) {
   return guess;
 }
 
-function getDateParts(weekStart, dayOffset) {
-  const [year, month, day] = weekStart.split("-").map(Number);
+function parseDateValue(dateValue) {
+  const [year, month, day] = dateValue.split("-").map(Number);
+  return {year, month, day};
+}
+
+function offsetDate(dateValue, dayOffset) {
+  const {year, month, day} = parseDateValue(dateValue);
+  const date = new Date(Date.UTC(year, month - 1, day + dayOffset));
+  return [
+    date.getUTCFullYear(),
+    String(date.getUTCMonth() + 1).padStart(2, "0"),
+    String(date.getUTCDate()).padStart(2, "0")
+  ].join("-");
+}
+
+function getDateParts(dateValue, dayOffset = 0) {
+  const {year, month, day} = parseDateValue(dateValue);
   const date = new Date(Date.UTC(year, month - 1, day + dayOffset));
   return {
     year: date.getUTCFullYear(),
@@ -215,16 +235,13 @@ function getDateParts(weekStart, dayOffset) {
   };
 }
 
-function slotToInterval(slot, weekStart, timeZone) {
-  const startDate = getDateParts(weekStart, Number(slot.day));
+function slotToInterval(slot, timeZone) {
+  const startDate = getDateParts(slot.date);
   const [startHour, startMinute] = slot.start.split(":").map(Number);
   const [endHour, endMinute] = slot.end.split(":").map(Number);
   const crossesMidnight =
     endHour * 60 + endMinute <= startHour * 60 + startMinute;
-  const endDate = getDateParts(
-    weekStart,
-    Number(slot.day) + (crossesMidnight ? 1 : 0)
-  );
+  const endDate = getDateParts(slot.date, crossesMidnight ? 1 : 0);
 
   return {
     start: zonedDateTimeToUtc(
@@ -275,12 +292,10 @@ function intersectIntervals(left, right) {
   return overlaps;
 }
 
-function getCommonIntervals(participants, weekStart) {
+function getCommonIntervals(participants) {
   const participantIntervals = participants.map(participant =>
     mergeIntervals(
-      participant.slots.map(slot =>
-        slotToInterval(slot, weekStart, participant.timeZone)
-      )
+      participant.slots.map(slot => slotToInterval(slot, participant.timeZone))
     )
   );
 
@@ -538,6 +553,7 @@ function TimePicker({value, onChange, label}) {
   const [isOpen, setIsOpen] = useState(false);
   const [stage, setStage] = useState("hour");
   const pickerRef = useRef(null);
+  const popoverRef = useRef(null);
   const [hour24, minute] = value.split(":").map(Number);
   const period = hour24 >= 12 ? "PM" : "AM";
   const hour12 = hour24 % 12 || 12;
@@ -546,7 +562,12 @@ function TimePicker({value, onChange, label}) {
     if (!isOpen) return undefined;
 
     const handlePointerDown = event => {
-      if (!pickerRef.current?.contains(event.target)) setIsOpen(false);
+      if (
+        !pickerRef.current?.contains(event.target) &&
+        !popoverRef.current?.contains(event.target)
+      ) {
+        setIsOpen(false);
+      }
     };
 
     document.addEventListener("pointerdown", handlePointerDown);
@@ -581,77 +602,86 @@ function TimePicker({value, onChange, label}) {
         <span>{formatDisplayTime()}</span>
         <ClockIcon />
       </button>
-      {isOpen ? (
-        <div className="time-picker-popover" role="dialog" aria-label={label}>
-          <div className="time-picker-display">
-            <button
-              className={stage === "hour" ? "active" : ""}
-              type="button"
-              onClick={() => setStage("hour")}
+      {isOpen
+        ? createPortal(
+            <div
+              className="time-picker-popover"
+              role="dialog"
+              aria-label={label}
+              ref={popoverRef}
             >
-              {hour12}
-            </button>
-            <span>:</span>
-            <button
-              className={stage === "minute" ? "active" : ""}
-              type="button"
-              onClick={() => setStage("minute")}
-            >
-              {String(minute).padStart(2, "0")}
-            </button>
-            <div className="period-toggle">
-              {["AM", "PM"].map(item => (
+              <div className="time-picker-display">
                 <button
-                  className={period === item ? "active" : ""}
+                  className={stage === "hour" ? "active" : ""}
                   type="button"
-                  key={item}
-                  onClick={() => setTime(hour12, minute, item)}
+                  onClick={() => setStage("hour")}
                 >
-                  {item}
+                  {hour12}
                 </button>
-              ))}
-            </div>
-          </div>
-          <div className="clock-face">
-            {stage === "hour"
-              ? Array.from({length: 12}, (_, index) => index + 1).map(
-                  (hour, index) => (
+                <span>:</span>
+                <button
+                  className={stage === "minute" ? "active" : ""}
+                  type="button"
+                  onClick={() => setStage("minute")}
+                >
+                  {String(minute).padStart(2, "0")}
+                </button>
+                <div className="period-toggle">
+                  {["AM", "PM"].map(item => (
                     <button
-                      className={hour12 === hour ? "selected" : ""}
+                      className={period === item ? "active" : ""}
                       type="button"
-                      key={hour}
-                      style={{"--clock-index": index}}
-                      onClick={() => {
-                        setTime(hour, minute);
-                        setStage("minute");
-                      }}
+                      key={item}
+                      onClick={() => setTime(hour12, minute, item)}
                     >
-                      {hour}
+                      {item}
                     </button>
-                  )
-                )
-              : Array.from({length: 12}, (_, index) => index * 5).map(
-                  (nextMinute, index) => (
-                    <button
-                      className={minute === nextMinute ? "selected" : ""}
-                      type="button"
-                      key={nextMinute}
-                      style={{"--clock-index": index}}
-                      onClick={() => {
-                        setTime(hour12, nextMinute);
-                        setIsOpen(false);
-                      }}
-                    >
-                      {String(nextMinute).padStart(2, "0")}
-                    </button>
-                  )
-                )}
-          </div>
-          <p className="time-picker-hint">
-            {stage === "hour" ? "Choose an hour" : "Choose minutes"}
-          </p>
-        </div>
-      ) : null}
+                  ))}
+                </div>
+              </div>
+              <div className="clock-face">
+                {stage === "hour"
+                  ? [
+                      12,
+                      ...Array.from({length: 11}, (_, index) => index + 1)
+                    ].map((hour, index) => (
+                      <button
+                        className={hour12 === hour ? "selected" : ""}
+                        type="button"
+                        key={hour}
+                        style={{"--clock-index": index}}
+                        onClick={() => {
+                          setTime(hour, minute);
+                          setStage("minute");
+                        }}
+                      >
+                        {hour}
+                      </button>
+                    ))
+                  : Array.from({length: 12}, (_, index) => index * 5).map(
+                      (nextMinute, index) => (
+                        <button
+                          className={minute === nextMinute ? "selected" : ""}
+                          type="button"
+                          key={nextMinute}
+                          style={{"--clock-index": index}}
+                          onClick={() => {
+                            setTime(hour12, nextMinute);
+                            setIsOpen(false);
+                          }}
+                        >
+                          {String(nextMinute).padStart(2, "0")}
+                        </button>
+                      )
+                    )}
+              </div>
+              <p className="time-picker-hint">
+                {stage === "hour" ? "Choose an hour" : "Choose minutes"}
+              </p>
+            </div>,
+            document.body
+          )
+        : null}
     </div>
   );
 }
@@ -671,9 +701,6 @@ function HomePage() {
         <div className="hero-actions">
           <a className="button primary" href="/#/research">
             View research <span aria-hidden="true">→</span>
-          </a>
-          <a className="button secondary" href="/#/fun">
-            Try caffeine model <span aria-hidden="true">↗</span>
           </a>
         </div>
       </div>
@@ -853,8 +880,7 @@ function MeetingPlanner() {
   const initialMeeting = useMemo(
     () =>
       getMeetingDataFromUrl() ?? {
-        version: 1,
-        weekStart: getNextMonday(),
+        version: 2,
         participants: []
       },
     []
@@ -865,13 +891,13 @@ function MeetingPlanner() {
   const [name, setName] = useState("");
   const [timeZone, setTimeZone] = useState(localTimeZone);
   const [slots, setSlots] = useState([
-    {id: 1, day: 0, start: "09:00", end: "17:00"}
+    {id: 1, date: getNextMonday(), start: "09:00", end: "17:00"}
   ]);
   const [editingParticipantId, setEditingParticipantId] = useState(null);
   const [copyState, setCopyState] = useState("Copy updated link");
 
   const commonIntervals = useMemo(
-    () => getCommonIntervals(meeting.participants, meeting.weekStart) ?? [],
+    () => getCommonIntervals(meeting.participants) ?? [],
     [meeting]
   );
 
@@ -893,7 +919,7 @@ function MeetingPlanner() {
       ...current,
       {
         id: Date.now(),
-        day: current.at(-1)?.day ?? 0,
+        date: current.at(-1)?.date ?? getNextMonday(),
         start: "09:00",
         end: "17:00"
       }
@@ -911,7 +937,7 @@ function MeetingPlanner() {
         `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
       name: trimmedName,
       timeZone,
-      slots: slots.map(({day, start, end}) => ({day, start, end}))
+      slots: slots.map(({date, start, end}) => ({date, start, end}))
     };
 
     setMeeting(current => ({
@@ -924,7 +950,14 @@ function MeetingPlanner() {
     }));
     setName("");
     setEditingParticipantId(null);
-    setSlots([{id: Date.now(), day: 0, start: "09:00", end: "17:00"}]);
+    setSlots([
+      {
+        id: Date.now(),
+        date: getNextMonday(),
+        start: "09:00",
+        end: "17:00"
+      }
+    ]);
     setCopyState("Copy updated link");
   };
 
@@ -947,7 +980,14 @@ function MeetingPlanner() {
     setEditingParticipantId(null);
     setName("");
     setTimeZone(localTimeZone);
-    setSlots([{id: Date.now(), day: 0, start: "09:00", end: "17:00"}]);
+    setSlots([
+      {
+        id: Date.now(),
+        date: getNextMonday(),
+        start: "09:00",
+        end: "17:00"
+      }
+    ]);
   };
 
   const copyShareLink = async () => {
@@ -961,8 +1001,7 @@ function MeetingPlanner() {
 
   const clearMeeting = () => {
     setMeeting({
-      version: 1,
-      weekStart: getNextMonday(),
+      version: 2,
       participants: []
     });
     cancelEditing();
@@ -987,25 +1026,13 @@ function MeetingPlanner() {
   return (
     <>
       <p className="experiment-description">
-        Choose a meeting week, add your available times in your own time zone,
-        then send the updated URL. Each person adds another layer; common times
-        are shown in the viewer&apos;s local time.
+        Add available dates and times in your own time zone, then send the
+        updated URL. Each person adds another layer; daylight-saving changes are
+        calculated from the selected date and time zone.
       </p>
 
-      <div className="meeting-toolbar">
-        <label>
-          Meeting week
-          <input
-            type="date"
-            value={meeting.weekStart}
-            onChange={event =>
-              setMeeting(current => ({
-                ...current,
-                weekStart: event.target.value
-              }))
-            }
-          />
-        </label>
+      <div className="meeting-share-bar">
+        <p>Times are shown in each viewer&apos;s local time.</p>
         <div className="meeting-share-actions">
           <button
             className="button primary compact-button"
@@ -1068,23 +1095,22 @@ function MeetingPlanner() {
               <div className="availability-row" key={slot.id}>
                 <label>
                   Day
-                  <select
-                    value={slot.day}
+                  <input
+                    type="date"
+                    value={slot.date}
+                    required
                     onChange={event =>
-                      updateSlot(slot.id, "day", Number(event.target.value))
+                      updateSlot(slot.id, "date", event.target.value)
                     }
-                  >
-                    {weekDays.map((day, dayIndex) => (
-                      <option value={dayIndex} key={day}>
-                        {formatWeekDay(meeting.weekStart, dayIndex)}
-                      </option>
-                    ))}
-                  </select>
+                  />
+                  <span className="selected-date">
+                    {formatCalendarDate(slot.date)}
+                  </span>
                 </label>
                 <label>
                   From
                   <TimePicker
-                    label={`${formatWeekDay(meeting.weekStart, slot.day)} from`}
+                    label={`${formatCalendarDate(slot.date)} from`}
                     value={slot.start}
                     onChange={value => updateSlot(slot.id, "start", value)}
                   />
@@ -1092,7 +1118,7 @@ function MeetingPlanner() {
                 <label>
                   To
                   <TimePicker
-                    label={`${formatWeekDay(meeting.weekStart, slot.day)} to`}
+                    label={`${formatCalendarDate(slot.date)} to`}
                     value={slot.end}
                     onChange={value => updateSlot(slot.id, "end", value)}
                   />

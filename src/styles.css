@@ -972,7 +972,7 @@ input[type="range"] {
   font-weight: 700;
 }
 
-.meeting-toolbar {
+.meeting-share-bar {
   display: flex;
   min-height: 72px;
   padding: 14px 18px;
@@ -985,7 +985,6 @@ input[type="range"] {
   background: var(--paper);
 }
 
-.meeting-toolbar > label,
 .identity-fields label,
 .availability-row label {
   display: grid;
@@ -995,8 +994,10 @@ input[type="range"] {
   gap: 5px;
 }
 
-.meeting-toolbar > label {
-  min-width: 190px;
+.meeting-share-bar > p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.72rem;
 }
 
 .meeting-share-actions {
@@ -1063,9 +1064,15 @@ input[type="range"] {
   padding: 14px;
   border: 1px solid var(--line);
   border-radius: 10px;
-  grid-template-columns: 1.3fr 0.85fr 0.85fr;
+  grid-template-columns: 1.45fr 0.8fr 0.8fr;
   gap: 9px;
   background: var(--surface);
+}
+
+.selected-date {
+  color: var(--accent);
+  font-size: 0.62rem;
+  font-weight: 700;
 }
 
 .time-picker {
@@ -1111,17 +1118,19 @@ input[type="range"] {
 }
 
 .time-picker-popover {
-  position: absolute;
-  z-index: 30;
-  top: calc(100% + 8px);
+  position: fixed;
+  z-index: 100;
+  top: 50%;
   left: 50%;
-  width: 250px;
-  padding: 14px;
+  width: 226px;
+  max-height: calc(100vh - 24px);
+  padding: 12px;
+  overflow-y: auto;
   border: 1px solid var(--line);
   border-radius: 14px;
   background: var(--paper);
   box-shadow: var(--shadow);
-  transform: translateX(-50%);
+  transform: translate(-50%, -50%);
 }
 
 .time-picker-display {
@@ -1179,8 +1188,8 @@ input[type="range"] {
 
 .clock-face {
   position: relative;
-  width: 200px;
-  height: 200px;
+  width: 184px;
+  height: 184px;
   margin-inline: auto;
   border: 1px solid var(--line);
   border-radius: 50%;
@@ -1204,7 +1213,7 @@ input[type="range"] {
   font-size: 0.68rem;
   font-weight: 720;
   place-items: center;
-  transform: rotate(var(--clock-angle)) translateY(-78px)
+  transform: rotate(var(--clock-angle)) translateY(-70px)
     rotate(calc(var(--clock-angle) * -1));
 }
 
@@ -1556,13 +1565,9 @@ footer a {
     gap: 12px;
   }
 
-  .meeting-toolbar {
+  .meeting-share-bar {
     align-items: stretch;
     flex-direction: column;
-  }
-
-  .meeting-toolbar > label {
-    min-width: 0;
   }
 
   .meeting-share-actions {
