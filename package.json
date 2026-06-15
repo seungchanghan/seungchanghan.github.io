@@ -1,0 +1,24 @@
+{
+  "homepage": "https://seungchanghan.github.io/",
+  "name": "seungchanghan-portfolio",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "vite",
+    "build": "vite build",
+    "test": "vite build",
+    "preview": "vite preview",
+    "format": "prettier --write \"src/**/*.{js,jsx,css}\" \"index.html\" \"package.json\"",
+    "check-format": "prettier --check \"src/**/*.{js,jsx,css}\" \"index.html\" \"package.json\""
+  },
+  "dependencies": {
+    "react": "19.2.7",
+    "react-dom": "19.2.7"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-react": "6.0.2",
+    "prettier": "3.8.4",
+    "vite": "8.0.16"
+  }
+}
