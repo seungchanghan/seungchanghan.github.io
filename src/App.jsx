@@ -54,6 +54,221 @@ const methods = [
 ];
 
 const defaultIntakes = [{id: 1, start: "07:00", end: "07:10", dose: 180}];
+const weekDays = [
+  "Monday",
+  "Tuesday",
+  "Wednesday",
+  "Thursday",
+  "Friday",
+  "Saturday",
+  "Sunday"
+];
+const fallbackTimeZones = [
+  "UTC",
+  "America/Los_Angeles",
+  "America/Denver",
+  "America/Chicago",
+  "America/New_York",
+  "America/Sao_Paulo",
+  "Europe/London",
+  "Europe/Paris",
+  "Europe/Berlin",
+  "Africa/Johannesburg",
+  "Asia/Dubai",
+  "Asia/Kolkata",
+  "Asia/Bangkok",
+  "Asia/Shanghai",
+  "Asia/Seoul",
+  "Asia/Tokyo",
+  "Australia/Sydney",
+  "Pacific/Auckland"
+];
+
+function getSupportedTimeZones() {
+  try {
+    return Intl.supportedValuesOf("timeZone");
+  } catch {
+    return fallbackTimeZones;
+  }
+}
+
+const supportedTimeZones = getSupportedTimeZones();
+
+function getNextMonday() {
+  const date = new Date();
+  const daysUntilMonday = (8 - date.getDay()) % 7 || 7;
+  date.setDate(date.getDate() + daysUntilMonday);
+  return [
+    date.getFullYear(),
+    String(date.getMonth() + 1).padStart(2, "0"),
+    String(date.getDate()).padStart(2, "0")
+  ].join("-");
+}
+
+function encodeMeetingData(value) {
+  const bytes = new TextEncoder().encode(JSON.stringify(value));
+  let binary = "";
+  bytes.forEach(byte => {
+    binary += String.fromCharCode(byte);
+  });
+  return btoa(binary)
+    .replaceAll("+", "-")
+    .replaceAll("/", "_")
+    .replaceAll("=", "");
+}
+
+function decodeMeetingData(value) {
+  try {
+    const normalized = value.replaceAll("-", "+").replaceAll("_", "/");
+    const padded = normalized.padEnd(
+      normalized.length + ((4 - (normalized.length % 4)) % 4),
+      "="
+    );
+    const binary = atob(padded);
+    const bytes = Uint8Array.from(binary, character => character.charCodeAt(0));
+    const parsed = JSON.parse(new TextDecoder().decode(bytes));
+    if (
+      parsed?.version !== 1 ||
+      typeof parsed.weekStart !== "string" ||
+      !Array.isArray(parsed.participants)
+    ) {
+      return null;
+    }
+    return parsed;
+  } catch {
+    return null;
+  }
+}
+
+function getMeetingDataFromUrl() {
+  const encoded = new URL(window.location.href).searchParams.get("meeting");
+  return encoded ? decodeMeetingData(encoded) : null;
+}
+
+function getZonedParts(date, timeZone) {
+  const parts = new Intl.DateTimeFormat("en-US", {
+    timeZone,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    hourCycle: "h23"
+  }).formatToParts(date);
+
+  return Object.fromEntries(
+    parts
+      .filter(part => part.type !== "literal")
+      .map(part => [part.type, Number(part.value)])
+  );
+}
+
+function zonedDateTimeToUtc({year, month, day, hour, minute}, timeZone) {
+  const target = Date.UTC(year, month - 1, day, hour, minute);
+  let guess = target;
+
+  for (let attempt = 0; attempt < 3; attempt += 1) {
+    const parts = getZonedParts(new Date(guess), timeZone);
+    const represented = Date.UTC(
+      parts.year,
+      parts.month - 1,
+      parts.day,
+      parts.hour,
+      parts.minute,
+      parts.second
+    );
+    guess -= represented - target;
+  }
+
+  return guess;
+}
+
+function getDateParts(weekStart, dayOffset) {
+  const [year, month, day] = weekStart.split("-").map(Number);
+  const date = new Date(Date.UTC(year, month - 1, day + dayOffset));
+  return {
+    year: date.getUTCFullYear(),
+    month: date.getUTCMonth() + 1,
+    day: date.getUTCDate()
+  };
+}
+
+function slotToInterval(slot, weekStart, timeZone) {
+  const startDate = getDateParts(weekStart, Number(slot.day));
+  const [startHour, startMinute] = slot.start.split(":").map(Number);
+  const [endHour, endMinute] = slot.end.split(":").map(Number);
+  const crossesMidnight =
+    endHour * 60 + endMinute <= startHour * 60 + startMinute;
+  const endDate = getDateParts(
+    weekStart,
+    Number(slot.day) + (crossesMidnight ? 1 : 0)
+  );
+
+  return {
+    start: zonedDateTimeToUtc(
+      {...startDate, hour: startHour, minute: startMinute},
+      timeZone
+    ),
+    end: zonedDateTimeToUtc(
+      {...endDate, hour: endHour, minute: endMinute},
+      timeZone
+    )
+  };
+}
+
+function mergeIntervals(intervals) {
+  const sorted = intervals.toSorted((left, right) => left.start - right.start);
+  const merged = [];
+
+  sorted.forEach(interval => {
+    const previous = merged.at(-1);
+    if (previous && interval.start <= previous.end) {
+      previous.end = Math.max(previous.end, interval.end);
+    } else {
+      merged.push({...interval});
+    }
+  });
+
+  return merged;
+}
+
+function intersectIntervals(left, right) {
+  const overlaps = [];
+  let leftIndex = 0;
+  let rightIndex = 0;
+
+  while (leftIndex < left.length && rightIndex < right.length) {
+    const start = Math.max(left[leftIndex].start, right[rightIndex].start);
+    const end = Math.min(left[leftIndex].end, right[rightIndex].end);
+
+    if (end > start) overlaps.push({start, end});
+
+    if (left[leftIndex].end < right[rightIndex].end) {
+      leftIndex += 1;
+    } else {
+      rightIndex += 1;
+    }
+  }
+
+  return overlaps;
+}
+
+function getCommonIntervals(participants, weekStart) {
+  const participantIntervals = participants.map(participant =>
+    mergeIntervals(
+      participant.slots.map(slot =>
+        slotToInterval(slot, weekStart, participant.timeZone)
+      )
+    )
+  );
+
+  return participantIntervals.reduce(
+    (common, intervals) =>
+      common === null ? intervals : intersectIntervals(common, intervals),
+    null
+  );
+}
 
 function useDarkMode() {
   const getInitialTheme = () => {
@@ -245,6 +460,47 @@ function PageIntro({eyebrow, title, children}) {
       <h1>{title}</h1>
       {children && <p className="page-summary">{children}</p>}
     </div>
+  );
+}
+
+function ExperimentAccordion({
+  index,
+  title,
+  summary,
+  defaultOpen = false,
+  children
+}) {
+  const [isOpen, setIsOpen] = useState(defaultOpen);
+  const contentId = `experiment-${index}-content`;
+
+  return (
+    <section className={isOpen ? "fun-experiment open" : "fun-experiment"}>
+      <button
+        className="experiment-summary"
+        type="button"
+        aria-expanded={isOpen}
+        aria-controls={contentId}
+        onClick={() => setIsOpen(open => !open)}
+      >
+        <span className="experiment-index">{index}</span>
+        <span>
+          <strong>{title}</strong>
+          <small>{summary}</small>
+        </span>
+        <span className="experiment-toggle" aria-hidden="true" />
+      </button>
+      <div
+        className="experiment-collapse"
+        aria-hidden={!isOpen}
+        inert={!isOpen}
+      >
+        <div className="experiment-collapse-inner">
+          <div className="experiment-body" id={contentId}>
+            {children}
+          </div>
+        </div>
+      </div>
+    </section>
   );
 }
 
@@ -441,6 +697,317 @@ function CaffeineChart({curves, intakes, eliminationHalfLife, halfLifeRange}) {
   );
 }
 
+function MeetingPlanner() {
+  const initialMeeting = useMemo(
+    () =>
+      getMeetingDataFromUrl() ?? {
+        version: 1,
+        weekStart: getNextMonday(),
+        participants: []
+      },
+    []
+  );
+  const localTimeZone =
+    Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC";
+  const [meeting, setMeeting] = useState(initialMeeting);
+  const [name, setName] = useState("");
+  const [timeZone, setTimeZone] = useState(localTimeZone);
+  const [slots, setSlots] = useState([
+    {id: 1, day: 0, start: "09:00", end: "17:00"}
+  ]);
+  const [copyState, setCopyState] = useState("Copy updated link");
+
+  const commonIntervals = useMemo(
+    () => getCommonIntervals(meeting.participants, meeting.weekStart) ?? [],
+    [meeting]
+  );
+
+  const shareUrl = useMemo(() => {
+    const url = new URL(window.location.href);
+    url.searchParams.set("meeting", encodeMeetingData(meeting));
+    url.hash = "/fun";
+    return url.toString();
+  }, [meeting]);
+
+  useEffect(() => {
+    const url = new URL(shareUrl);
+    window.history.replaceState(null, "", `${url.pathname}${url.search}#/fun`);
+  }, [shareUrl]);
+
+  const updateSlot = (id, field, value) => {
+    setSlots(current =>
+      current.map(slot => (slot.id === id ? {...slot, [field]: value} : slot))
+    );
+  };
+
+  const addSlot = () => {
+    setSlots(current => [
+      ...current,
+      {
+        id: Date.now(),
+        day: current.at(-1)?.day ?? 0,
+        start: "09:00",
+        end: "17:00"
+      }
+    ]);
+  };
+
+  const addAvailability = event => {
+    event.preventDefault();
+    const trimmedName = name.trim();
+    if (!trimmedName || slots.length === 0) return;
+
+    setMeeting(current => ({
+      ...current,
+      participants: [
+        ...current.participants,
+        {
+          id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+          name: trimmedName,
+          timeZone,
+          slots: slots.map(({day, start, end}) => ({day, start, end}))
+        }
+      ]
+    }));
+    setName("");
+    setCopyState("Copy updated link");
+  };
+
+  const copyShareLink = async () => {
+    try {
+      await navigator.clipboard.writeText(shareUrl);
+      setCopyState("Link copied");
+    } catch {
+      window.prompt("Copy this meeting link", shareUrl);
+    }
+  };
+
+  const clearMeeting = () => {
+    setMeeting({
+      version: 1,
+      weekStart: getNextMonday(),
+      participants: []
+    });
+    setCopyState("Copy updated link");
+  };
+
+  const formatInterval = interval => {
+    const formatter = new Intl.DateTimeFormat("en-US", {
+      timeZone: localTimeZone,
+      weekday: "short",
+      month: "short",
+      day: "numeric",
+      hour: "numeric",
+      minute: "2-digit"
+    });
+    return `${formatter.format(interval.start)} – ${formatter.format(
+      interval.end
+    )}`;
+  };
+
+  return (
+    <>
+      <p className="experiment-description">
+        Pick a reference week, add your available times in your own time zone,
+        then send the updated URL. Each person adds another layer; common times
+        are shown in the viewer&apos;s local time.
+      </p>
+
+      <div className="meeting-toolbar">
+        <label>
+          Week starting
+          <input
+            type="date"
+            value={meeting.weekStart}
+            onChange={event =>
+              setMeeting(current => ({
+                ...current,
+                weekStart: event.target.value
+              }))
+            }
+          />
+        </label>
+        <div className="meeting-share-actions">
+          <button
+            className="button primary compact-button"
+            type="button"
+            onClick={copyShareLink}
+          >
+            {copyState}
+          </button>
+          <button className="text-button" type="button" onClick={clearMeeting}>
+            Start new
+          </button>
+        </div>
+      </div>
+
+      <div className="meeting-layout">
+        <form className="availability-form" onSubmit={addAvailability}>
+          <div className="control-heading">
+            <div>
+              <p className="eyebrow">Your availability</p>
+              <h2>Add your times</h2>
+            </div>
+            <button className="add-button" type="button" onClick={addSlot}>
+              + Time
+            </button>
+          </div>
+
+          <div className="identity-fields">
+            <label>
+              Name
+              <input
+                type="text"
+                value={name}
+                placeholder="Your name"
+                required
+                onChange={event => setName(event.target.value)}
+              />
+            </label>
+            <label>
+              Time zone
+              <select
+                value={timeZone}
+                onChange={event => setTimeZone(event.target.value)}
+              >
+                {!supportedTimeZones.includes(timeZone) && (
+                  <option value={timeZone}>{timeZone}</option>
+                )}
+                {supportedTimeZones.map(zone => (
+                  <option value={zone} key={zone}>
+                    {zone.replaceAll("_", " ")}
+                  </option>
+                ))}
+              </select>
+            </label>
+          </div>
+
+          <div className="availability-list">
+            {slots.map((slot, index) => (
+              <div className="availability-row" key={slot.id}>
+                <label>
+                  Day
+                  <select
+                    value={slot.day}
+                    onChange={event =>
+                      updateSlot(slot.id, "day", Number(event.target.value))
+                    }
+                  >
+                    {weekDays.map((day, dayIndex) => (
+                      <option value={dayIndex} key={day}>
+                        {day}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <label>
+                  From
+                  <input
+                    type="time"
+                    value={slot.start}
+                    onChange={event =>
+                      updateSlot(slot.id, "start", event.target.value)
+                    }
+                  />
+                </label>
+                <label>
+                  To
+                  <input
+                    type="time"
+                    value={slot.end}
+                    onChange={event =>
+                      updateSlot(slot.id, "end", event.target.value)
+                    }
+                  />
+                </label>
+                {slots.length > 1 && (
+                  <button
+                    className="remove-button"
+                    type="button"
+                    aria-label={`Remove availability ${index + 1}`}
+                    onClick={() =>
+                      setSlots(current =>
+                        current.filter(item => item.id !== slot.id)
+                      )
+                    }
+                  >
+                    ×
+                  </button>
+                )}
+              </div>
+            ))}
+          </div>
+
+          <button className="button primary submit-availability" type="submit">
+            Add availability to link
+          </button>
+        </form>
+
+        <div className="meeting-results">
+          <div className="meeting-result-section">
+            <div className="meeting-section-heading">
+              <div>
+                <p className="eyebrow">Best overlap</p>
+                <h2>Times everyone can make</h2>
+              </div>
+              <span>{localTimeZone.replaceAll("_", " ")}</span>
+            </div>
+            {meeting.participants.length < 2 ? (
+              <p className="empty-meeting-state">
+                Add at least two people to calculate shared availability.
+              </p>
+            ) : commonIntervals.length > 0 ? (
+              <ol className="overlap-list">
+                {commonIntervals.map(interval => (
+                  <li key={`${interval.start}-${interval.end}`}>
+                    <strong>{formatInterval(interval)}</strong>
+                    <span>
+                      {Math.round((interval.end - interval.start) / 60000)} min
+                    </span>
+                  </li>
+                ))}
+              </ol>
+            ) : (
+              <p className="empty-meeting-state">
+                No common time yet. Add more options or adjust the week.
+              </p>
+            )}
+          </div>
+
+          <div className="meeting-result-section participant-section">
+            <div className="meeting-section-heading">
+              <div>
+                <p className="eyebrow">Responses</p>
+                <h2>{meeting.participants.length} people added</h2>
+              </div>
+            </div>
+            {meeting.participants.length > 0 ? (
+              <ul className="participant-list">
+                {meeting.participants.map(participant => (
+                  <li key={participant.id}>
+                    <div>
+                      <strong>{participant.name}</strong>
+                      <span>{participant.timeZone.replaceAll("_", " ")}</span>
+                    </div>
+                    <span>
+                      {participant.slots.length} time
+                      {participant.slots.length === 1 ? "" : "s"}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="empty-meeting-state">
+                No responses yet. Add yours to create the first shareable link.
+              </p>
+            )}
+          </div>
+        </div>
+      </div>
+    </>
+  );
+}
+
 function ForFunPage() {
   const [intakes, setIntakes] = useState(defaultIntakes);
   const [eliminationHalfLife, setEliminationHalfLife] = useState(6);
@@ -538,17 +1105,13 @@ function ForFunPage() {
         explore. Open an experiment to try it.
       </PageIntro>
 
-      <details className="fun-experiment" open>
-        <summary>
-          <span className="experiment-index">01</span>
-          <span>
-            <strong>Caffeine curve</strong>
-            <small>Estimate active caffeine remaining throughout the day</small>
-          </span>
-          <span className="experiment-toggle" aria-hidden="true" />
-        </summary>
-
-        <div className="experiment-body">
+      <div className="experiment-list">
+        <ExperimentAccordion
+          index="01"
+          title="Caffeine curve"
+          summary="Estimate active caffeine remaining throughout the day"
+          defaultOpen
+        >
           <p className="experiment-description">
             A browser version of the two-compartment model in{" "}
             <code>user-input/caffe.py</code>. Add what you drank and the
@@ -748,8 +1311,16 @@ function ForFunPage() {
               </div>
             </div>
           </div>
-        </div>
-      </details>
+        </ExperimentAccordion>
+
+        <ExperimentAccordion
+          index="02"
+          title="Across time"
+          summary="Find a meeting time across time zones and share it by URL"
+        >
+          <MeetingPlanner />
+        </ExperimentAccordion>
+      </div>
     </section>
   );
 }
