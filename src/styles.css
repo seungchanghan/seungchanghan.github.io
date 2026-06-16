@@ -897,6 +897,7 @@ input[type="time"],
 input[type="number"],
 input[type="date"],
 input[type="text"],
+textarea,
 select {
   width: 100%;
   min-width: 0;
@@ -910,7 +911,14 @@ select {
   font-size: 0.77rem;
 }
 
+textarea {
+  min-height: 92px;
+  padding-block: 8px;
+  resize: vertical;
+}
+
 input:focus,
+textarea:focus,
 select:focus {
   border-color: var(--accent);
   box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 16%, transparent);
@@ -1121,6 +1129,92 @@ input[type="range"] {
 .model-explanation a {
   color: var(--accent);
   font-weight: 700;
+}
+
+.energy-tool-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px;
+}
+
+.energy-tool-grid .wide {
+  grid-column: 1 / -1;
+}
+
+.tool-input-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.tool-input-grid.three {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.tool-input-grid label,
+.frequency-field,
+.checkbox-label {
+  display: grid;
+  color: var(--muted);
+  font-size: 0.68rem;
+  font-weight: 650;
+  gap: 5px;
+}
+
+.checkbox-label {
+  min-height: 38px;
+  padding: 0 9px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  grid-template-columns: auto 1fr;
+  align-items: center;
+  background: var(--paper);
+}
+
+.checkbox-label input {
+  accent-color: var(--accent);
+}
+
+.tool-result-list {
+  display: grid;
+  margin-top: 18px;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--surface);
+}
+
+.tool-result-list.compact {
+  margin-top: 10px;
+}
+
+.tool-result-row {
+  display: flex;
+  min-width: 0;
+  padding: 9px 11px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+}
+
+.tool-result-row + .tool-result-row {
+  border-top: 1px solid var(--line);
+}
+
+.tool-result-row span {
+  min-width: 0;
+  color: var(--muted);
+  font-size: 0.68rem;
+}
+
+.tool-result-row strong {
+  overflow: hidden;
+  color: var(--ink);
+  font-family: "SFMono-Regular", Consolas, monospace;
+  font-size: 0.72rem;
+  font-weight: 650;
+  text-align: right;
+  text-overflow: ellipsis;
 }
 
 .meeting-share-bar {
@@ -1769,6 +1863,10 @@ footer a {
     grid-template-columns: 1fr;
   }
 
+  .energy-tool-grid {
+    grid-template-columns: 1fr;
+  }
+
   .meeting-layout {
     grid-template-columns: 1fr;
   }
@@ -2043,6 +2141,8 @@ footer a {
   }
 
   .time-window,
+  .tool-input-grid,
+  .tool-input-grid.three,
   .result-stats {
     grid-template-columns: 1fr;
   }

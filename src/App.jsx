@@ -175,6 +175,178 @@ function getSupportedTimeZones() {
 
 const supportedTimeZones = getSupportedTimeZones();
 
+const energyUnits = [
+  "J",
+  "eV",
+  "Eh",
+  "J/mol",
+  "kJ/mol",
+  "kcal/mol",
+  "cm^-1",
+  "THz",
+  "Hz",
+  "nm",
+  "K"
+];
+
+const C_LIGHT = 299792458;
+const H_PLANCK = 6.62607015e-34;
+const K_BOLTZMANN = 1.380649e-23;
+const N_AVOGADRO = 6.02214076e23;
+const EV_J = 1.602176634e-19;
+const HARTREE_EV = 27.211386245981;
+const HARTREE_J = HARTREE_EV * EV_J;
+const KCAL_J = 4184;
+const R_GAS = N_AVOGADRO * K_BOLTZMANN;
+const EV_MOLAR_J = EV_J * N_AVOGADRO;
+const K_B_EV = K_BOLTZMANN / EV_J;
+
+function formatScientific(value, digits = 6) {
+  if (!Number.isFinite(value)) return value > 0 ? "Infinity" : "-Infinity";
+  if (
+    Math.abs(value) >= 1e5 ||
+    (Math.abs(value) > 0 && Math.abs(value) < 1e-3)
+  ) {
+    return value.toExponential(digits);
+  }
+  return Number(value.toPrecision(digits + 1)).toString();
+}
+
+function parseNumber(value, fallback = 0) {
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : fallback;
+}
+
+function toJoulePerParticle(value, unit) {
+  if (unit === "J") return value;
+  if (unit === "eV") return value * EV_J;
+  if (unit === "Eh") return value * HARTREE_J;
+  if (unit === "J/mol") return value / N_AVOGADRO;
+  if (unit === "kJ/mol") return (value * 1000) / N_AVOGADRO;
+  if (unit === "kcal/mol") return (value * KCAL_J) / N_AVOGADRO;
+  if (unit === "cm^-1") return H_PLANCK * C_LIGHT * value * 100;
+  if (unit === "THz") return H_PLANCK * value * 1e12;
+  if (unit === "Hz") return H_PLANCK * value;
+  if (unit === "nm") return (H_PLANCK * C_LIGHT) / (value * 1e-9);
+  if (unit === "K") return K_BOLTZMANN * value;
+  return 0;
+}
+
+function convertEnergyValues(value, unit, temperature) {
+  const energy = toJoulePerParticle(value, unit);
+  const absEnergy = Math.abs(energy);
+  const wavelength = energy === 0 ? Infinity : (H_PLANCK * C_LIGHT) / absEnergy;
+  const boltzmannRatio = Math.exp(-(energy / (K_BOLTZMANN * temperature)));
+  const boltzmannDenominator = 1 + boltzmannRatio;
+
+  return {
+    rows: [
+      ["J", energy],
+      ["eV", energy / EV_J],
+      ["Eh", energy / HARTREE_J],
+      ["J/mol", energy * N_AVOGADRO],
+      ["kJ/mol", (energy * N_AVOGADRO) / 1000],
+      ["kcal/mol", (energy * N_AVOGADRO) / KCAL_J],
+      ["cm^-1", energy / (H_PLANCK * C_LIGHT * 100)],
+      ["THz", energy / H_PLANCK / 1e12],
+      ["Hz", energy / H_PLANCK],
+      ["nm", wavelength / 1e-9],
+      ["K", energy / K_BOLTZMANN],
+      ["E/kBT", energy / (K_BOLTZMANN * temperature)]
+    ],
+    boltzmann: [
+      ["N high / N low", boltzmannRatio],
+      ["p low", 1 / boltzmannDenominator],
+      ["p high", boltzmannRatio / boltzmannDenominator]
+    ],
+    note:
+      energy < 0
+        ? "Negative energy: frequency and wavenumber stay signed; wavelength uses |E|."
+        : ""
+  };
+}
+
+function calculateRedhead({peakTemperature, heatingRate, betaUnit, prefactor}) {
+  const tp = parseNumber(peakTemperature);
+  const beta =
+    betaUnit === "K/min"
+      ? parseNumber(heatingRate) / 60
+      : parseNumber(heatingRate);
+  const nu =
+    prefactor === "" ? (K_BOLTZMANN * tp) / H_PLANCK : parseNumber(prefactor);
+  const logArgument = (nu * tp) / beta;
+  const eJmol = R_GAS * tp * (Math.log(logArgument) - 3.64);
+
+  return [
+    ["nu / s^-1", nu],
+    ["ln(nu Tp / beta)", Math.log(logArgument)],
+    ["Edes / J mol^-1", eJmol],
+    ["Edes / kJ mol^-1", eJmol / 1000],
+    ["Edes / kcal mol^-1", eJmol / KCAL_J],
+    ["Edes / eV molecule^-1", eJmol / EV_MOLAR_J]
+  ];
+}
+
+function parseFrequencies(text) {
+  return text
+    .replaceAll(",", " ")
+    .replaceAll(";", " ")
+    .split(/\s+/)
+    .map(item => item.trim())
+    .filter(Boolean)
+    .map(Number)
+    .filter(Number.isFinite);
+}
+
+function frequencyToCmInv(value, unit) {
+  if (unit === "cm^-1") return value;
+  if (unit === "THz") return (value * 1e12) / (C_LIGHT * 100);
+  return value / (C_LIGHT * 100);
+}
+
+function cmInvToEv(value) {
+  return (H_PLANCK * C_LIGHT * 100 * value) / EV_J;
+}
+
+function calculateHarmonicThermo({frequencies, unit, temperature, ignoreImag}) {
+  const notes = [];
+  const realModes = parseFrequencies(frequencies)
+    .filter(value => {
+      if (value >= 0) return true;
+      if (ignoreImag) {
+        notes.push(`Ignored imaginary mode ${value} ${unit}.`);
+        return false;
+      }
+      return true;
+    })
+    .map(value => frequencyToCmInv(value, unit))
+    .filter(value => value >= 0);
+  const vibEv = realModes.map(cmInvToEv);
+  const zpe = 0.5 * vibEv.reduce((sum, value) => sum + value, 0);
+  const thermal = vibEv.reduce((sum, value) => {
+    const x = value / (K_B_EV * temperature);
+    return sum + value / (Math.exp(x) - 1);
+  }, 0);
+  const entropy = vibEv.reduce((sum, value) => {
+    const x = value / (K_B_EV * temperature);
+    return sum + K_B_EV * (x / (Math.exp(x) - 1) - Math.log(1 - Math.exp(-x)));
+  }, 0);
+  const internalEnergy = zpe + thermal;
+  const ts = temperature * entropy;
+
+  return {
+    modeCount: realModes.length,
+    rows: [
+      ["ZPE correction / eV", zpe],
+      ["E to U / eV", internalEnergy],
+      ["T S / eV", ts],
+      ["E to F / eV", internalEnergy - ts],
+      ["S / eV K^-1", entropy]
+    ],
+    notes
+  };
+}
+
 function getNextMonday() {
   const date = new Date();
   const daysUntilMonday = (8 - date.getDay()) % 7 || 7;
@@ -1619,6 +1791,237 @@ function MeetingPlanner() {
   );
 }
 
+function EnergyTool() {
+  const [energyValue, setEnergyValue] = useState("1");
+  const [energyUnit, setEnergyUnit] = useState("eV");
+  const [energyTemperature, setEnergyTemperature] = useState("298.15");
+  const [redheadTp, setRedheadTp] = useState("500");
+  const [redheadBeta, setRedheadBeta] = useState("1");
+  const [redheadBetaUnit, setRedheadBetaUnit] = useState("K/s");
+  const [redheadNu, setRedheadNu] = useState("");
+  const [thermoFrequencies, setThermoFrequencies] =
+    useState("500 800 1200 1600");
+  const [thermoUnit, setThermoUnit] = useState("cm^-1");
+  const [thermoTemperature, setThermoTemperature] = useState("298.15");
+  const [ignoreImag, setIgnoreImag] = useState(true);
+
+  const converted = useMemo(
+    () =>
+      convertEnergyValues(
+        parseNumber(energyValue),
+        energyUnit,
+        Math.max(parseNumber(energyTemperature, 298.15), 1e-9)
+      ),
+    [energyValue, energyUnit, energyTemperature]
+  );
+
+  const redheadRows = useMemo(
+    () =>
+      calculateRedhead({
+        peakTemperature: redheadTp,
+        heatingRate: redheadBeta,
+        betaUnit: redheadBetaUnit,
+        prefactor: redheadNu
+      }),
+    [redheadTp, redheadBeta, redheadBetaUnit, redheadNu]
+  );
+
+  const thermo = useMemo(
+    () =>
+      calculateHarmonicThermo({
+        frequencies: thermoFrequencies,
+        unit: thermoUnit,
+        temperature: Math.max(parseNumber(thermoTemperature, 298.15), 1e-9),
+        ignoreImag
+      }),
+    [thermoFrequencies, thermoUnit, thermoTemperature, ignoreImag]
+  );
+
+  const renderRows = rows =>
+    rows.map(([label, value]) => (
+      <div className="tool-result-row" key={label}>
+        <span>{label}</span>
+        <strong>{formatScientific(value)}</strong>
+      </div>
+    ));
+
+  return (
+    <>
+      <p className="experiment-description">
+        Browser version of the conversion, Redhead TPD, and harmonic
+        thermochemistry parts of{" "}
+        <code>user-input/energy_tool_thermo_added.py</code>. ASE ideal-gas
+        thermochemistry is not included because it depends on Python/ASE
+        molecular geometry routines.
+      </p>
+      <div className="energy-tool-grid">
+        <form
+          className="control-panel"
+          onSubmit={event => event.preventDefault()}
+        >
+          <div className="control-heading">
+            <div>
+              <p className="eyebrow">Unit converter</p>
+              <h2>Energy equivalents</h2>
+            </div>
+          </div>
+          <div className="tool-input-grid three">
+            <label>
+              Value
+              <input
+                type="number"
+                value={energyValue}
+                onChange={event => setEnergyValue(event.target.value)}
+              />
+            </label>
+            <label>
+              Unit
+              <select
+                value={energyUnit}
+                onChange={event => setEnergyUnit(event.target.value)}
+              >
+                {energyUnits.map(unit => (
+                  <option value={unit} key={unit}>
+                    {unit}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label>
+              T (K)
+              <input
+                type="number"
+                min="1"
+                value={energyTemperature}
+                onChange={event => setEnergyTemperature(event.target.value)}
+              />
+            </label>
+          </div>
+          <div className="tool-result-list">{renderRows(converted.rows)}</div>
+          <div className="tool-result-list compact">
+            {renderRows(converted.boltzmann)}
+          </div>
+          {converted.note ? (
+            <p className="model-note">{converted.note}</p>
+          ) : null}
+        </form>
+
+        <form
+          className="control-panel"
+          onSubmit={event => event.preventDefault()}
+        >
+          <div className="control-heading">
+            <div>
+              <p className="eyebrow">TPD</p>
+              <h2>Redhead estimate</h2>
+            </div>
+          </div>
+          <div className="tool-input-grid">
+            <label>
+              Peak T (K)
+              <input
+                type="number"
+                min="1"
+                value={redheadTp}
+                onChange={event => setRedheadTp(event.target.value)}
+              />
+            </label>
+            <label>
+              Heating rate
+              <input
+                type="number"
+                min="0.000001"
+                step="any"
+                value={redheadBeta}
+                onChange={event => setRedheadBeta(event.target.value)}
+              />
+            </label>
+            <label>
+              beta unit
+              <select
+                value={redheadBetaUnit}
+                onChange={event => setRedheadBetaUnit(event.target.value)}
+              >
+                <option value="K/s">K/s</option>
+                <option value="K/min">K/min</option>
+              </select>
+            </label>
+            <label>
+              nu (s^-1)
+              <input
+                type="number"
+                placeholder="kBTp/h"
+                value={redheadNu}
+                onChange={event => setRedheadNu(event.target.value)}
+              />
+            </label>
+          </div>
+          <div className="tool-result-list">{renderRows(redheadRows)}</div>
+        </form>
+
+        <form
+          className="control-panel wide"
+          onSubmit={event => event.preventDefault()}
+        >
+          <div className="control-heading">
+            <div>
+              <p className="eyebrow">Thermochemistry</p>
+              <h2>Harmonic correction</h2>
+            </div>
+          </div>
+          <label className="frequency-field">
+            Frequencies
+            <textarea
+              value={thermoFrequencies}
+              onChange={event => setThermoFrequencies(event.target.value)}
+            />
+          </label>
+          <div className="tool-input-grid three">
+            <label>
+              Unit
+              <select
+                value={thermoUnit}
+                onChange={event => setThermoUnit(event.target.value)}
+              >
+                <option value="cm^-1">cm^-1</option>
+                <option value="THz">THz</option>
+                <option value="Hz">Hz</option>
+              </select>
+            </label>
+            <label>
+              T (K)
+              <input
+                type="number"
+                min="1"
+                value={thermoTemperature}
+                onChange={event => setThermoTemperature(event.target.value)}
+              />
+            </label>
+            <label className="checkbox-label">
+              <input
+                type="checkbox"
+                checked={ignoreImag}
+                onChange={event => setIgnoreImag(event.target.checked)}
+              />
+              Ignore imaginary modes
+            </label>
+          </div>
+          <div className="tool-result-list">
+            <div className="tool-result-row">
+              <span>Modes used</span>
+              <strong>{thermo.modeCount}</strong>
+            </div>
+            {renderRows(thermo.rows)}
+          </div>
+          {thermo.notes.length > 0 ? (
+            <p className="model-note">{thermo.notes.join(" ")}</p>
+          ) : null}
+        </form>
+      </div>
+    </>
+  );
+}
+
 function ForFunPage() {
   const hasSharedMeeting = useMemo(() => Boolean(getMeetingDataFromUrl()), []);
   const [openExperiment, setOpenExperiment] = useState(
@@ -1944,6 +2347,16 @@ function ForFunPage() {
           onToggle={() => toggleExperiment("02")}
         >
           <MeetingPlanner />
+        </ExperimentAccordion>
+
+        <ExperimentAccordion
+          index="03"
+          title="Energy tools"
+          summary="Convert energy units, estimate Redhead TPD energies, and compute harmonic corrections"
+          isOpen={openExperiment === "03"}
+          onToggle={() => toggleExperiment("03")}
+        >
+          <EnergyTool />
         </ExperimentAccordion>
       </div>
     </section>
