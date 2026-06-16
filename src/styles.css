@@ -239,14 +239,15 @@ em {
   display: grid;
   min-height: calc(100vh - 78px);
   min-width: 0;
-  grid-template-columns: minmax(0, 0.82fr) minmax(260px, 0.38fr);
-  gap: 56px;
+  grid-template-columns: minmax(0, 0.74fr);
+  align-content: center;
   align-items: center;
 }
 
 .hero-copy {
   min-width: 0;
   width: 100%;
+  max-width: 780px;
   padding-block: clamp(82px, 12vh, 142px);
 }
 
@@ -304,181 +305,63 @@ em {
   border-color: var(--accent);
 }
 
-.catalyst-field {
+.hero-backdrop {
   position: absolute;
   inset: 0;
   overflow: hidden;
-  color: var(--accent);
-  background:
-    radial-gradient(
-      circle at 78% 42%,
-      color-mix(in srgb, var(--accent) 13%, transparent),
-      transparent 28%
-    ),
-    radial-gradient(
-      circle at 86% 28%,
-      color-mix(in srgb, #2f8f8a 12%, transparent),
-      transparent 24%
-    ),
-    linear-gradient(
-      115deg,
-      var(--paper) 0%,
-      var(--paper) 48%,
-      color-mix(in srgb, var(--surface) 68%, transparent) 100%
-    );
+  --spotlight-x: 72%;
+  --spotlight-y: 42%;
+  background-position: center;
+  background-size: max(132vw, 132vh);
+  isolation: isolate;
 }
 
-.catalyst-field::before {
+.hero-backdrop::before,
+.hero-backdrop::after,
+.hero-spotlight {
   position: absolute;
   inset: 0;
   content: "";
-  background-image:
-    linear-gradient(
-      color-mix(in srgb, var(--line) 56%, transparent) 1px,
-      transparent 1px
-    ),
+}
+
+.hero-backdrop::before {
+  z-index: -1;
+  background: inherit;
+  background-position: inherit;
+  background-size: inherit;
+  transform: scale(1.08);
+}
+
+.hero-backdrop::after {
+  z-index: 0;
+  background:
     linear-gradient(
       90deg,
-      color-mix(in srgb, var(--line) 42%, transparent) 1px,
-      transparent 1px
+      color-mix(in srgb, var(--paper) 96%, transparent) 0%,
+      color-mix(in srgb, var(--paper) 82%, transparent) 38%,
+      color-mix(in srgb, var(--paper) 30%, transparent) 78%,
+      color-mix(in srgb, var(--paper) 16%, transparent) 100%
+    ),
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--paper) 18%, transparent) 0%,
+      transparent 48%,
+      color-mix(in srgb, var(--paper) 32%, transparent) 100%
     );
-  background-size: 64px 64px;
-  mask-image: linear-gradient(90deg, transparent 0%, #000 42%, #000 100%);
-  opacity: 0.32;
 }
 
-.field-svg {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-}
-
-.field-band {
-  fill: color-mix(in srgb, var(--surface) 58%, transparent);
-}
-
-.surface-grid {
-  color: color-mix(in srgb, var(--accent) 64%, var(--muted));
-  opacity: 0.5;
-}
-
-.surface-grid circle {
-  fill: currentColor;
-}
-
-.field-path {
-  fill: none;
-  stroke: color-mix(in srgb, var(--accent) 46%, transparent);
-  stroke-linecap: round;
-  stroke-width: 2;
-}
-
-.field-path.muted {
-  stroke: color-mix(in srgb, #2f8f8a 36%, transparent);
-}
-
-.field-molecule {
-  color: color-mix(in srgb, var(--ink) 70%, var(--accent));
-  opacity: 0.64;
-}
-
-.field-molecule circle {
-  fill: var(--paper);
-  stroke: currentColor;
-  stroke-width: 2;
-}
-
-.field-molecule line {
-  stroke: currentColor;
-  stroke-width: 2;
-}
-
-.home-map {
-  position: relative;
-  display: grid;
-  justify-self: end;
-  width: min(100%, 360px);
-  aspect-ratio: 1;
-  place-items: center;
-}
-
-.home-map-lines {
-  position: absolute;
-  inset: 0;
-  color: var(--accent);
-}
-
-.home-map-lines path {
-  fill: none;
-  stroke: currentColor;
-  stroke-dasharray: 6 10;
-  stroke-linejoin: round;
-  stroke-opacity: 0.32;
-  stroke-width: 1.5;
-}
-
-.home-map-node {
-  position: absolute;
-  display: grid;
-  width: min(46%, 164px);
-  min-height: 88px;
-  padding: 16px;
-  border: 1px solid color-mix(in srgb, var(--accent) 36%, var(--line));
-  border-radius: 8px;
-  align-content: center;
-  background: color-mix(in srgb, var(--paper) 82%, transparent);
-  box-shadow: 0 18px 42px rgba(29, 36, 33, 0.08);
-  gap: 4px;
-  transition:
-    transform 0.18s ease,
-    border-color 0.18s ease,
-    background 0.18s ease;
-}
-
-.home-map-node:hover,
-.home-map-node:focus-visible {
-  transform: translateY(-3px);
-  border-color: var(--accent);
-  background: var(--paper);
-}
-
-.home-map-node:focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: 3px;
-}
-
-.home-map-node strong {
-  color: var(--ink);
-  font-size: 0.96rem;
-  line-height: 1.1;
-}
-
-.home-map-node span {
-  color: var(--muted);
-  font-size: 0.72rem;
-  line-height: 1.35;
-}
-
-.node-reaction {
-  top: 12px;
-  left: 50%;
-  transform: translateX(-50%);
-}
-
-.node-reaction:hover,
-.node-reaction:focus-visible {
-  transform: translateX(-50%) translateY(-3px);
-}
-
-.node-surface {
-  bottom: 24px;
-  left: 8px;
-}
-
-.node-ml {
-  right: 8px;
-  bottom: 24px;
+.hero-spotlight {
+  z-index: 1;
+  mix-blend-mode: screen;
+  pointer-events: none;
+  background: radial-gradient(
+    circle 240px at var(--spotlight-x) var(--spotlight-y),
+    rgba(255, 244, 204, 0.62),
+    rgba(255, 244, 204, 0.22) 34%,
+    transparent 68%
+  );
+  opacity: 0.9;
+  transition: opacity 0.2s ease;
 }
 
 .content-page,
@@ -546,23 +429,30 @@ em {
 }
 
 .profile-details div {
+  display: grid;
   padding-top: 16px;
   border-top: 1px solid var(--line);
+  grid-template-columns: 96px minmax(0, 1fr);
+  gap: 14px;
+  align-items: start;
 }
 
 .profile-details dt {
-  margin-bottom: 4px;
+  margin-bottom: 0;
   color: var(--accent);
   font-size: 0.68rem;
   font-weight: 760;
   letter-spacing: 0.1em;
+  line-height: 1.35;
   text-transform: uppercase;
 }
 
 .profile-details dd {
   margin: 0;
   color: var(--ink);
+  font-size: 0.94rem;
   font-weight: 650;
+  line-height: 1.35;
 }
 
 .about-stack {
@@ -1691,6 +1581,30 @@ input[type="range"] {
   outline-offset: 3px;
 }
 
+.contact-location {
+  display: flex;
+  padding-top: 22px;
+  margin-top: 24px;
+  border-top: 1px solid var(--line);
+  align-items: flex-start;
+  gap: 12px;
+  color: var(--ink);
+  font-size: 0.84rem;
+  font-weight: 650;
+  line-height: 1.45;
+}
+
+.contact-location svg {
+  flex: 0 0 auto;
+  width: 22px;
+  height: 22px;
+  fill: none;
+  stroke: var(--accent);
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 1.8;
+}
+
 footer {
   display: flex;
   min-height: 70px;
@@ -1712,8 +1626,7 @@ footer a {
   }
 
   .hero {
-    grid-template-columns: minmax(0, 1fr) minmax(220px, 0.38fr);
-    gap: 40px;
+    grid-template-columns: minmax(0, 1fr);
   }
 
   .research-grid,
@@ -1831,22 +1744,33 @@ footer a {
     padding-block: 74px 22px;
   }
 
-  .catalyst-field::before {
-    mask-image: linear-gradient(90deg, transparent 0%, #000 18%, #000 100%);
+  .hero-backdrop {
+    background-position: 58% center;
+    background-size: auto 118%;
   }
 
-  .field-svg {
-    opacity: 0.52;
-    transform: translate(118px, 112px) scale(0.84);
-    transform-origin: center;
+  .hero-backdrop::after {
+    background:
+      linear-gradient(
+        180deg,
+        color-mix(in srgb, var(--paper) 88%, transparent) 0%,
+        color-mix(in srgb, var(--paper) 66%, transparent) 45%,
+        color-mix(in srgb, var(--paper) 76%, transparent) 100%
+      ),
+      linear-gradient(
+        90deg,
+        color-mix(in srgb, var(--paper) 82%, transparent) 0%,
+        color-mix(in srgb, var(--paper) 34%, transparent) 100%
+      );
   }
 
-  .field-band {
-    display: none;
-  }
-
-  .home-map {
-    display: none;
+  .hero-spotlight {
+    background: radial-gradient(
+      circle 170px at var(--spotlight-x) var(--spotlight-y),
+      rgba(255, 244, 204, 0.5),
+      rgba(255, 244, 204, 0.16) 36%,
+      transparent 70%
+    );
   }
 
   h1 {
@@ -1892,6 +1816,11 @@ footer a {
   .timeline-panel,
   .publication-card {
     padding: 22px;
+  }
+
+  .profile-details div {
+    grid-template-columns: 84px minmax(0, 1fr);
+    gap: 12px;
   }
 
   .research-card,

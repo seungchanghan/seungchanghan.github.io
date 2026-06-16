@@ -1,5 +1,6 @@
 import {useEffect, useMemo, useRef, useState} from "react";
 import {createPortal} from "react-dom";
+import heroBackgroundUrl from "../user-input/main.png";
 
 const pages = [
   {id: "home", label: "Home"},
@@ -11,9 +12,11 @@ const pages = [
 
 const profileLinks = {
   email: "moonspath@korea.ac.kr",
-  linkedin: "https://www.linkedin.com/in/seungchanghan-8761b9414",
+  linkedin: "https://www.linkedin.com/in/seungchang-han-8761b9414",
   github: "https://github.com/seungchanghan"
 };
+
+const contactLocation = "145, Anam-ro, Seongbuk-gu, Seoul, Republic of Korea";
 
 const profileDetails = [
   {
@@ -53,6 +56,19 @@ const experience = [
       "Quantum chemical modeling of interfaces using density functional theory",
       "Machine learning approaches for canonical algorithms"
     ]
+  }
+];
+
+const awards = [
+  {
+    period: "January 2024",
+    title: "Excellent Poster Presentation Award",
+    event: "2024 KIM-CMS Winter Symposium"
+  },
+  {
+    period: "January 2025",
+    title: "Excellent Poster Award",
+    event: "2025 KU BK21 Chem Fair"
   }
 ];
 
@@ -493,79 +509,15 @@ function calculateCaffeineCurve({
   return {times, body};
 }
 
-function CatalystField() {
+function HeroBackdrop({backdropRef}) {
   return (
     <div
-      className="catalyst-field"
-      aria-label="Abstract catalytic interface background"
+      className="hero-backdrop"
       aria-hidden="true"
+      ref={backdropRef}
+      style={{backgroundImage: `url(${heroBackgroundUrl})`}}
     >
-      <svg className="field-svg" viewBox="0 0 1200 720" focusable="false">
-        <path className="field-band" d="M610 118h500v486H610z" />
-        <path className="field-path" d="M686 466C778 330 890 334 990 214" />
-        <path className="field-path muted" d="M650 290c112 80 248 84 378 24" />
-        <g className="surface-grid">
-          {Array.from({length: 6}, (_, row) =>
-            Array.from({length: 7}, (_, col) => (
-              <circle
-                cx={652 + col * 58 + (row % 2) * 28}
-                cy={438 + row * 30}
-                r="5.5"
-                key={`${row}-${col}`}
-              />
-            ))
-          )}
-        </g>
-        <g className="field-molecule">
-          <circle cx="842" cy="276" r="17" />
-          <circle cx="792" cy="276" r="12" />
-          <circle cx="892" cy="276" r="12" />
-          <line x1="804" y1="276" x2="825" y2="276" />
-          <line x1="859" y1="276" x2="880" y2="276" />
-        </g>
-      </svg>
-    </div>
-  );
-}
-
-function HomeMap() {
-  const nodes = [
-    {
-      label: (
-        <>
-          CO<sub>2</sub>RR
-        </>
-      ),
-      detail: "reaction descriptors",
-      className: "node-reaction"
-    },
-    {
-      label: "Cu surface",
-      detail: "structure and solvation",
-      className: "node-surface"
-    },
-    {
-      label: "ML potentials",
-      detail: "larger atomistic scales",
-      className: "node-ml"
-    }
-  ];
-
-  return (
-    <div className="home-map" aria-label="Research focus map">
-      <svg className="home-map-lines" viewBox="0 0 360 360" aria-hidden="true">
-        <path d="M180 82 L92 240 L268 240 Z" />
-      </svg>
-      {nodes.map(node => (
-        <a
-          className={`home-map-node ${node.className}`}
-          href="/#/research"
-          key={node.className}
-        >
-          <strong>{node.label}</strong>
-          <span>{node.detail}</span>
-        </a>
-      ))}
+      <div className="hero-spotlight" />
     </div>
   );
 }
@@ -596,6 +548,15 @@ function GitHubIcon() {
     <svg viewBox="0 0 24 24" aria-hidden="true">
       <path d="M9 19c-4 1.2-4-2-5.5-2.4" />
       <path d="M15 21v-3.4c.1-.8-.2-1.4-.6-1.9 2-.2 4.1-1 4.1-4.5 0-1-.4-1.9-1-2.6.1-.3.4-1.3-.1-2.6 0 0-.8-.3-2.7 1a9.5 9.5 0 0 0-5 0C7.8 5.7 7 6 7 6c-.5 1.3-.2 2.3-.1 2.6-.6.7-1 1.6-1 2.6 0 3.5 2.1 4.3 4.1 4.5-.3.3-.6.8-.6 1.5V21" />
+    </svg>
+  );
+}
+
+function LocationIcon() {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <path d="M12 21s6.5-5.5 6.5-11a6.5 6.5 0 0 0-13 0c0 5.5 6.5 11 6.5 11Z" />
+      <circle cx="12" cy="10" r="2.2" />
     </svg>
   );
 }
@@ -798,9 +759,23 @@ function TimePicker({value, onChange, label}) {
 }
 
 function HomePage() {
+  const backdropRef = useRef(null);
+
+  const moveSpotlight = event => {
+    const rect = event.currentTarget.getBoundingClientRect();
+    backdropRef.current?.style.setProperty(
+      "--spotlight-x",
+      `${event.clientX - rect.left}px`
+    );
+    backdropRef.current?.style.setProperty(
+      "--spotlight-y",
+      `${event.clientY - rect.top}px`
+    );
+  };
+
   return (
-    <section className="page hero-page">
-      <CatalystField />
+    <section className="page hero-page" onPointerMove={moveSpotlight}>
+      <HeroBackdrop backdropRef={backdropRef} />
       <div className="hero section-shell">
         <div className="hero-copy">
           <h1>
@@ -825,7 +800,6 @@ function HomePage() {
             </a>
           </div>
         </div>
-        <HomeMap />
       </div>
     </section>
   );
@@ -857,6 +831,17 @@ function AboutPage() {
 
         <div className="about-stack">
           <section className="timeline-panel">
+            <h2>Education</h2>
+            {education.map(item => (
+              <article className="timeline-item" key={item.institution}>
+                <span>{item.period}</span>
+                <h3>{item.institution}</h3>
+                <p>{item.degree}</p>
+              </article>
+            ))}
+          </section>
+
+          <section className="timeline-panel">
             <h2>Experience</h2>
             {experience.map(item => (
               <article
@@ -876,12 +861,12 @@ function AboutPage() {
           </section>
 
           <section className="timeline-panel">
-            <h2>Education</h2>
-            {education.map(item => (
-              <article className="timeline-item" key={item.institution}>
+            <h2>Awards</h2>
+            {awards.map(item => (
+              <article className="timeline-item" key={item.title}>
                 <span>{item.period}</span>
-                <h3>{item.institution}</h3>
-                <p>{item.degree}</p>
+                <h3>{item.title}</h3>
+                <p>{item.event}</p>
               </article>
             ))}
           </section>
@@ -1229,6 +1214,16 @@ function MeetingPlanner() {
     )}`;
   };
 
+  const bestIntervals = useMemo(() => {
+    if (commonIntervals.length === 0) return [];
+    const longestDuration = Math.max(
+      ...commonIntervals.map(interval => interval.end - interval.start)
+    );
+    return commonIntervals.filter(
+      interval => interval.end - interval.start === longestDuration
+    );
+  }, [commonIntervals]);
+
   return (
     <>
       <p className="experiment-description">
@@ -1381,9 +1376,9 @@ function MeetingPlanner() {
               <p className="empty-meeting-state">
                 Add at least two people to calculate shared availability.
               </p>
-            ) : commonIntervals.length > 0 ? (
+            ) : bestIntervals.length > 0 ? (
               <ol className="overlap-list">
-                {commonIntervals.map(interval => (
+                {bestIntervals.map(interval => (
                   <li key={`${interval.start}-${interval.end}`}>
                     <strong>{formatInterval(interval)}</strong>
                     <span>
@@ -1815,6 +1810,10 @@ function ContactPage() {
             <GitHubIcon />
             <span>Code archive</span>
           </a>
+        </div>
+        <div className="contact-location">
+          <LocationIcon />
+          <span>{contactLocation}</span>
         </div>
       </div>
     </section>
