@@ -1,7 +1,7 @@
 import {useEffect, useMemo, useRef, useState} from "react";
 import {createPortal} from "react-dom";
 import {gsap} from "gsap";
-import heroBackgroundUrl from "../user-input/main.png";
+import heroBackgroundUrl from "../user-input/main.webp";
 
 const pages = [
   {id: "home", label: "Home"},
