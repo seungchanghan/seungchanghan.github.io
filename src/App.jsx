@@ -257,6 +257,15 @@ function getSavedMeetingTimeZone(fallback) {
   }
 }
 
+function isValidTimeZone(value) {
+  try {
+    new Intl.DateTimeFormat("en-US", {timeZone: value}).format(new Date());
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 function formatCalendarDate(dateValue) {
   if (!dateValue) return "Choose a date";
   const {year, month, day} = parseDateValue(dateValue);
@@ -1156,6 +1165,7 @@ function MeetingPlanner() {
   const [meeting, setMeeting] = useState(initialMeeting);
   const [name, setName] = useState("");
   const [timeZone, setTimeZone] = useState(initialTimeZone);
+  const [displayTimeZone, setDisplayTimeZone] = useState(localTimeZone);
   const [slots, setSlots] = useState([
     {id: 1, date: getNextMonday(), start: "09:00", end: "17:00"}
   ]);
@@ -1166,6 +1176,27 @@ function MeetingPlanner() {
     () => getCommonIntervals(meeting.participants) ?? [],
     [meeting]
   );
+
+  const participantTimeZones = useMemo(
+    () => [
+      ...new Set(
+        meeting.participants
+          .map(participant => participant.timeZone)
+          .filter(isValidTimeZone)
+      )
+    ],
+    [meeting.participants]
+  );
+
+  useEffect(() => {
+    if (participantTimeZones.length === 0) {
+      setDisplayTimeZone(localTimeZone);
+      return;
+    }
+    if (!participantTimeZones.includes(displayTimeZone)) {
+      setDisplayTimeZone(participantTimeZones[0]);
+    }
+  }, [displayTimeZone, localTimeZone, participantTimeZones]);
 
   useEffect(() => {
     try {
@@ -1203,7 +1234,8 @@ function MeetingPlanner() {
   const addAvailability = event => {
     event.preventDefault();
     const trimmedName = name.trim();
-    if (!trimmedName || slots.length === 0) return;
+    if (!trimmedName || slots.length === 0 || !isValidTimeZone(timeZone))
+      return;
 
     const participant = {
       id:
@@ -1250,6 +1282,17 @@ function MeetingPlanner() {
       ?.scrollIntoView({behavior: "smooth", block: "start"});
   };
 
+  const deleteParticipant = participantId => {
+    setMeeting(current => ({
+      ...current,
+      participants: current.participants.filter(
+        participant => participant.id !== participantId
+      )
+    }));
+    if (editingParticipantId === participantId) cancelEditing();
+    setCopyState("Copy updated link");
+  };
+
   const cancelEditing = () => {
     setEditingParticipantId(null);
     setName("");
@@ -1285,7 +1328,7 @@ function MeetingPlanner() {
 
   const formatInterval = interval => {
     const formatter = new Intl.DateTimeFormat("en-US", {
-      timeZone: localTimeZone,
+      timeZone: displayTimeZone,
       weekday: "short",
       month: "short",
       day: "numeric",
@@ -1369,19 +1412,18 @@ function MeetingPlanner() {
             </label>
             <label>
               Time zone
-              <select
+              <input
+                list="meeting-time-zone-options"
                 value={timeZone}
                 onChange={event => setTimeZone(event.target.value)}
-              >
-                {!supportedTimeZones.includes(timeZone) && (
-                  <option value={timeZone}>{timeZone}</option>
-                )}
+                placeholder="Search time zone"
+                required
+              />
+              <datalist id="meeting-time-zone-options">
                 {supportedTimeZones.map(zone => (
-                  <option value={zone} key={zone}>
-                    {zone.replaceAll("_", " ")}
-                  </option>
+                  <option value={zone} key={zone} />
                 ))}
-              </select>
+              </datalist>
             </label>
           </div>
 
@@ -1464,8 +1506,22 @@ function MeetingPlanner() {
                 <p className="eyebrow">Best overlap</p>
                 <h2>Times everyone can make</h2>
               </div>
-              <span>{localTimeZone.replaceAll("_", " ")}</span>
+              <span>{displayTimeZone.replaceAll("_", " ")}</span>
             </div>
+            {participantTimeZones.length > 0 ? (
+              <div className="timezone-toggle" aria-label="Display time zone">
+                {participantTimeZones.map(zone => (
+                  <button
+                    className={zone === displayTimeZone ? "active" : ""}
+                    type="button"
+                    key={zone}
+                    onClick={() => setDisplayTimeZone(zone)}
+                  >
+                    {zone.replaceAll("_", " ")}
+                  </button>
+                ))}
+              </div>
+            ) : null}
             {meeting.participants.length < 2 ? (
               <p className="empty-meeting-state">
                 Add at least two people to calculate shared availability.
@@ -1539,6 +1595,14 @@ function MeetingPlanner() {
                         {participant.slots.length} time
                         {participant.slots.length === 1 ? "" : "s"} · Edit
                       </span>
+                    </button>
+                    <button
+                      className="participant-delete"
+                      type="button"
+                      aria-label={`Delete ${participant.name}`}
+                      onClick={() => deleteParticipant(participant.id)}
+                    >
+                      ×
                     </button>
                   </li>
                 ))}

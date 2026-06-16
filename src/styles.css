@@ -1423,6 +1423,31 @@ input[type="range"] {
   text-align: right;
 }
 
+.timezone-toggle {
+  display: flex;
+  margin: -8px 0 18px;
+  gap: 7px;
+  flex-wrap: wrap;
+}
+
+.timezone-toggle button {
+  min-height: 30px;
+  padding: 0 10px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--muted);
+  font-size: 0.64rem;
+  font-weight: 720;
+}
+
+.timezone-toggle button:hover,
+.timezone-toggle button.active {
+  border-color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 12%, var(--surface));
+  color: var(--accent);
+}
+
 .empty-meeting-state {
   padding: 28px 20px;
   margin: 0;
@@ -1451,13 +1476,6 @@ input[type="range"] {
   border: 1px solid var(--line);
   border-radius: 9px;
   background: var(--surface);
-}
-
-.participant-list li {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
 }
 
 .overlap-list li {
@@ -1536,8 +1554,11 @@ input[type="range"] {
 }
 
 .participant-list li {
+  display: grid;
   padding: 0;
   overflow: hidden;
+  grid-template-columns: minmax(0, 1fr) 42px;
+  align-items: stretch;
 }
 
 .participant-button {
@@ -1554,6 +1575,25 @@ input[type="range"] {
   transition:
     background 0.2s ease,
     color 0.2s ease;
+}
+
+.participant-delete {
+  display: grid;
+  width: 42px;
+  padding: 0;
+  border: 0;
+  border-left: 1px solid var(--line);
+  background: transparent;
+  color: var(--muted);
+  font-size: 1.15rem;
+  font-weight: 650;
+  place-items: center;
+}
+
+.participant-delete:hover,
+.participant-delete:focus-visible {
+  background: color-mix(in srgb, var(--accent) 12%, var(--surface));
+  color: var(--accent);
 }
 
 .participant-button:hover,
