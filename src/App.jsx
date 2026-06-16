@@ -476,7 +476,8 @@ function calculateThermochemistry({
   }
 
   const pressurePa = pressure;
-  const sigma = Math.max(1, Number(symmetryNumber));
+  const sigma =
+    geometry === "monatomic" ? 1 : Math.max(1, Number(symmetryNumber));
   const massKg = (molecularMass * 1e-3) / N_AVOGADRO;
   const spinMultiplicity = 2 * spin + 1;
   const rotationalTheta = parseNumberList(rotationalTemperatures);
@@ -2023,7 +2024,8 @@ function EnergyEquivalentsTool() {
         Browser version of the strict energy conversion section in{" "}
         <code>user-input/energy_tool_thermo_added.py</code>. Constants follow
         NIST/CODATA 2022 values, with the thermochemical calorie definition used
-        for kcal.
+        for kcal. Use this as a calculation aid for checking scale and units; do
+        not cite these browser outputs directly in literature.
       </p>
       <div className="energy-equivalent-layout">
         <form
@@ -2101,6 +2103,12 @@ function EnergyEquivalentsTool() {
             p_low and p_high are the normalized fractions of the lower and
             higher state.
           </p>
+          <p>
+            Treat this panel as a sanity check for assumptions, not as a
+            publishable statistical-mechanics model. Degeneracy, activity,
+            coverage, and ensemble choice must be handled explicitly in any
+            serious analysis.
+          </p>
           <div className="boltzmann-grid">
             {converted.boltzmann.map(([label, value]) => (
               <div className="energy-value-card compact" key={label}>
@@ -2142,7 +2150,9 @@ function RedheadTool() {
         First-order Redhead TPD estimate from{" "}
         <code>user-input/energy_tool_thermo_added.py</code>. The browser version
         keeps the same constants, units, default prefactor, and 3.64 analytical
-        approximation.
+        approximation. This is for exploratory interpretation only; do not
+        report it as a literature-grade desorption barrier without independent
+        kinetic validation.
       </p>
       <div className="energy-equivalent-layout redhead-layout">
         <form
@@ -2243,6 +2253,12 @@ function RedheadTool() {
               readsorption, transport limitation, or non-first-order kinetics
               are relevant.
             </p>
+            <p>
+              This estimate is appropriate for comparing rough magnitudes or
+              checking whether a TPD assignment is plausible. It should not be
+              used as a final cited value unless the first-order assumptions and
+              prefactor choice are justified elsewhere.
+            </p>
             {redhead.notes.map(note => (
               <p key={note}>{note}</p>
             ))}
@@ -2301,7 +2317,8 @@ function ThermochemistryTool() {
         <code>user-input/energy_tool_thermo_added.py</code>. Harmonic mode gives
         the adsorbate E {"->"} F correction. Ideal-gas mode gives E {"->"} G and
         exposes the extra translational/rotational inputs that the ASE ideal-gas
-        model needs.
+        model needs. Use these values to audit corrections and inputs; cite the
+        underlying thermochemistry method, not this page output.
       </p>
       <div className="thermo-tool-grid">
         <form
@@ -2410,36 +2427,45 @@ function ThermochemistryTool() {
                   </select>
                 </label>
               </div>
-              <div className="tool-input-grid three">
-                <label>
-                  Rot. temp. (K)
-                  <input
-                    type="text"
-                    value={rotationalTemperatures}
-                    onChange={event =>
-                      setRotationalTemperatures(event.target.value)
-                    }
-                    placeholder={
-                      geometry === "nonlinear"
-                        ? "thetaA thetaB thetaC"
-                        : "theta"
-                    }
-                    disabled={geometry === "monatomic"}
-                  />
-                </label>
-                <label>
-                  Symmetry
-                  <select
-                    value={symmetryNumber}
-                    onChange={event => setSymmetryNumber(event.target.value)}
-                  >
-                    {symmetryOptions.map(option => (
-                      <option value={option.value} key={option.label}>
-                        {option.label} / sigma={option.value}
-                      </option>
-                    ))}
-                  </select>
-                </label>
+              <div
+                className={
+                  geometry === "monatomic"
+                    ? "tool-input-grid one"
+                    : "tool-input-grid three"
+                }
+              >
+                {geometry !== "monatomic" ? (
+                  <label>
+                    Rot. temp. (K)
+                    <input
+                      type="text"
+                      value={rotationalTemperatures}
+                      onChange={event =>
+                        setRotationalTemperatures(event.target.value)
+                      }
+                      placeholder={
+                        geometry === "nonlinear"
+                          ? "thetaA thetaB thetaC"
+                          : "theta"
+                      }
+                    />
+                  </label>
+                ) : null}
+                {geometry !== "monatomic" ? (
+                  <label>
+                    Symmetry
+                    <select
+                      value={symmetryNumber}
+                      onChange={event => setSymmetryNumber(event.target.value)}
+                    >
+                      {symmetryOptions.map(option => (
+                        <option value={option.value} key={option.label}>
+                          {option.label} / sigma={option.value}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                ) : null}
                 <label>
                   Spin S
                   <input

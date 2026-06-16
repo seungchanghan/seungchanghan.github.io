@@ -1135,6 +1135,7 @@ input[type="range"] {
 .thermo-tool-grid {
   display: grid;
   gap: 18px;
+  align-items: stretch;
 }
 
 .energy-equivalent-layout {
@@ -1147,11 +1148,19 @@ input[type="range"] {
 
 .redhead-layout {
   grid-template-columns: minmax(320px, 0.46fr) minmax(0, 1fr);
-  align-items: start;
+  align-items: stretch;
+}
+
+.redhead-layout .energy-input-panel {
+  display: flex;
+  min-height: 100%;
+  flex-direction: column;
 }
 
 .redhead-layout .equation-block {
+  flex: 1;
   margin-top: 18px;
+  align-content: center;
 }
 
 .redhead-layout .energy-card-grid {
@@ -1172,10 +1181,15 @@ input[type="range"] {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 10px;
+  align-items: end;
 }
 
 .tool-input-grid.three {
   grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.tool-input-grid.one {
+  grid-template-columns: minmax(0, 1fr);
 }
 
 .thermo-input-panel {
@@ -1337,6 +1351,7 @@ input[type="range"] {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 10px;
+  align-items: stretch;
 }
 
 .energy-value-card {
@@ -1348,6 +1363,10 @@ input[type="range"] {
   align-content: start;
   background: var(--paper);
   gap: 8px;
+}
+
+.energy-equivalent-layout > .energy-card-grid {
+  grid-auto-rows: minmax(128px, auto);
 }
 
 .energy-value-card.compact {
@@ -1419,6 +1438,7 @@ input[type="range"] {
   margin-top: 16px;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 10px;
+  align-items: stretch;
 }
 
 .thermo-result-grid {
