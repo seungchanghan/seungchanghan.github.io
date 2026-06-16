@@ -59,24 +59,28 @@ const experience = [
 const researchAreas = [
   {
     number: "01",
-    title: "CO₂ reduction on copper",
+    title: (
+      <>
+        CO<sub>2</sub> reduction on copper
+      </>
+    ),
     description:
-      "Understanding how copper surface structure and the electrode-electrolyte environment shape reaction pathways and product selectivity.",
-    tags: ["Electrocatalysis", "Surface science"]
+      "Copper surfaces, interfacial structure, and selectivity in electrochemical conversion.",
+    tags: ["Electrocatalysis", "Interfaces"]
   },
   {
     number: "02",
     title: "Machine-learned interatomic potentials",
     description:
-      "Building accurate atomistic models that extend first-principles fidelity to larger systems and longer simulation times.",
-    tags: ["Active learning", "Molecular dynamics"]
+      "Models that carry first-principles accuracy into larger and longer atomistic simulations.",
+    tags: ["Active learning", "MLIP"]
   },
   {
     number: "03",
     title: "Atomistic materials modeling",
     description:
-      "Studying adsorption, reconstruction, solvation, and defects to connect microscopic surface chemistry with materials performance.",
-    tags: ["DFT", "Interfaces", "Thermodynamics"]
+      "Adsorption, reconstruction, solvation, and defects as microscopic drivers of performance.",
+    tags: ["DFT", "Thermodynamics"]
   }
 ];
 
@@ -84,27 +88,30 @@ const methodToolkit = [
   {
     name: "Density functional theory",
     description:
-      "Electronic-structure calculations for adsorption, reaction energetics, and catalytic interfaces.",
-    level: 92
+      "Electronic-structure calculations for adsorption and reaction energetics."
   },
   {
     name: "Atomistic simulation",
     description:
-      "Molecular dynamics and statistical sampling for dynamic surface and solvent environments.",
-    level: 86
+      "Molecular dynamics and statistical sampling for dynamic interfaces."
   },
   {
     name: "Machine learning potentials",
     description:
-      "Data-driven interatomic models that extend first-principles accuracy to realistic scales.",
-    level: 80
+      "Data-driven interatomic models for realistic length and time scales."
   }
 ];
 
 const publications = [
   {
-    title:
+    titleText:
       "Peaks and pitfalls of electrocatalytic CO2 reduction descriptor models",
+    title: (
+      <>
+        Peaks and pitfalls of electrocatalytic CO<sub>2</sub> reduction
+        descriptor models
+      </>
+    ),
     authors: (
       <>
         Beomil Kim†, <strong>Seungchang Han†</strong>, Suneon Wang†, Stefan
@@ -487,135 +494,109 @@ function calculateCaffeineCurve({
 }
 
 function CatalystField() {
-  const fieldRef = useRef(null);
-
-  const handlePointerMove = event => {
-    const field = fieldRef.current;
-    if (!field) return;
-
-    const bounds = field.getBoundingClientRect();
-    const x = (event.clientX - bounds.left) / bounds.width - 0.5;
-    const y = (event.clientY - bounds.top) / bounds.height - 0.5;
-
-    field.style.setProperty("--field-x", `${(x + 0.5) * 100}%`);
-    field.style.setProperty("--field-y", `${(y + 0.5) * 100}%`);
-    field.style.setProperty("--drift-x", `${x * 32}px`);
-    field.style.setProperty("--drift-y", `${y * 24}px`);
-    field.style.setProperty("--counter-x", `${x * -20}px`);
-    field.style.setProperty("--counter-y", `${y * -16}px`);
-    field.style.setProperty("--tilt-x", `${y * -3.5}deg`);
-    field.style.setProperty("--tilt-y", `${x * 4.5}deg`);
-  };
-
-  const resetPointer = () => {
-    const field = fieldRef.current;
-    if (!field) return;
-
-    field.style.setProperty("--field-x", "70%");
-    field.style.setProperty("--field-y", "42%");
-    field.style.setProperty("--drift-x", "0px");
-    field.style.setProperty("--drift-y", "0px");
-    field.style.setProperty("--counter-x", "0px");
-    field.style.setProperty("--counter-y", "0px");
-    field.style.setProperty("--tilt-x", "0deg");
-    field.style.setProperty("--tilt-y", "0deg");
-  };
-
-  const latticeNodes = [
-    [58, 68],
-    [110, 58],
-    [164, 71],
-    [218, 58],
-    [272, 72],
-    [326, 58],
-    [84, 118],
-    [138, 104],
-    [192, 118],
-    [246, 104],
-    [300, 118],
-    [112, 168],
-    [166, 154],
-    [220, 168],
-    [274, 154],
-    [328, 168]
-  ];
-
   return (
     <div
       className="catalyst-field"
-      ref={fieldRef}
-      onPointerMove={handlePointerMove}
-      onPointerLeave={resetPointer}
-      aria-label="Interactive abstract catalytic interface background"
+      aria-label="Abstract catalytic interface background"
       aria-hidden="true"
     >
-      <div className="field-glow" />
       <svg className="field-svg" viewBox="0 0 1200 720" focusable="false">
-        <defs>
-          <linearGradient id="path-gradient" x1="0%" x2="100%">
-            <stop offset="0%" stopColor="currentColor" stopOpacity="0.08" />
-            <stop offset="42%" stopColor="currentColor" stopOpacity="0.42" />
-            <stop offset="100%" stopColor="currentColor" stopOpacity="0.14" />
-          </linearGradient>
-        </defs>
-        <g className="field-lattice">
-          {latticeNodes.map(([cx, cy], index) => (
-            <circle
-              cx={cx}
-              cy={cy}
-              r={index % 3 === 0 ? 6 : 4.5}
-              key={`${cx}-${cy}`}
-            />
-          ))}
-          {latticeNodes.slice(0, -1).map(([x1, y1], index) => {
-            const [x2, y2] = latticeNodes[index + 1];
-            return <line x1={x1} y1={y1} x2={x2} y2={y2} key={index} />;
-          })}
+        <path className="field-band" d="M610 118h500v486H610z" />
+        <path className="field-path" d="M686 466C778 330 890 334 990 214" />
+        <path className="field-path muted" d="M650 290c112 80 248 84 378 24" />
+        <g className="surface-grid">
+          {Array.from({length: 6}, (_, row) =>
+            Array.from({length: 7}, (_, col) => (
+              <circle
+                cx={652 + col * 58 + (row % 2) * 28}
+                cy={438 + row * 30}
+                r="5.5"
+                key={`${row}-${col}`}
+              />
+            ))
+          )}
         </g>
-        <g className="field-orbits">
-          <ellipse cx="805" cy="304" rx="205" ry="74" />
-          <ellipse
-            cx="805"
-            cy="304"
-            rx="205"
-            ry="74"
-            transform="rotate(58 805 304)"
-          />
-          <ellipse
-            cx="805"
-            cy="304"
-            rx="205"
-            ry="74"
-            transform="rotate(-56 805 304)"
-          />
-        </g>
-        <path
-          className="reaction-path"
-          d="M356 490 C 470 394, 568 430, 650 332 S 846 222, 1006 186"
-        />
-        <path
-          className="reaction-path reaction-path-secondary"
-          d="M248 252 C 386 196, 484 286, 594 236 S 812 152, 958 254"
-        />
-        <g className="molecule molecule-one">
-          <circle cx="760" cy="304" r="16" />
-          <circle cx="811" cy="304" r="12" />
-          <circle cx="861" cy="304" r="12" />
-          <line x1="776" y1="304" x2="799" y2="304" />
-          <line x1="823" y1="304" x2="849" y2="304" />
-        </g>
-        <g className="molecule molecule-two">
-          <circle cx="1008" cy="188" r="10" />
-          <circle cx="1044" cy="174" r="8" />
-          <line x1="1018" y1="184" x2="1035" y2="177" />
+        <g className="field-molecule">
+          <circle cx="842" cy="276" r="17" />
+          <circle cx="792" cy="276" r="12" />
+          <circle cx="892" cy="276" r="12" />
+          <line x1="804" y1="276" x2="825" y2="276" />
+          <line x1="859" y1="276" x2="880" y2="276" />
         </g>
       </svg>
-      <div className="field-particles">
-        {Array.from({length: 18}, (_, index) => (
-          <span key={index} style={{"--i": index}} />
-        ))}
-      </div>
     </div>
+  );
+}
+
+function HomeMap() {
+  const nodes = [
+    {
+      label: (
+        <>
+          CO<sub>2</sub>RR
+        </>
+      ),
+      detail: "reaction descriptors",
+      className: "node-reaction"
+    },
+    {
+      label: "Cu surface",
+      detail: "structure and solvation",
+      className: "node-surface"
+    },
+    {
+      label: "ML potentials",
+      detail: "larger atomistic scales",
+      className: "node-ml"
+    }
+  ];
+
+  return (
+    <div className="home-map" aria-label="Research focus map">
+      <svg className="home-map-lines" viewBox="0 0 360 360" aria-hidden="true">
+        <path d="M180 82 L92 240 L268 240 Z" />
+      </svg>
+      {nodes.map(node => (
+        <a
+          className={`home-map-node ${node.className}`}
+          href="/#/research"
+          key={node.className}
+        >
+          <strong>{node.label}</strong>
+          <span>{node.detail}</span>
+        </a>
+      ))}
+    </div>
+  );
+}
+
+function MailIcon() {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <rect x="3.5" y="5.5" width="17" height="13" rx="2" />
+      <path d="m4.5 7 7.5 6 7.5-6" />
+    </svg>
+  );
+}
+
+function LinkedInIcon() {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <path d="M6.5 9.5v8" />
+      <path d="M6.5 6.5v.1" />
+      <path d="M11 17.5v-8" />
+      <path d="M11 13c0-2.2 1.1-3.5 3.1-3.5 1.8 0 3.4 1.1 3.4 3.9v4.1" />
+      <rect x="3.5" y="3.5" width="17" height="17" rx="3" />
+    </svg>
+  );
+}
+
+function GitHubIcon() {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <path d="M9 19c-4 1.2-4-2-5.5-2.4" />
+      <path d="M15 21v-3.4c.1-.8-.2-1.4-.6-1.9 2-.2 4.1-1 4.1-4.5 0-1-.4-1.9-1-2.6.1-.3.4-1.3-.1-2.6 0 0-.8-.3-2.7 1a9.5 9.5 0 0 0-5 0C7.8 5.7 7 6 7 6c-.5 1.3-.2 2.3-.1 2.6-.6.7-1 1.6-1 2.6 0 3.5 2.1 4.3 4.1 4.5-.3.3-.6.8-.6 1.5V21" />
+    </svg>
   );
 }
 
@@ -844,11 +825,7 @@ function HomePage() {
             </a>
           </div>
         </div>
-        <div className="hero-note" aria-hidden="true">
-          <span>Cu surface</span>
-          <span>CO2RR pathway</span>
-          <span>ML potentials</span>
-        </div>
+        <HomeMap />
       </div>
     </section>
   );
@@ -946,9 +923,6 @@ function ResearchPage() {
               <span className="card-number">0{index + 1}</span>
               <h2>{method.name}</h2>
               <p>{method.description}</p>
-              <div className="method-scale">
-                <span style={{width: `${method.level}%`}} />
-              </div>
             </article>
           ))}
         </div>
@@ -960,23 +934,27 @@ function ResearchPage() {
         </div>
         <div className="publication-list">
           {publications.map(publication => (
-            <article className="publication-card" key={publication.title}>
-              <a
-                className="publication-title"
-                href={`https://doi.org/${publication.doi}`}
-                target="_blank"
-                rel="noreferrer"
-              >
-                {publication.title}
-              </a>
-              <p className="publication-authors">{publication.authors}</p>
-              <p className="publication-meta">
-                <em>{publication.journal}</em>{" "}
-                <strong>{publication.volume}</strong>, {publication.pages} (
-                {publication.year})
-              </p>
-              <p className="publication-doi">doi: {publication.doi}</p>
-            </article>
+            <a
+              className="publication-card"
+              key={publication.titleText}
+              href={`https://doi.org/${publication.doi}`}
+              target="_blank"
+              rel="noreferrer"
+            >
+              <article>
+                <h3 className="publication-title">
+                  {publication.title}
+                  <span aria-hidden="true">↗</span>
+                </h3>
+                <p className="publication-authors">{publication.authors}</p>
+                <p className="publication-meta">
+                  <em>{publication.journal}</em>{" "}
+                  <strong>{publication.volume}</strong>, {publication.pages} (
+                  {publication.year})
+                </p>
+                <p className="publication-doi">doi: {publication.doi}</p>
+              </article>
+            </a>
           ))}
         </div>
         <p className="publication-note">†: equally contributed</p>
@@ -1805,28 +1783,39 @@ function ContactPage() {
       </PageIntro>
       <div className="contact-card">
         <p>
-          For research conversations, collaborations, or current work, email is
-          the best first step. LinkedIn and GitHub are also open.
+          For research conversations, collaborations, or current work, choose a
+          route below.
         </p>
-        <a className="contact-link" href={`mailto:${profileLinks.email}`}>
-          {profileLinks.email} <span aria-hidden="true">→</span>
-        </a>
-        <a
-          className="contact-link"
-          href={profileLinks.linkedin}
-          target="_blank"
-          rel="noreferrer"
-        >
-          LinkedIn <span aria-hidden="true">↗</span>
-        </a>
-        <a
-          className="contact-link"
-          href={profileLinks.github}
-          target="_blank"
-          rel="noreferrer"
-        >
-          GitHub <span aria-hidden="true">↗</span>
-        </a>
+        <div className="contact-grid" aria-label="Contact links">
+          <a
+            className="contact-link"
+            href={`mailto:${profileLinks.email}`}
+            aria-label="Send email"
+          >
+            <MailIcon />
+            <span>Academic mail</span>
+          </a>
+          <a
+            className="contact-link"
+            href={profileLinks.linkedin}
+            target="_blank"
+            rel="noreferrer"
+            aria-label="Open professional profile"
+          >
+            <LinkedInIcon />
+            <span>Professional profile</span>
+          </a>
+          <a
+            className="contact-link"
+            href={profileLinks.github}
+            target="_blank"
+            rel="noreferrer"
+            aria-label="Open code profile"
+          >
+            <GitHubIcon />
+            <span>Code archive</span>
+          </a>
+        </div>
       </div>
     </section>
   );
@@ -1898,9 +1887,6 @@ function App() {
 
       <footer>
         <span>© {new Date().getFullYear()} Seungchang Han</span>
-        <span>
-          <a href="/#/fun">For fun: experiments</a>
-        </span>
       </footer>
     </div>
   );

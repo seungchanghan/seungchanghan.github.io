@@ -304,59 +304,28 @@ em {
   border-color: var(--accent);
 }
 
-.hero-note {
-  display: grid;
-  justify-self: end;
-  width: min(100%, 310px);
-  border-left: 1px solid color-mix(in srgb, var(--accent) 42%, var(--line));
-  color: color-mix(in srgb, var(--ink) 78%, transparent);
-}
-
-.hero-note span {
-  padding: 16px 0 16px 22px;
-  border-bottom: 1px solid color-mix(in srgb, var(--line) 76%, transparent);
-  font-size: 0.78rem;
-  font-weight: 720;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-}
-
-.hero-note span:last-child {
-  border-bottom: 0;
-}
-
 .catalyst-field {
-  --field-x: 70%;
-  --field-y: 42%;
-  --drift-x: 0px;
-  --drift-y: 0px;
-  --counter-x: 0px;
-  --counter-y: 0px;
-  --tilt-x: 0deg;
-  --tilt-y: 0deg;
   position: absolute;
   inset: 0;
   overflow: hidden;
   color: var(--accent);
   background:
     radial-gradient(
-      circle at var(--field-x) var(--field-y),
-      color-mix(in srgb, var(--accent) 22%, transparent),
-      transparent 30%
+      circle at 78% 42%,
+      color-mix(in srgb, var(--accent) 13%, transparent),
+      transparent 28%
     ),
     radial-gradient(
-      circle at 83% 24%,
-      color-mix(in srgb, #2f8f8a 18%, transparent),
-      transparent 28%
+      circle at 86% 28%,
+      color-mix(in srgb, #2f8f8a 12%, transparent),
+      transparent 24%
     ),
     linear-gradient(
       115deg,
       var(--paper) 0%,
-      var(--paper) 39%,
-      color-mix(in srgb, var(--surface) 62%, transparent) 100%
+      var(--paper) 48%,
+      color-mix(in srgb, var(--surface) 68%, transparent) 100%
     );
-  perspective: 1200px;
-  touch-action: pan-y;
 }
 
 .catalyst-field::before {
@@ -373,53 +342,9 @@ em {
       color-mix(in srgb, var(--line) 42%, transparent) 1px,
       transparent 1px
     );
-  background-position:
-    var(--counter-x) var(--counter-y),
-    var(--counter-x) var(--counter-y);
   background-size: 64px 64px;
   mask-image: linear-gradient(90deg, transparent 0%, #000 42%, #000 100%);
-  opacity: 0.42;
-}
-
-.catalyst-field::after {
-  position: absolute;
-  inset: auto -8% -22% 28%;
-  height: 42%;
-  content: "";
-  transform: translate(var(--counter-x), var(--counter-y)) skewY(-8deg);
-  background:
-    linear-gradient(
-      120deg,
-      transparent,
-      color-mix(in srgb, var(--accent) 12%, transparent),
-      transparent
-    ),
-    repeating-linear-gradient(
-      90deg,
-      color-mix(in srgb, var(--accent) 18%, transparent) 0 1px,
-      transparent 1px 44px
-    );
-  opacity: 0.62;
-}
-
-.field-glow {
-  position: absolute;
-  inset: 0;
-  transform: translate(var(--drift-x), var(--drift-y));
-  background:
-    radial-gradient(
-      ellipse at 74% 43%,
-      color-mix(in srgb, var(--accent) 32%, transparent),
-      transparent 25%
-    ),
-    radial-gradient(
-      ellipse at 60% 62%,
-      color-mix(in srgb, #2f8f8a 20%, transparent),
-      transparent 27%
-    );
-  filter: blur(4px);
-  opacity: 0.76;
-  transition: transform 0.18s ease-out;
+  opacity: 0.32;
 }
 
 .field-svg {
@@ -427,106 +352,133 @@ em {
   inset: 0;
   width: 100%;
   height: 100%;
-  transform: rotateX(var(--tilt-x)) rotateY(var(--tilt-y));
-  transform-style: preserve-3d;
-  transition: transform 0.18s ease-out;
 }
 
-.field-lattice {
-  transform: translate(590px, 336px) skewX(-14deg) scale(1.18);
-  color: color-mix(in srgb, var(--accent) 72%, var(--muted));
-  opacity: 0.74;
+.field-band {
+  fill: color-mix(in srgb, var(--surface) 58%, transparent);
 }
 
-.field-lattice circle {
-  fill: currentColor;
-  stroke: color-mix(in srgb, var(--paper) 74%, transparent);
-  stroke-width: 2;
-}
-
-.field-lattice line {
-  stroke: currentColor;
-  stroke-opacity: 0.26;
-  stroke-width: 1.4;
-}
-
-.field-orbits {
-  color: color-mix(in srgb, #2f8f8a 70%, var(--accent));
+.surface-grid {
+  color: color-mix(in srgb, var(--accent) 64%, var(--muted));
   opacity: 0.5;
-  transform: translate(var(--drift-x), var(--drift-y));
-  transition: transform 0.2s ease-out;
 }
 
-.field-orbits ellipse {
-  fill: none;
-  stroke: currentColor;
-  stroke-width: 1.8;
+.surface-grid circle {
+  fill: currentColor;
 }
 
-.reaction-path {
+.field-path {
   fill: none;
-  stroke: url("#path-gradient");
+  stroke: color-mix(in srgb, var(--accent) 46%, transparent);
   stroke-linecap: round;
-  stroke-width: 3;
-  stroke-dasharray: 10 14;
-  animation: path-flow 9s linear infinite;
-}
-
-.reaction-path-secondary {
-  opacity: 0.42;
   stroke-width: 2;
-  animation-duration: 13s;
 }
 
-.molecule {
-  color: color-mix(in srgb, var(--ink) 72%, var(--accent));
-  transform: translate(var(--counter-x), var(--counter-y));
-  transition: transform 0.18s ease-out;
+.field-path.muted {
+  stroke: color-mix(in srgb, #2f8f8a 36%, transparent);
 }
 
-.molecule circle {
+.field-molecule {
+  color: color-mix(in srgb, var(--ink) 70%, var(--accent));
+  opacity: 0.64;
+}
+
+.field-molecule circle {
   fill: var(--paper);
   stroke: currentColor;
   stroke-width: 2;
 }
 
-.molecule line {
+.field-molecule line {
   stroke: currentColor;
   stroke-width: 2;
 }
 
-.molecule-two {
-  opacity: 0.72;
+.home-map {
+  position: relative;
+  display: grid;
+  justify-self: end;
+  width: min(100%, 360px);
+  aspect-ratio: 1;
+  place-items: center;
 }
 
-.field-particles span {
+.home-map-lines {
   position: absolute;
-  top: calc(16% + ((var(--i) * 37) % 68) * 1%);
-  left: calc(40% + ((var(--i) * 23) % 55) * 1%);
-  width: 4px;
-  height: 4px;
-  border-radius: 50%;
-  background: color-mix(in srgb, #2f8f8a 70%, var(--accent));
-  opacity: 0.28;
-  transform: translate(var(--drift-x), var(--drift-y));
-  animation: particle-drift 7s ease-in-out infinite;
-  animation-delay: calc(var(--i) * -0.38s);
+  inset: 0;
+  color: var(--accent);
 }
 
-@keyframes path-flow {
-  to {
-    stroke-dashoffset: -96;
-  }
+.home-map-lines path {
+  fill: none;
+  stroke: currentColor;
+  stroke-dasharray: 6 10;
+  stroke-linejoin: round;
+  stroke-opacity: 0.32;
+  stroke-width: 1.5;
 }
 
-@keyframes particle-drift {
-  50% {
-    opacity: 0.58;
-    transform: translate(
-      calc(var(--drift-x) + 10px),
-      calc(var(--drift-y) - 14px)
-    );
-  }
+.home-map-node {
+  position: absolute;
+  display: grid;
+  width: min(46%, 164px);
+  min-height: 88px;
+  padding: 16px;
+  border: 1px solid color-mix(in srgb, var(--accent) 36%, var(--line));
+  border-radius: 8px;
+  align-content: center;
+  background: color-mix(in srgb, var(--paper) 82%, transparent);
+  box-shadow: 0 18px 42px rgba(29, 36, 33, 0.08);
+  gap: 4px;
+  transition:
+    transform 0.18s ease,
+    border-color 0.18s ease,
+    background 0.18s ease;
+}
+
+.home-map-node:hover,
+.home-map-node:focus-visible {
+  transform: translateY(-3px);
+  border-color: var(--accent);
+  background: var(--paper);
+}
+
+.home-map-node:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+}
+
+.home-map-node strong {
+  color: var(--ink);
+  font-size: 0.96rem;
+  line-height: 1.1;
+}
+
+.home-map-node span {
+  color: var(--muted);
+  font-size: 0.72rem;
+  line-height: 1.35;
+}
+
+.node-reaction {
+  top: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.node-reaction:hover,
+.node-reaction:focus-visible {
+  transform: translateX(-50%) translateY(-3px);
+}
+
+.node-surface {
+  bottom: 24px;
+  left: 8px;
+}
+
+.node-ml {
+  right: 8px;
+  bottom: 24px;
 }
 
 .content-page,
@@ -579,8 +531,6 @@ em {
 }
 
 .about-profile {
-  position: sticky;
-  top: 104px;
   padding: 32px;
 }
 
@@ -735,44 +685,53 @@ em {
   font-weight: 650;
 }
 
-.method-scale {
-  height: 7px;
-  margin-top: auto;
-  overflow: hidden;
-  border-radius: 999px;
-  background: var(--surface-strong);
-}
-
-.method-scale span {
-  display: block;
-  height: 100%;
-  border-radius: inherit;
-  background: var(--accent);
-}
-
 .publication-list {
   display: grid;
   gap: 14px;
 }
 
 .publication-card {
+  display: block;
   padding: 28px;
+  color: inherit;
+  transition:
+    transform 0.22s ease,
+    border-color 0.22s ease,
+    box-shadow 0.22s ease;
+}
+
+.publication-card:hover,
+.publication-card:focus-visible {
+  transform: translateY(-4px);
+  border-color: color-mix(in srgb, var(--accent) 55%, var(--line));
+  box-shadow: var(--shadow);
+}
+
+.publication-card:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
 }
 
 .publication-title {
-  display: inline-flex;
-  max-width: 840px;
+  display: block;
   margin-bottom: 18px;
   color: var(--ink);
   font-size: clamp(1.25rem, 2.2vw, 1.9rem);
   font-weight: 650;
-  line-height: 1.08;
-  letter-spacing: -0.035em;
-  text-wrap: balance;
+  line-height: 1.18;
+  letter-spacing: -0.025em;
+  text-wrap: wrap;
   transition: color 0.2s ease;
 }
 
-.publication-title:hover {
+.publication-title span {
+  margin-left: 8px;
+  color: var(--accent);
+  font-size: 0.75em;
+}
+
+.publication-card:hover .publication-title,
+.publication-card:focus-visible .publication-title {
   color: var(--accent);
 }
 
@@ -1679,24 +1638,57 @@ input[type="range"] {
   color: var(--muted);
 }
 
+.contact-card p {
+  margin-bottom: 24px;
+}
+
+.contact-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
 .contact-link {
-  display: flex;
-  padding: 18px 0;
-  margin-top: 18px;
-  border-top: 1px solid var(--line);
-  justify-content: space-between;
-  gap: 18px;
+  display: grid;
+  min-height: 132px;
+  padding: 18px 12px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  align-content: center;
+  justify-items: center;
+  gap: 12px;
+  background: var(--paper);
   color: var(--ink);
-  font-weight: 680;
-  overflow-wrap: anywhere;
+  font-size: 0.72rem;
+  font-weight: 720;
+  line-height: 1.25;
+  text-align: center;
+  transition:
+    transform 0.2s ease,
+    border-color 0.2s ease,
+    color 0.2s ease;
 }
 
-.contact-link:last-child {
-  border-bottom: 1px solid var(--line);
+.contact-link svg {
+  width: 36px;
+  height: 36px;
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 1.7;
 }
 
-.contact-link:hover {
+.contact-link:hover,
+.contact-link:focus-visible {
+  transform: translateY(-3px);
+  border-color: var(--accent);
   color: var(--accent);
+}
+
+.contact-link:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
 }
 
 footer {
@@ -1705,7 +1697,7 @@ footer {
   padding-inline: max(32px, calc((100vw - 1180px) / 2));
   border-top: 1px solid var(--line);
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-start;
   color: var(--muted);
   font-size: 0.7rem;
 }
@@ -1839,25 +1831,22 @@ footer a {
     padding-block: 74px 22px;
   }
 
-  .hero-note {
-    width: min(100%, 360px);
-    justify-self: start;
-  }
-
-  .hero-note span {
-    padding-block: 12px;
-  }
-
   .catalyst-field::before {
     mask-image: linear-gradient(90deg, transparent 0%, #000 18%, #000 100%);
   }
 
-  .field-lattice {
-    transform: translate(360px, 360px) skewX(-14deg) scale(1.05);
+  .field-svg {
+    opacity: 0.52;
+    transform: translate(118px, 112px) scale(0.84);
+    transform-origin: center;
   }
 
-  .field-orbits {
-    transform: translate(calc(var(--drift-x) - 120px), var(--drift-y));
+  .field-band {
+    display: none;
+  }
+
+  .home-map {
+    display: none;
   }
 
   h1 {
@@ -1876,10 +1865,6 @@ footer a {
   .hero-intro {
     max-width: 30ch;
     font-size: 1rem;
-  }
-
-  .hero-note {
-    display: none;
   }
 
   .page-intro {
@@ -1959,6 +1944,14 @@ footer a {
   .contact-page {
     grid-template-columns: 1fr;
     gap: 38px;
+  }
+
+  .contact-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .contact-link {
+    min-height: 94px;
   }
 
   footer {
