@@ -144,6 +144,10 @@ const publications = [
 ];
 
 const defaultIntakes = [{id: 1, start: "07:00", end: "07:10", dose: 180}];
+const MAX_MEETING_PAYLOAD_LENGTH = 12000;
+const MAX_MEETING_PARTICIPANTS = 24;
+const MAX_MEETING_SLOTS_PER_PERSON = 16;
+const MAX_MEETING_NAME_LENGTH = 80;
 const fallbackTimeZones = [
   "UTC",
   "America/Los_Angeles",
@@ -582,8 +586,80 @@ function encodeMeetingData(value) {
     .replaceAll("=", "");
 }
 
+function isValidDateValue(value) {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
+  const {year, month, day} = parseDateValue(value);
+  const date = new Date(Date.UTC(year, month - 1, day));
+  return (
+    date.getUTCFullYear() === year &&
+    date.getUTCMonth() === month - 1 &&
+    date.getUTCDate() === day
+  );
+}
+
+function isValidTimeValue(value) {
+  if (!/^\d{2}:\d{2}$/.test(value)) return false;
+  const [hours, minutes] = value.split(":").map(Number);
+  return hours >= 0 && hours <= 23 && minutes >= 0 && minutes <= 59;
+}
+
+function normalizeMeetingSlot(slot) {
+  if (
+    !slot ||
+    !isValidDateValue(slot.date) ||
+    !isValidTimeValue(slot.start) ||
+    !isValidTimeValue(slot.end) ||
+    slot.start === slot.end
+  ) {
+    return null;
+  }
+  return {
+    date: slot.date,
+    start: slot.start,
+    end: slot.end
+  };
+}
+
+function normalizeMeetingData(value) {
+  if (
+    value?.version !== 2 ||
+    !Array.isArray(value.participants) ||
+    value.participants.length > MAX_MEETING_PARTICIPANTS
+  ) {
+    return null;
+  }
+
+  const participants = [];
+  for (const participant of value.participants) {
+    const name = String(participant?.name ?? "")
+      .trim()
+      .slice(0, MAX_MEETING_NAME_LENGTH);
+    const timeZone = String(participant?.timeZone ?? "");
+    if (
+      !name ||
+      !isValidTimeZone(timeZone) ||
+      !Array.isArray(participant?.slots) ||
+      participant.slots.length === 0 ||
+      participant.slots.length > MAX_MEETING_SLOTS_PER_PERSON
+    ) {
+      return null;
+    }
+    const slots = participant.slots.map(normalizeMeetingSlot).filter(Boolean);
+    if (slots.length !== participant.slots.length) return null;
+    participants.push({
+      id: String(participant.id ?? participants.length).slice(0, 80),
+      name,
+      timeZone,
+      slots
+    });
+  }
+
+  return {version: 2, participants};
+}
+
 function decodeMeetingData(value) {
   try {
+    if (value.length > MAX_MEETING_PAYLOAD_LENGTH) return null;
     const normalized = value.replaceAll("-", "+").replaceAll("_", "/");
     const padded = normalized.padEnd(
       normalized.length + ((4 - (normalized.length % 4)) % 4),
@@ -598,10 +674,10 @@ function decodeMeetingData(value) {
     ) {
       return null;
     }
-    if (parsed.version === 2) return parsed;
+    if (parsed.version === 2) return normalizeMeetingData(parsed);
     if (typeof parsed.weekStart !== "string") return null;
 
-    return {
+    return normalizeMeetingData({
       version: 2,
       participants: parsed.participants.map(participant => ({
         ...participant,
@@ -611,7 +687,7 @@ function decodeMeetingData(value) {
           end: slot.end
         }))
       }))
-    };
+    });
   } catch {
     return null;
   }
@@ -1592,7 +1668,12 @@ function MeetingPlanner() {
 
   const shareUrl = useMemo(() => {
     const url = new URL(window.location.href);
-    url.searchParams.set("meeting", encodeMeetingData(meeting));
+    const encoded = encodeMeetingData(meeting);
+    if (encoded.length <= MAX_MEETING_PAYLOAD_LENGTH) {
+      url.searchParams.set("meeting", encoded);
+    } else {
+      url.searchParams.delete("meeting");
+    }
     url.hash = "/fun";
     return url.toString();
   }, [meeting]);
@@ -1604,6 +1685,7 @@ function MeetingPlanner() {
   };
 
   const addSlot = () => {
+    if (slots.length >= MAX_MEETING_SLOTS_PER_PERSON) return;
     setSlots(current => [
       ...current,
       {
@@ -1617,9 +1699,17 @@ function MeetingPlanner() {
 
   const addAvailability = event => {
     event.preventDefault();
-    const trimmedName = name.trim();
+    const trimmedName = name.trim().slice(0, MAX_MEETING_NAME_LENGTH);
     if (!trimmedName || slots.length === 0 || !isValidTimeZone(timeZone))
       return;
+    if (
+      !editingParticipantId &&
+      meeting.participants.length >= MAX_MEETING_PARTICIPANTS
+    ) {
+      return;
+    }
+    const normalizedSlots = slots.map(normalizeMeetingSlot).filter(Boolean);
+    if (normalizedSlots.length !== slots.length) return;
 
     const participant = {
       id:
@@ -1627,7 +1717,7 @@ function MeetingPlanner() {
         `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
       name: trimmedName,
       timeZone,
-      slots: slots.map(({date, start, end}) => ({date, start, end}))
+      slots: normalizedSlots
     };
 
     setMeeting(current => ({
@@ -1636,7 +1726,9 @@ function MeetingPlanner() {
         ? current.participants.map(item =>
             item.id === editingParticipantId ? participant : item
           )
-        : [...current.participants, participant]
+        : current.participants.length < MAX_MEETING_PARTICIPANTS
+          ? [...current.participants, participant]
+          : current.participants
     }));
     setName("");
     setEditingParticipantId(null);
@@ -1789,6 +1881,7 @@ function MeetingPlanner() {
               <input
                 type="text"
                 value={name}
+                maxLength={MAX_MEETING_NAME_LENGTH}
                 placeholder="Your name"
                 required
                 onChange={event => setName(event.target.value)}
