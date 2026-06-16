@@ -3,10 +3,57 @@ import {createPortal} from "react-dom";
 
 const pages = [
   {id: "home", label: "Home"},
+  {id: "about", label: "About me"},
   {id: "research", label: "Research"},
-  {id: "methods", label: "Methods"},
-  {id: "fun", label: "For Fun"},
+  {id: "fun", label: "For fun"},
   {id: "contact", label: "Contact"}
+];
+
+const profileLinks = {
+  email: "moonspath@korea.ac.kr",
+  linkedin: "https://www.linkedin.com/in/seungchanghan-8761b9414",
+  github: "https://github.com/seungchanghan"
+};
+
+const profileDetails = [
+  {
+    label: "Role",
+    value: "Ph.D. Student in Physical Chemistry and Integrative Data Science"
+  },
+  {label: "Institution", value: "Korea University"},
+  {label: "Location", value: "Seoul, South Korea"},
+  {label: "Languages", value: "Korean, English"}
+];
+
+const education = [
+  {
+    institution: "Korea University",
+    degree: "Ph.D. Student, Physical Chemistry and Integrative Data Science",
+    period: "September 2022 - present"
+  },
+  {
+    institution: "Pusan National University",
+    degree: "B.S., Chemistry",
+    period: "March 2020 - February 2022"
+  }
+];
+
+const experience = [
+  {
+    organization: "Korea University",
+    role: "Lecturer",
+    period: "March 2025 - February 2026",
+    notes: ["University lecturing", "Undergraduate teaching"]
+  },
+  {
+    organization: "Institute for Basic Science (IBS)",
+    role: "Researcher",
+    period: "March 2023 - August 2023",
+    notes: [
+      "Quantum chemical modeling of interfaces using density functional theory",
+      "Machine learning approaches for canonical algorithms"
+    ]
+  }
 ];
 
 const researchAreas = [
@@ -33,7 +80,7 @@ const researchAreas = [
   }
 ];
 
-const methods = [
+const methodToolkit = [
   {
     name: "Density functional theory",
     description:
@@ -51,6 +98,23 @@ const methods = [
     description:
       "Data-driven interatomic models that extend first-principles accuracy to realistic scales.",
     level: 80
+  }
+];
+
+const publications = [
+  {
+    title:
+      "Peaks and pitfalls of electrocatalytic CO2 reduction descriptor models",
+    authors: (
+      <>
+        Beomil Kim†, <strong>Seungchang Han†</strong>, Suneon Wang†, Stefan
+        Ringe and Jihun Oh
+      </>
+    ),
+    journal: "Nature Catalysis",
+    volume: "9",
+    pages: "471-481",
+    year: "2026"
   }
 ];
 
@@ -690,7 +754,7 @@ function HomePage() {
   return (
     <section className="page hero section-shell">
       <div className="hero-copy">
-        <p className="eyebrow">Ph.D. Student · Materials Science</p>
+        <p className="eyebrow">Ph.D. Student · Physical Chemistry</p>
         <h1>
           Computational insight into catalytic <em>interfaces.</em>
         </h1>
@@ -705,6 +769,68 @@ function HomePage() {
         </div>
       </div>
       <AtomVisual />
+    </section>
+  );
+}
+
+function AboutPage() {
+  return (
+    <section className="page content-page section-shell">
+      <PageIntro eyebrow="About me" title="Seungchang Han">
+        Ph.D. student in Physical Chemistry and Integrative Data Science at
+        Korea University, working at the intersection of computational
+        chemistry, atomistic simulation, and machine learning for catalytic
+        interfaces.
+      </PageIntro>
+      <div className="about-layout">
+        <article className="about-profile">
+          <p>
+            My research uses density functional theory, molecular simulation,
+            and machine-learned interatomic potentials to connect microscopic
+            surface chemistry with electrocatalytic performance.
+          </p>
+          <dl className="profile-details">
+            {profileDetails.map(item => (
+              <div key={item.label}>
+                <dt>{item.label}</dt>
+                <dd>{item.value}</dd>
+              </div>
+            ))}
+          </dl>
+        </article>
+
+        <div className="about-stack">
+          <section className="timeline-panel">
+            <h2>Experience</h2>
+            {experience.map(item => (
+              <article
+                className="timeline-item"
+                key={`${item.organization}-${item.role}`}
+              >
+                <span>{item.period}</span>
+                <h3>{item.role}</h3>
+                <p>{item.organization}</p>
+                <ul>
+                  {item.notes.map(note => (
+                    <li key={note}>{note}</li>
+                  ))}
+                </ul>
+              </article>
+            ))}
+          </section>
+
+          <section className="timeline-panel">
+            <h2>Education</h2>
+            {education.map(item => (
+              <article className="timeline-item" key={item.institution}>
+                <span>{item.period}</span>
+                <h3>{item.institution}</h3>
+                <p>{item.degree}</p>
+              </article>
+            ))}
+          </section>
+        </div>
+      </div>
     </section>
   );
 }
@@ -730,28 +856,42 @@ function ResearchPage() {
           </article>
         ))}
       </div>
-    </section>
-  );
-}
-
-function MethodsPage() {
-  return (
-    <section className="page content-page section-shell">
-      <PageIntro eyebrow="Methods" title="Computational toolkit">
-        Complementary methods bridge electronic accuracy, dynamic sampling, and
-        experimentally relevant length and time scales.
-      </PageIntro>
-      <div className="methods-grid">
-        {methods.map((method, index) => (
-          <article className="method-card" key={method.name}>
-            <span className="card-number">0{index + 1}</span>
-            <h2>{method.name}</h2>
-            <p>{method.description}</p>
-            <div className="method-scale">
-              <span style={{width: `${method.level}%`}} />
-            </div>
-          </article>
-        ))}
+      <div className="research-section">
+        <div className="section-heading">
+          <p className="eyebrow">Methods</p>
+          <h2>Computational toolkit</h2>
+        </div>
+        <div className="methods-grid">
+          {methodToolkit.map((method, index) => (
+            <article className="method-card" key={method.name}>
+              <span className="card-number">0{index + 1}</span>
+              <h2>{method.name}</h2>
+              <p>{method.description}</p>
+              <div className="method-scale">
+                <span style={{width: `${method.level}%`}} />
+              </div>
+            </article>
+          ))}
+        </div>
+      </div>
+      <div className="research-section">
+        <div className="section-heading">
+          <p className="eyebrow">Publication</p>
+          <h2>Selected work</h2>
+        </div>
+        <div className="publication-list">
+          {publications.map(publication => (
+            <article className="publication-card" key={publication.title}>
+              <h3>{publication.title}</h3>
+              <p className="publication-authors">{publication.authors}</p>
+              <p className="publication-meta">
+                <em>{publication.journal}</em>{" "}
+                <strong>{publication.volume}</strong>, {publication.pages} (
+                {publication.year})
+              </p>
+            </article>
+          ))}
+        </div>
       </div>
     </section>
   );
@@ -1340,7 +1480,7 @@ function ForFunPage() {
 
   return (
     <section className="page fun-page section-shell">
-      <PageIntro eyebrow="For Fun" title="Small experiments">
+      <PageIntro eyebrow="For fun" title="Small experiments">
         Interactive tools and side projects built from questions I wanted to
         explore. Open an experiment to try it.
       </PageIntro>
@@ -1577,16 +1717,27 @@ function ContactPage() {
       </PageIntro>
       <div className="contact-card">
         <p>
-          The easiest way to find my current work and get in touch is through
-          GitHub.
+          For research conversations, collaborations, or current work, email is
+          the best first step. LinkedIn and GitHub are also open.
         </p>
+        <a className="contact-link" href={`mailto:${profileLinks.email}`}>
+          {profileLinks.email} <span aria-hidden="true">→</span>
+        </a>
         <a
           className="contact-link"
-          href="https://github.com/seungchanghan"
+          href={profileLinks.linkedin}
           target="_blank"
           rel="noreferrer"
         >
-          Connect on GitHub <span aria-hidden="true">↗</span>
+          LinkedIn <span aria-hidden="true">↗</span>
+        </a>
+        <a
+          className="contact-link"
+          href={profileLinks.github}
+          target="_blank"
+          rel="noreferrer"
+        >
+          GitHub <span aria-hidden="true">↗</span>
         </a>
       </div>
     </section>
@@ -1595,8 +1746,8 @@ function ContactPage() {
 
 const pageComponents = {
   home: HomePage,
+  about: AboutPage,
   research: ResearchPage,
-  methods: MethodsPage,
   fun: ForFunPage,
   contact: ContactPage
 };
@@ -1660,7 +1811,7 @@ function App() {
       <footer>
         <span>© {new Date().getFullYear()} Seungchang Han</span>
         <span>
-          <a href="/#/fun">For Fun: experiments</a>
+          <a href="/#/fun">For fun: experiments</a>
         </span>
       </footer>
     </div>
