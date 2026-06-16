@@ -462,10 +462,10 @@ function calculateThermochemistry({
       modeCount: vib.modeCount,
       rows: [
         ["ZPE correction / eV", vib.zpe],
-        ["U correction, no ZPE / eV", thermalU],
+        ["Thermal U, excludes ZPE / eV", thermalU],
         ["T S / eV", vib.ts],
-        ["F correction, no ZPE / eV", fNoZpe],
-        ["Full E -> F / eV", fullF],
+        ["Thermal F, excludes ZPE / eV", fNoZpe],
+        ["Total F correction, includes ZPE / eV", fullF],
         ["S / eV K^-1", vib.entropy]
       ],
       notes: [
@@ -535,16 +535,18 @@ function calculateThermochemistry({
   const ts = temperature * entropy;
   const gNoZpe = thermalH - ts;
   const fullG = vib.zpe + gNoZpe;
+  const symmetryPenalty = K_B_EV * temperature * Math.log(sigma);
 
   return {
     mode,
     modeCount: vib.modeCount,
     rows: [
       ["ZPE correction / eV", vib.zpe],
-      ["H correction, no ZPE / eV", thermalH],
+      ["Thermal H, excludes ZPE / eV", thermalH],
       ["T S / eV", ts],
-      ["G correction, no ZPE / eV", gNoZpe],
-      ["Full E -> G / eV", fullG],
+      ["Thermal G, excludes ZPE / eV", gNoZpe],
+      ["Total G correction, includes ZPE / eV", fullG],
+      ["Symmetry penalty, kBT ln sigma / eV", symmetryPenalty],
       ["S / eV K^-1", entropy],
       ["translation U / eV", uTrans],
       ["rotation U / eV", uRot]
@@ -2149,8 +2151,8 @@ function RedheadTool() {
         >
           <div className="control-heading">
             <div>
-              <p className="eyebrow">TPD</p>
-              <h2>Redhead estimate</h2>
+              <p className="eyebrow">TPD analysis</p>
+              <h2>First-order desorption energy</h2>
             </div>
           </div>
           <div className="tool-input-grid">
@@ -2226,22 +2228,20 @@ function RedheadTool() {
               </div>
             ))}
           </div>
-          <div className="tool-detail-grid">
-            {redhead.details.map(([label, value]) => (
-              <div className="tool-result-row" key={label}>
-                <span>{label}</span>
-                <strong>{formatScientific(value)}</strong>
-              </div>
-            ))}
-          </div>
           <section className="educational-note">
-            <h3>Model boundary</h3>
+            <h3>How to read this estimate</h3>
             <p>
-              Assumes first-order desorption, linear heating beta = dT/dt, a
-              temperature-independent prefactor across the peak unless the
-              default nu = kB Tp / h is used at Tp, and no readsorption,
-              transport limitation, coverage dependence, or kinetic-order
-              change.
+              The calculation converts beta to K s^-1, evaluates the peak
+              condition ln(nu Tp / beta), and returns one desorption barrier in
+              several units. The value is sensitive to the prefactor because nu
+              appears inside the logarithm.
+            </p>
+            <p>
+              If nu is blank, the page uses nu = kB Tp / h at the peak
+              temperature. The 3.64 constant is the standard Redhead analytical
+              approximation. Use full kinetic fitting when coverage dependence,
+              readsorption, transport limitation, or non-first-order kinetics
+              are relevant.
             </p>
             {redhead.notes.map(note => (
               <p key={note}>{note}</p>
@@ -2388,7 +2388,21 @@ function ThermochemistryTool() {
                   Geometry
                   <select
                     value={geometry}
-                    onChange={event => setGeometry(event.target.value)}
+                    onChange={event => {
+                      const nextGeometry = event.target.value;
+                      setGeometry(nextGeometry);
+                      setRotationalTemperatures(current => {
+                        const values = parseNumberList(current);
+                        if (nextGeometry === "nonlinear" && values.length < 3) {
+                          const theta = values[0] || 2.77;
+                          return `${theta} ${theta} ${theta}`;
+                        }
+                        if (nextGeometry === "linear" && values.length !== 1) {
+                          return String(values[0] || 2.77);
+                        }
+                        return current;
+                      });
+                    }}
                   >
                     <option value="monatomic">monatomic</option>
                     <option value="linear">linear</option>
@@ -2444,14 +2458,20 @@ function ThermochemistryTool() {
               <>
                 <span className="equation-title">Harmonic adsorbate</span>
                 <span className="equation-line">
-                  F - E = U<sub>vib</sub> - T S<sub>vib</sub>
+                  Delta F = ZPE + U<sub>thermal,vib</sub> - T S<sub>vib</sub>
+                </span>
+                <span className="equation-line muted">
+                  Total F correction includes ZPE; thermal F excludes ZPE.
                 </span>
               </>
             ) : (
               <>
                 <span className="equation-title">Ideal gas</span>
                 <span className="equation-line">
-                  G - E = H<sub>trans+rot+vib</sub> - T S<sub>total</sub>
+                  Delta G = ZPE + H<sub>thermal</sub> - T S<sub>total</sub>
+                </span>
+                <span className="equation-line muted">
+                  sigma lowers rotational entropy, adding kBT ln sigma to G.
                 </span>
               </>
             )}
@@ -2837,7 +2857,7 @@ function ForFunPage() {
 
         <ExperimentAccordion
           index="04"
-          title="TPD - Redhead estimate"
+          title="Redhead TPD analysis"
           summary="Estimate first-order desorption energy from a TPD peak"
           isOpen={openExperiment === "04"}
           onToggle={() => toggleExperiment("04")}

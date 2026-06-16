@@ -1150,6 +1150,14 @@ input[type="range"] {
   align-items: start;
 }
 
+.redhead-layout .equation-block {
+  margin-top: 18px;
+}
+
+.redhead-layout .energy-card-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
 .boltzmann-panel,
 .thermo-tool-grid .wide {
   grid-column: 1 / -1;
@@ -1249,7 +1257,8 @@ input[type="range"] {
 .equation-line.muted {
   min-height: 0;
   color: var(--muted);
-  font-size: 0.82rem;
+  font-family: inherit;
+  font-size: 0.78rem;
 }
 
 .bracket {
