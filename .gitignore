@@ -29,3 +29,5 @@ __pycache__/
 #user generated content
 public/profile.json
 public/blogs.json
+
+AGENTS.md
