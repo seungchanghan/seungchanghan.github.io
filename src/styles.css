@@ -1145,6 +1145,11 @@ input[type="range"] {
   grid-template-columns: minmax(360px, 0.9fr) minmax(460px, 1.1fr);
 }
 
+.redhead-layout {
+  grid-template-columns: minmax(320px, 0.46fr) minmax(0, 1fr);
+  align-items: start;
+}
+
 .boltzmann-panel,
 .thermo-tool-grid .wide {
   grid-column: 1 / -1;
@@ -1165,6 +1170,12 @@ input[type="range"] {
   grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 
+.thermo-input-panel {
+  display: grid;
+  align-content: start;
+  gap: 16px;
+}
+
 .tool-input-grid label,
 .frequency-field {
   display: grid;
@@ -1172,6 +1183,104 @@ input[type="range"] {
   font-size: 0.68rem;
   font-weight: 650;
   gap: 5px;
+}
+
+.mode-switch {
+  display: grid;
+  padding: 3px;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  grid-template-columns: 1fr 1fr;
+  gap: 3px;
+  background: var(--surface);
+}
+
+.mode-switch button {
+  min-height: 34px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+  font-size: 0.72rem;
+  font-weight: 750;
+}
+
+.mode-switch button.active {
+  background: var(--paper);
+  color: var(--accent);
+  box-shadow: 0 1px 8px color-mix(in srgb, var(--ink) 8%, transparent);
+}
+
+.ideal-gas-fields {
+  display: grid;
+  padding-top: 16px;
+  border-top: 1px solid var(--line);
+  gap: 10px;
+}
+
+.equation-block {
+  display: grid;
+  padding: 16px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--surface);
+  gap: 8px;
+}
+
+.equation-title {
+  color: var(--accent);
+  font-size: 0.68rem;
+  font-weight: 780;
+  text-transform: uppercase;
+}
+
+.equation-line {
+  display: flex;
+  min-height: 30px;
+  align-items: center;
+  gap: 7px;
+  color: var(--ink);
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: clamp(1.05rem, 1.8vw, 1.38rem);
+  line-height: 1.2;
+}
+
+.equation-line.muted {
+  min-height: 0;
+  color: var(--muted);
+  font-size: 0.82rem;
+}
+
+.bracket {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.bracket::before {
+  content: "[";
+}
+
+.bracket::after {
+  content: "]";
+}
+
+.fraction {
+  display: inline-grid;
+  min-width: 58px;
+  align-items: center;
+  text-align: center;
+  line-height: 1.05;
+}
+
+.fraction span:first-child {
+  padding: 0 4px 3px;
+  border-bottom: 1px solid currentColor;
+}
+
+.fraction span:last-child {
+  padding-top: 3px;
 }
 
 .constant-source-panel,
@@ -1256,6 +1365,39 @@ input[type="range"] {
   color: var(--muted);
   font-size: 0.68rem;
   line-height: 1.45;
+}
+
+.tool-detail-grid {
+  display: grid;
+  margin-top: 14px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.tool-result-row {
+  display: flex;
+  min-height: 44px;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  background: var(--surface);
+}
+
+.tool-result-row span {
+  color: var(--muted);
+  font-size: 0.68rem;
+  font-weight: 700;
+}
+
+.tool-result-row strong {
+  color: var(--ink);
+  font-family: "SFMono-Regular", Consolas, monospace;
+  font-size: 0.75rem;
+  font-weight: 650;
+  text-align: right;
 }
 
 .boltzmann-panel {

@@ -212,6 +212,8 @@ const conversionSources = [
 
 const symmetryOptions = [
   {label: "C1 / Cs / Ci", value: 1},
+  {label: "Cinfv", value: 1},
+  {label: "Dinfh", value: 2},
   {label: "C2 / C2v", value: 2},
   {label: "C3v", value: 3},
   {label: "D2h / C4v", value: 4},
@@ -306,19 +308,50 @@ function calculateRedhead({peakTemperature, heatingRate, betaUnit, prefactor}) {
     betaUnit === "K/min"
       ? parseNumber(heatingRate) / 60
       : parseNumber(heatingRate);
+  if (tp <= 0 || beta <= 0) {
+    return {
+      rows: [],
+      details: [],
+      notes: ["Peak temperature and heating rate must both be positive."]
+    };
+  }
   const nu =
     prefactor === "" ? (K_BOLTZMANN * tp) / H_PLANCK : parseNumber(prefactor);
+  if (nu <= 0) {
+    return {
+      rows: [],
+      details: [],
+      notes: ["Prefactor must be positive when supplied."]
+    };
+  }
   const logArgument = (nu * tp) / beta;
+  const lnArgument = Math.log(logArgument);
   const eJmol = R_GAS * tp * (Math.log(logArgument) - 3.64);
 
-  return [
-    ["nu / s^-1", nu],
-    ["ln(nu Tp / beta)", Math.log(logArgument)],
-    ["Edes / J mol^-1", eJmol],
-    ["Edes / kJ mol^-1", eJmol / 1000],
-    ["Edes / kcal mol^-1", eJmol / KCAL_J],
-    ["Edes / eV molecule^-1", eJmol / EV_MOLAR_J]
-  ];
+  return {
+    rows: [
+      ["Edes / kJ mol^-1", eJmol / 1000],
+      ["Edes / eV molecule^-1", eJmol / EV_MOLAR_J],
+      ["Edes / kcal mol^-1", eJmol / KCAL_J],
+      ["Edes / J mol^-1", eJmol]
+    ],
+    details: [
+      ["Tp / K", tp],
+      ["beta / K s^-1", beta],
+      ["nu / s^-1", nu],
+      ["ln(nu Tp / beta)", lnArgument]
+    ],
+    notes: [
+      prefactor === ""
+        ? "Prefactor was set by nu = kB Tp / h."
+        : "Prefactor was supplied by the user; nu = kB Tp / h was not used.",
+      ...(eJmol <= 0
+        ? [
+            "Computed Edes is non-positive. Check Tp, beta, nu, and first-order Redhead applicability."
+          ]
+        : [])
+    ]
+  };
 }
 
 function parseFrequencies(text) {
@@ -342,13 +375,24 @@ function cmInvToEv(value) {
   return (H_PLANCK * C_LIGHT * 100 * value) / EV_J;
 }
 
-function calculateHarmonicThermo({
-  frequencies,
-  unit,
-  temperature,
-  symmetryNumber
-}) {
-  const realModes = parseFrequencies(frequencies)
+function safeLog(value) {
+  return value > 0 ? Math.log(value) : Number.NaN;
+}
+
+function parseNumberList(text) {
+  return text
+    .replaceAll(",", " ")
+    .replaceAll(";", " ")
+    .split(/\s+/)
+    .map(item => item.trim())
+    .filter(Boolean)
+    .map(Number)
+    .filter(Number.isFinite);
+}
+
+function vibrationalThermo(frequencies, unit, temperature) {
+  const inputModes = parseFrequencies(frequencies);
+  const realModes = inputModes
     .filter(value => value >= 0)
     .map(value => frequencyToCmInv(value, unit))
     .filter(value => value >= 0);
@@ -356,25 +400,158 @@ function calculateHarmonicThermo({
   const zpe = 0.5 * vibEv.reduce((sum, value) => sum + value, 0);
   const thermal = vibEv.reduce((sum, value) => {
     const x = value / (K_B_EV * temperature);
-    return sum + value / (Math.exp(x) - 1);
+    if (x > 700) return sum;
+    return sum + value / Math.expm1(x);
   }, 0);
   const entropy = vibEv.reduce((sum, value) => {
     const x = value / (K_B_EV * temperature);
-    return sum + K_B_EV * (x / (Math.exp(x) - 1) - Math.log(1 - Math.exp(-x)));
+    if (x > 700) return sum;
+    return sum + K_B_EV * (x / Math.expm1(x) - Math.log1p(-Math.exp(-x)));
   }, 0);
-  const internalEnergy = zpe + thermal;
-  const ts = temperature * entropy;
-  const symmetryPenalty = K_B_EV * temperature * Math.log(symmetryNumber);
 
   return {
+    inputCount: inputModes.length,
     modeCount: realModes.length,
+    ignoredCount: inputModes.filter(value => value < 0).length,
+    realModes,
+    vibEv,
+    zpe,
+    thermal,
+    internalEnergy: zpe + thermal,
+    entropy,
+    ts: temperature * entropy
+  };
+}
+
+function calculateThermochemistry({
+  mode,
+  frequencies,
+  unit,
+  temperature,
+  pressure,
+  symmetryNumber,
+  molecularMass,
+  geometry,
+  rotationalTemperatures,
+  spin
+}) {
+  if (temperature <= 0) {
+    return {modeCount: 0, rows: [], notes: ["Temperature must be positive."]};
+  }
+  const vib = vibrationalThermo(frequencies, unit, temperature);
+  if (vib.modeCount === 0) {
+    return {
+      modeCount: 0,
+      rows: [],
+      notes: ["No real vibrational modes remain."]
+    };
+  }
+  const notes = [
+    "Vibrational energies use epsilon = h c nu-tilde and are evaluated in eV.",
+    ...(vib.ignoredCount > 0
+      ? [`Ignored ${vib.ignoredCount} negative/imaginary mode(s).`]
+      : [])
+  ];
+
+  if (mode === "harmonic") {
+    const thermalU = vib.thermal;
+    const fNoZpe = thermalU - vib.ts;
+    const fullF = vib.zpe + fNoZpe;
+    return {
+      mode,
+      modeCount: vib.modeCount,
+      rows: [
+        ["ZPE correction / eV", vib.zpe],
+        ["U correction, no ZPE / eV", thermalU],
+        ["T S / eV", vib.ts],
+        ["F correction, no ZPE / eV", fNoZpe],
+        ["Full E -> F / eV", fullF],
+        ["S / eV K^-1", vib.entropy]
+      ],
+      notes: [
+        ...notes,
+        "Harmonic mode treats every retained real mode as an adsorbate vibrational oscillator and reports Helmholtz F."
+      ]
+    };
+  }
+
+  const pressurePa = pressure;
+  const sigma = Math.max(1, Number(symmetryNumber));
+  const massKg = (molecularMass * 1e-3) / N_AVOGADRO;
+  const spinMultiplicity = 2 * spin + 1;
+  const rotationalTheta = parseNumberList(rotationalTemperatures);
+  const validIdealInputs =
+    pressurePa > 0 &&
+    molecularMass > 0 &&
+    sigma > 0 &&
+    spinMultiplicity > 0 &&
+    (geometry === "monatomic" ||
+      (geometry === "linear" && rotationalTheta.length >= 1) ||
+      (geometry === "nonlinear" && rotationalTheta.length >= 3));
+
+  if (!validIdealInputs) {
+    return {
+      mode,
+      modeCount: vib.modeCount,
+      rows: [],
+      notes: [
+        ...notes,
+        "Ideal-gas E -> G requires positive pressure, molecular mass, symmetry number, spin multiplicity, and rotational temperature input for the selected geometry."
+      ]
+    };
+  }
+
+  const qTransVolume =
+    Math.pow(
+      (2 * Math.PI * massKg * K_BOLTZMANN * temperature) / H_PLANCK ** 2,
+      1.5
+    ) *
+    ((K_BOLTZMANN * temperature) / pressurePa);
+  const sTrans = K_B_EV * (safeLog(qTransVolume) + 2.5);
+  const uTrans = 1.5 * K_B_EV * temperature;
+
+  let uRot = 0;
+  let sRot = 0;
+  if (geometry === "linear") {
+    uRot = K_B_EV * temperature;
+    sRot = K_B_EV * (safeLog(temperature / (sigma * rotationalTheta[0])) + 1);
+  }
+  if (geometry === "nonlinear") {
+    const thetaProduct =
+      rotationalTheta[0] * rotationalTheta[1] * rotationalTheta[2];
+    uRot = 1.5 * K_B_EV * temperature;
+    sRot =
+      K_B_EV *
+      (safeLog(
+        (Math.sqrt(Math.PI) * temperature ** 1.5) /
+          (sigma * Math.sqrt(thetaProduct))
+      ) +
+        1.5);
+  }
+
+  const sElec = K_B_EV * safeLog(spinMultiplicity);
+  const thermalH = vib.thermal + uTrans + uRot + K_B_EV * temperature;
+  const entropy = vib.entropy + sTrans + sRot + sElec;
+  const ts = temperature * entropy;
+  const gNoZpe = thermalH - ts;
+  const fullG = vib.zpe + gNoZpe;
+
+  return {
+    mode,
+    modeCount: vib.modeCount,
     rows: [
-      ["ZPE correction / eV", zpe],
-      ["E to U / eV", internalEnergy],
+      ["ZPE correction / eV", vib.zpe],
+      ["H correction, no ZPE / eV", thermalH],
       ["T S / eV", ts],
-      ["E to F / eV", internalEnergy - ts],
+      ["G correction, no ZPE / eV", gNoZpe],
+      ["Full E -> G / eV", fullG],
       ["S / eV K^-1", entropy],
-      ["Ideal-gas symmetry term / eV", symmetryPenalty]
+      ["translation U / eV", uTrans],
+      ["rotation U / eV", uRot]
+    ],
+    notes: [
+      ...notes,
+      "Ideal-gas result includes translational, rotational, vibrational, symmetry, and spin terms. Molecular mass and rotational temperature inputs replace the ASE Atoms-derived mass and inertia."
     ]
   };
 }
@@ -1936,18 +2113,17 @@ function EnergyEquivalentsTool() {
   );
 }
 
-function ThermochemistryTool() {
+function EquationBlock({children}) {
+  return <div className="equation-block">{children}</div>;
+}
+
+function RedheadTool() {
   const [redheadTp, setRedheadTp] = useState("500");
   const [redheadBeta, setRedheadBeta] = useState("1");
   const [redheadBetaUnit, setRedheadBetaUnit] = useState("K/s");
   const [redheadNu, setRedheadNu] = useState("");
-  const [thermoFrequencies, setThermoFrequencies] =
-    useState("500 800 1200 1600");
-  const [thermoUnit, setThermoUnit] = useState("cm^-1");
-  const [thermoTemperature, setThermoTemperature] = useState("298.15");
-  const [symmetryNumber, setSymmetryNumber] = useState(1);
 
-  const redheadRows = useMemo(
+  const redhead = useMemo(
     () =>
       calculateRedhead({
         peakTemperature: redheadTp,
@@ -1958,35 +2134,17 @@ function ThermochemistryTool() {
     [redheadTp, redheadBeta, redheadBetaUnit, redheadNu]
   );
 
-  const thermo = useMemo(
-    () =>
-      calculateHarmonicThermo({
-        frequencies: thermoFrequencies,
-        unit: thermoUnit,
-        temperature: Math.max(parseNumber(thermoTemperature, 298.15), 1e-9),
-        symmetryNumber: Number(symmetryNumber)
-      }),
-    [thermoFrequencies, thermoUnit, thermoTemperature, symmetryNumber]
-  );
-
-  const renderRows = rows =>
-    rows.map(([label, value]) => (
-      <div className="tool-result-row" key={label}>
-        <span>{label}</span>
-        <strong>{formatScientific(value)}</strong>
-      </div>
-    ));
-
   return (
     <>
       <p className="experiment-description">
-        Browser version of the Redhead TPD and thermochemistry parts of{" "}
-        <code>user-input/energy_tool_thermo_added.py</code>. Harmonic and
-        ideal-gas sections are based on the ASE thermochemistry documentation.
+        First-order Redhead TPD estimate from{" "}
+        <code>user-input/energy_tool_thermo_added.py</code>. The browser version
+        keeps the same constants, units, default prefactor, and 3.64 analytical
+        approximation.
       </p>
-      <div className="thermo-tool-grid">
+      <div className="energy-equivalent-layout redhead-layout">
         <form
-          className="control-panel"
+          className="control-panel energy-input-panel"
           onSubmit={event => event.preventDefault()}
         >
           <div className="control-heading">
@@ -2029,55 +2187,151 @@ function ThermochemistryTool() {
               nu (s^-1)
               <input
                 type="number"
-                placeholder="kBTp/h"
+                placeholder="kB Tp / h"
                 value={redheadNu}
                 onChange={event => setRedheadNu(event.target.value)}
               />
             </label>
           </div>
-          <div className="tool-result-list">{renderRows(redheadRows)}</div>
-          <section className="educational-note">
-            <h3>Where the equation comes from</h3>
-            <p>
-              Thermal desorption is modeled from the Polanyi-Wigner rate law:
-              the coverage decreases with an Arrhenius desorption rate. For
-              first-order desorption with linear heating beta = dT/dt, the rate
-              peak occurs at T_p. Redhead's peak-maximum approximation solves
-              that condition as E_des = R T_p [ln(nu T_p / beta) - 3.64].
-            </p>
-            <p>
-              T_p is the observed TPD peak temperature. beta is the heating rate
-              in K/s. nu is the first-order prefactor; when omitted, this page
-              uses the transition-state-like thermal estimate nu = kB T_p / h.
-              Outputs are the same desorption barrier in molar units and eV per
-              molecule.
-            </p>
-          </section>
+
+          <EquationBlock>
+            <span className="equation-title">
+              First-order peak approximation
+            </span>
+            <span className="equation-line">
+              E<sub>des</sub> = R T<sub>p</sub>
+              <span className="bracket">
+                ln
+                <span className="fraction">
+                  <span>
+                    nu T<sub>p</sub>
+                  </span>
+                  <span>beta</span>
+                </span>
+                - 3.64
+              </span>
+            </span>
+            <span className="equation-line muted">
+              default: nu = k<sub>B</sub>T<sub>p</sub> / h
+            </span>
+          </EquationBlock>
         </form>
 
+        <section className="results-panel">
+          <div className="energy-card-grid">
+            {redhead.rows.map(([label, value]) => (
+              <div className="energy-value-card" key={label}>
+                <span>{label}</span>
+                <strong>{formatScientific(value)}</strong>
+              </div>
+            ))}
+          </div>
+          <div className="tool-detail-grid">
+            {redhead.details.map(([label, value]) => (
+              <div className="tool-result-row" key={label}>
+                <span>{label}</span>
+                <strong>{formatScientific(value)}</strong>
+              </div>
+            ))}
+          </div>
+          <section className="educational-note">
+            <h3>Model boundary</h3>
+            <p>
+              Assumes first-order desorption, linear heating beta = dT/dt, a
+              temperature-independent prefactor across the peak unless the
+              default nu = kB Tp / h is used at Tp, and no readsorption,
+              transport limitation, coverage dependence, or kinetic-order
+              change.
+            </p>
+            {redhead.notes.map(note => (
+              <p key={note}>{note}</p>
+            ))}
+          </section>
+        </section>
+      </div>
+    </>
+  );
+}
+
+function ThermochemistryTool() {
+  const [thermoMode, setThermoMode] = useState("harmonic");
+  const [thermoFrequencies, setThermoFrequencies] =
+    useState("500 800 1200 1600");
+  const [thermoUnit, setThermoUnit] = useState("cm^-1");
+  const [thermoTemperature, setThermoTemperature] = useState("298.15");
+  const [thermoPressure, setThermoPressure] = useState("101325");
+  const [symmetryNumber, setSymmetryNumber] = useState(1);
+  const [molecularMass, setMolecularMass] = useState("28.0101");
+  const [geometry, setGeometry] = useState("linear");
+  const [rotationalTemperatures, setRotationalTemperatures] = useState("2.77");
+  const [spin, setSpin] = useState("0");
+
+  const thermo = useMemo(
+    () =>
+      calculateThermochemistry({
+        mode: thermoMode,
+        frequencies: thermoFrequencies,
+        unit: thermoUnit,
+        temperature: Math.max(parseNumber(thermoTemperature, 298.15), 1e-9),
+        pressure: parseNumber(thermoPressure, 101325),
+        symmetryNumber: Number(symmetryNumber),
+        molecularMass: parseNumber(molecularMass, 28.0101),
+        geometry,
+        rotationalTemperatures,
+        spin: parseNumber(spin, 0)
+      }),
+    [
+      thermoMode,
+      thermoFrequencies,
+      thermoUnit,
+      thermoTemperature,
+      thermoPressure,
+      symmetryNumber,
+      molecularMass,
+      geometry,
+      rotationalTemperatures,
+      spin
+    ]
+  );
+
+  return (
+    <>
+      <p className="experiment-description">
+        Browser thermochemistry correction helper aligned with{" "}
+        <code>user-input/energy_tool_thermo_added.py</code>. Harmonic mode gives
+        the adsorbate E {"->"} F correction. Ideal-gas mode gives E {"->"} G and
+        exposes the extra translational/rotational inputs that the ASE ideal-gas
+        model needs.
+      </p>
+      <div className="thermo-tool-grid">
         <form
-          className="control-panel wide"
+          className="control-panel thermo-input-panel"
           onSubmit={event => event.preventDefault()}
         >
           <div className="control-heading">
             <div>
               <p className="eyebrow">Thermochemistry</p>
-              <h2>Harmonic correction</h2>
+              <h2>
+                {thermoMode === "harmonic" ? "E -> F" : "E -> G"} correction
+              </h2>
             </div>
           </div>
-          <p className="ase-reference">
-            Based on{" "}
-            <a
-              href="https://ase-lib.org/ase/thermochemistry/thermochemistry.html"
-              target="_blank"
-              rel="noreferrer"
+          <div className="mode-switch" aria-label="Thermochemistry mode">
+            <button
+              type="button"
+              className={thermoMode === "harmonic" ? "active" : ""}
+              onClick={() => setThermoMode("harmonic")}
             >
-              ASE thermochemistry
-            </a>
-            . The harmonic block treats retained real frequencies as independent
-            harmonic modes. The ideal-gas symmetry selector previews the
-            symmetry-number free-energy term used by ideal-gas thermochemistry.
-          </p>
+              Harmonic adsorbate
+            </button>
+            <button
+              type="button"
+              className={thermoMode === "ideal_gas" ? "active" : ""}
+              onClick={() => setThermoMode("ideal_gas")}
+            >
+              Ideal gas
+            </button>
+          </div>
           <label className="frequency-field">
             Frequencies
             <textarea
@@ -2085,7 +2339,7 @@ function ThermochemistryTool() {
               onChange={event => setThermoFrequencies(event.target.value)}
             />
           </label>
-          <div className="tool-input-grid three">
+          <div className="tool-input-grid">
             <label>
               Unit
               <select
@@ -2106,20 +2360,108 @@ function ThermochemistryTool() {
                 onChange={event => setThermoTemperature(event.target.value)}
               />
             </label>
-            <label>
-              Symmetry
-              <select
-                value={symmetryNumber}
-                onChange={event => setSymmetryNumber(event.target.value)}
-              >
-                {symmetryOptions.map(option => (
-                  <option value={option.value} key={option.label}>
-                    {option.label} / sigma={option.value}
-                  </option>
-                ))}
-              </select>
-            </label>
           </div>
+          {thermoMode === "ideal_gas" && (
+            <div className="ideal-gas-fields">
+              <div className="tool-input-grid three">
+                <label>
+                  Pressure (Pa)
+                  <input
+                    type="number"
+                    min="0.000001"
+                    step="any"
+                    value={thermoPressure}
+                    onChange={event => setThermoPressure(event.target.value)}
+                  />
+                </label>
+                <label>
+                  Mass (g mol^-1)
+                  <input
+                    type="number"
+                    min="0.000001"
+                    step="any"
+                    value={molecularMass}
+                    onChange={event => setMolecularMass(event.target.value)}
+                  />
+                </label>
+                <label>
+                  Geometry
+                  <select
+                    value={geometry}
+                    onChange={event => setGeometry(event.target.value)}
+                  >
+                    <option value="monatomic">monatomic</option>
+                    <option value="linear">linear</option>
+                    <option value="nonlinear">nonlinear</option>
+                  </select>
+                </label>
+              </div>
+              <div className="tool-input-grid three">
+                <label>
+                  Rot. temp. (K)
+                  <input
+                    type="text"
+                    value={rotationalTemperatures}
+                    onChange={event =>
+                      setRotationalTemperatures(event.target.value)
+                    }
+                    placeholder={
+                      geometry === "nonlinear"
+                        ? "thetaA thetaB thetaC"
+                        : "theta"
+                    }
+                    disabled={geometry === "monatomic"}
+                  />
+                </label>
+                <label>
+                  Symmetry
+                  <select
+                    value={symmetryNumber}
+                    onChange={event => setSymmetryNumber(event.target.value)}
+                  >
+                    {symmetryOptions.map(option => (
+                      <option value={option.value} key={option.label}>
+                        {option.label} / sigma={option.value}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <label>
+                  Spin S
+                  <input
+                    type="number"
+                    min="0"
+                    step="0.5"
+                    value={spin}
+                    onChange={event => setSpin(event.target.value)}
+                  />
+                </label>
+              </div>
+            </div>
+          )}
+          <EquationBlock>
+            {thermoMode === "harmonic" ? (
+              <>
+                <span className="equation-title">Harmonic adsorbate</span>
+                <span className="equation-line">
+                  F - E = U<sub>vib</sub> - T S<sub>vib</sub>
+                </span>
+              </>
+            ) : (
+              <>
+                <span className="equation-title">Ideal gas</span>
+                <span className="equation-line">
+                  G - E = H<sub>trans+rot+vib</sub> - T S<sub>total</sub>
+                </span>
+              </>
+            )}
+            <span className="equation-line muted">
+              epsilon<sub>i</sub> = h c nu-tilde<sub>i</sub>
+            </span>
+          </EquationBlock>
+        </form>
+
+        <section className="results-panel">
           <div className="thermo-result-grid">
             <div className="energy-value-card compact">
               <span>Modes used</span>
@@ -2132,7 +2474,25 @@ function ThermochemistryTool() {
               </div>
             ))}
           </div>
-        </form>
+          <section className="educational-note">
+            <h3>Calculation notes</h3>
+            {thermo.notes.map(note => (
+              <p key={note}>{note}</p>
+            ))}
+            <p>
+              Based on{" "}
+              <a
+                href="https://ase-lib.org/ase/thermochemistry/thermochemistry.html"
+                target="_blank"
+                rel="noreferrer"
+              >
+                ASE thermochemistry
+              </a>
+              ; potential energy is treated as 0 eV so displayed values are
+              corrections relative to electronic energy.
+            </p>
+          </section>
+        </section>
       </div>
     </>
   );
@@ -2477,10 +2837,20 @@ function ForFunPage() {
 
         <ExperimentAccordion
           index="04"
-          title="Thermochemistry tools"
-          summary="Estimate Redhead TPD energies and harmonic thermochemistry corrections"
+          title="TPD - Redhead estimate"
+          summary="Estimate first-order desorption energy from a TPD peak"
           isOpen={openExperiment === "04"}
           onToggle={() => toggleExperiment("04")}
+        >
+          <RedheadTool />
+        </ExperimentAccordion>
+
+        <ExperimentAccordion
+          index="05"
+          title="Thermochemistry"
+          summary="Calculate harmonic E -> F or ideal-gas E -> G corrections"
+          isOpen={openExperiment === "05"}
+          onToggle={() => toggleExperiment("05")}
         >
           <ThermochemistryTool />
         </ExperimentAccordion>
