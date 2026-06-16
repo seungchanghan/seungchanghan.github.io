@@ -1,5 +1,6 @@
 import {useEffect, useMemo, useRef, useState} from "react";
 import {createPortal} from "react-dom";
+import {gsap} from "gsap";
 import heroBackgroundUrl from "../user-input/main.png";
 
 const pages = [
@@ -61,14 +62,14 @@ const experience = [
 
 const awards = [
   {
-    period: "January 2024",
-    title: "Excellent Poster Presentation Award",
-    event: "2024 KIM-CMS Winter Symposium"
-  },
-  {
     period: "January 2025",
     title: "Excellent Poster Award",
     event: "2025 KU BK21 Chem Fair"
+  },
+  {
+    period: "January 2024",
+    title: "Excellent Poster Presentation Award",
+    event: "2024 KIM-CMS Winter Symposium"
   }
 ];
 
@@ -248,6 +249,14 @@ function clearMeetingDataFromUrl() {
   );
 }
 
+function getSavedMeetingTimeZone(fallback) {
+  try {
+    return window.localStorage.getItem("meeting-time-zone") || fallback;
+  } catch {
+    return fallback;
+  }
+}
+
 function formatCalendarDate(dateValue) {
   if (!dateValue) return "Choose a date";
   const {year, month, day} = parseDateValue(dateValue);
@@ -321,6 +330,21 @@ function getDateParts(dateValue, dayOffset = 0) {
     month: date.getUTCMonth() + 1,
     day: date.getUTCDate()
   };
+}
+
+function getPainScore(interval, timeZone) {
+  const midpoint = new Date((interval.start + interval.end) / 2);
+  const {hour, minute} = getZonedParts(midpoint, timeZone);
+  const localHour = hour + minute / 60;
+  const distanceFromThree = Math.abs(localHour - 3);
+  const circularDistance = Math.min(distanceFromThree, 24 - distanceFromThree);
+  return Math.round((1 - Math.min(circularDistance, 12) / 12) ** 2 * 100);
+}
+
+function getPainLevel(score) {
+  if (score >= 67) return "high";
+  if (score >= 34) return "medium";
+  return "low";
 }
 
 function slotToInterval(slot, timeZone) {
@@ -760,17 +784,64 @@ function TimePicker({value, onChange, label}) {
 
 function HomePage() {
   const backdropRef = useRef(null);
+  const spotlightRef = useRef({x: 0, y: 0});
+  const spotlightTweenRef = useRef(null);
+
+  useEffect(() => {
+    const backdrop = backdropRef.current;
+    if (!backdrop) return undefined;
+
+    const bounds = backdrop.getBoundingClientRect();
+    spotlightRef.current = {x: bounds.width * 0.72, y: bounds.height * 0.42};
+    const syncSpotlight = () => {
+      backdrop.style.setProperty(
+        "--spotlight-x",
+        `${spotlightRef.current.x}px`
+      );
+      backdrop.style.setProperty(
+        "--spotlight-y",
+        `${spotlightRef.current.y}px`
+      );
+    };
+    syncSpotlight();
+
+    if (window.matchMedia?.("(prefers-reduced-motion: reduce)").matches) {
+      spotlightTweenRef.current = {
+        x: value => {
+          spotlightRef.current.x = value;
+          syncSpotlight();
+        },
+        y: value => {
+          spotlightRef.current.y = value;
+          syncSpotlight();
+        }
+      };
+      return undefined;
+    }
+
+    spotlightTweenRef.current = {
+      x: gsap.quickTo(spotlightRef.current, "x", {
+        duration: 0.65,
+        ease: "power3.out",
+        onUpdate: syncSpotlight
+      }),
+      y: gsap.quickTo(spotlightRef.current, "y", {
+        duration: 0.65,
+        ease: "power3.out",
+        onUpdate: syncSpotlight
+      })
+    };
+
+    return () => {
+      spotlightTweenRef.current?.x?.tween?.kill();
+      spotlightTweenRef.current?.y?.tween?.kill();
+    };
+  }, []);
 
   const moveSpotlight = event => {
     const rect = event.currentTarget.getBoundingClientRect();
-    backdropRef.current?.style.setProperty(
-      "--spotlight-x",
-      `${event.clientX - rect.left}px`
-    );
-    backdropRef.current?.style.setProperty(
-      "--spotlight-y",
-      `${event.clientY - rect.top}px`
-    );
+    spotlightTweenRef.current?.x(event.clientX - rect.left);
+    spotlightTweenRef.current?.y(event.clientY - rect.top);
   };
 
   return (
@@ -1078,9 +1149,13 @@ function MeetingPlanner() {
   );
   const localTimeZone =
     Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC";
+  const initialTimeZone = useMemo(
+    () => getSavedMeetingTimeZone(localTimeZone),
+    [localTimeZone]
+  );
   const [meeting, setMeeting] = useState(initialMeeting);
   const [name, setName] = useState("");
-  const [timeZone, setTimeZone] = useState(localTimeZone);
+  const [timeZone, setTimeZone] = useState(initialTimeZone);
   const [slots, setSlots] = useState([
     {id: 1, date: getNextMonday(), start: "09:00", end: "17:00"}
   ]);
@@ -1091,6 +1166,14 @@ function MeetingPlanner() {
     () => getCommonIntervals(meeting.participants) ?? [],
     [meeting]
   );
+
+  useEffect(() => {
+    try {
+      window.localStorage.setItem("meeting-time-zone", timeZone);
+    } catch {
+      // Ignore private browsing storage failures.
+    }
+  }, [timeZone]);
 
   const shareUrl = useMemo(() => {
     const url = new URL(window.location.href);
@@ -1170,7 +1253,7 @@ function MeetingPlanner() {
   const cancelEditing = () => {
     setEditingParticipantId(null);
     setName("");
-    setTimeZone(localTimeZone);
+    setTimeZone(initialTimeZone);
     setSlots([
       {
         id: Date.now(),
@@ -1223,6 +1306,17 @@ function MeetingPlanner() {
       interval => interval.end - interval.start === longestDuration
     );
   }, [commonIntervals]);
+
+  const getParticipantPainScores = interval =>
+    meeting.participants.map(participant => {
+      const score = getPainScore(interval, participant.timeZone);
+      return {
+        id: participant.id,
+        name: participant.name,
+        score,
+        level: getPainLevel(score)
+      };
+    });
 
   return (
     <>
@@ -1378,14 +1472,37 @@ function MeetingPlanner() {
               </p>
             ) : bestIntervals.length > 0 ? (
               <ol className="overlap-list">
-                {bestIntervals.map(interval => (
-                  <li key={`${interval.start}-${interval.end}`}>
-                    <strong>{formatInterval(interval)}</strong>
-                    <span>
-                      {Math.round((interval.end - interval.start) / 60000)} min
-                    </span>
-                  </li>
-                ))}
+                {bestIntervals.map(interval => {
+                  const painScores = getParticipantPainScores(interval);
+                  return (
+                    <li key={`${interval.start}-${interval.end}`}>
+                      <div className="overlap-summary">
+                        <strong>{formatInterval(interval)}</strong>
+                        <span>
+                          {Math.round((interval.end - interval.start) / 60000)}{" "}
+                          min
+                        </span>
+                      </div>
+                      <div
+                        className="pain-meter-list"
+                        aria-label="Participant pain scores"
+                      >
+                        {painScores.map(item => (
+                          <div className="pain-meter" key={item.id}>
+                            <span>{item.name}</span>
+                            <div className="pain-track" aria-hidden="true">
+                              <span
+                                className={`pain-fill ${item.level}`}
+                                style={{"--pain-score": `${item.score}%`}}
+                              />
+                            </div>
+                            <strong>{item.score}</strong>
+                          </div>
+                        ))}
+                      </div>
+                    </li>
+                  );
+                })}
               </ol>
             ) : (
               <p className="empty-meeting-state">

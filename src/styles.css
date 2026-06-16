@@ -312,7 +312,7 @@ em {
   --spotlight-x: 72%;
   --spotlight-y: 42%;
   background-position: center;
-  background-size: max(132vw, 132vh);
+  background-size: max(118vw, 118vh);
   isolation: isolate;
 }
 
@@ -329,39 +329,51 @@ em {
   background: inherit;
   background-position: inherit;
   background-size: inherit;
-  transform: scale(1.08);
+  filter: saturate(1.04) contrast(1.02);
+  transform: scale(1.04);
 }
 
 .hero-backdrop::after {
   z-index: 0;
   background:
+    radial-gradient(
+      circle 520px at 76% 34%,
+      color-mix(in srgb, #ffffff 18%, transparent),
+      transparent 66%
+    ),
     linear-gradient(
       90deg,
-      color-mix(in srgb, var(--paper) 96%, transparent) 0%,
-      color-mix(in srgb, var(--paper) 82%, transparent) 38%,
-      color-mix(in srgb, var(--paper) 30%, transparent) 78%,
-      color-mix(in srgb, var(--paper) 16%, transparent) 100%
+      color-mix(in srgb, var(--paper) 98%, transparent) 0%,
+      color-mix(in srgb, var(--paper) 88%, transparent) 38%,
+      color-mix(in srgb, var(--paper) 28%, transparent) 78%,
+      color-mix(in srgb, var(--paper) 10%, transparent) 100%
     ),
     linear-gradient(
       180deg,
-      color-mix(in srgb, var(--paper) 18%, transparent) 0%,
+      color-mix(in srgb, var(--paper) 12%, transparent) 0%,
       transparent 48%,
-      color-mix(in srgb, var(--paper) 32%, transparent) 100%
+      color-mix(in srgb, var(--paper) 30%, transparent) 100%
     );
 }
 
 .hero-spotlight {
   z-index: 1;
-  mix-blend-mode: screen;
+  mix-blend-mode: soft-light;
   pointer-events: none;
-  background: radial-gradient(
-    circle 240px at var(--spotlight-x) var(--spotlight-y),
-    rgba(255, 244, 204, 0.62),
-    rgba(255, 244, 204, 0.22) 34%,
-    transparent 68%
-  );
-  opacity: 0.9;
-  transition: opacity 0.2s ease;
+  background:
+    radial-gradient(
+      circle 180px at var(--spotlight-x) var(--spotlight-y),
+      rgba(255, 255, 255, 0.72),
+      rgba(255, 235, 176, 0.32) 38%,
+      transparent 70%
+    ),
+    radial-gradient(
+      circle 420px at var(--spotlight-x) var(--spotlight-y),
+      rgba(79, 153, 149, 0.16),
+      transparent 72%
+    );
+  filter: blur(2px);
+  opacity: 0.86;
 }
 
 .content-page,
@@ -1435,14 +1447,29 @@ input[type="range"] {
 
 .overlap-list li,
 .participant-list li {
-  display: flex;
   padding: 13px 14px;
   border: 1px solid var(--line);
   border-radius: 9px;
+  background: var(--surface);
+}
+
+.participant-list li {
+  display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 16px;
-  background: var(--surface);
+}
+
+.overlap-list li {
+  display: grid;
+  gap: 12px;
+}
+
+.overlap-summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
 }
 
 .overlap-list strong {
@@ -1454,6 +1481,53 @@ input[type="range"] {
   color: var(--muted);
   font-size: 0.66rem;
   white-space: nowrap;
+}
+
+.pain-meter-list {
+  display: grid;
+  gap: 8px;
+}
+
+.pain-meter {
+  display: grid;
+  grid-template-columns: minmax(64px, 0.44fr) minmax(90px, 1fr) 28px;
+  gap: 10px;
+  align-items: center;
+}
+
+.pain-meter > span {
+  overflow: hidden;
+  min-width: 0;
+  text-overflow: ellipsis;
+}
+
+.pain-meter strong {
+  color: var(--ink);
+  font-size: 0.68rem;
+  text-align: right;
+}
+
+.pain-track {
+  height: 7px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: var(--surface-strong);
+}
+
+.pain-fill {
+  display: block;
+  width: var(--pain-score);
+  height: 100%;
+  border-radius: inherit;
+  background: #5f9d8e;
+}
+
+.pain-fill.medium {
+  background: #c3934a;
+}
+
+.pain-fill.high {
+  background: var(--accent);
 }
 
 .participant-list {
@@ -1746,7 +1820,7 @@ footer a {
 
   .hero-backdrop {
     background-position: 58% center;
-    background-size: auto 118%;
+    background-size: auto 112%;
   }
 
   .hero-backdrop::after {
@@ -1766,9 +1840,9 @@ footer a {
 
   .hero-spotlight {
     background: radial-gradient(
-      circle 170px at var(--spotlight-x) var(--spotlight-y),
-      rgba(255, 244, 204, 0.5),
-      rgba(255, 244, 204, 0.16) 36%,
+      circle 160px at var(--spotlight-x) var(--spotlight-y),
+      rgba(255, 255, 255, 0.58),
+      rgba(255, 235, 176, 0.2) 36%,
       transparent 70%
     );
   }
