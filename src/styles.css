@@ -92,6 +92,10 @@ h1 {
   font-weight: 650;
 }
 
+h1 > span {
+  display: block;
+}
+
 h2 {
   margin-bottom: 16px;
   font-size: clamp(1.6rem, 2.7vw, 2.35rem);
@@ -221,21 +225,38 @@ em {
   }
 }
 
+.hero-page {
+  position: relative;
+  min-height: calc(100vh - 78px);
+  overflow: clip;
+  padding-block: 0;
+  animation: none;
+}
+
 .hero {
+  position: relative;
+  z-index: 1;
   display: grid;
+  min-height: calc(100vh - 78px);
   min-width: 0;
-  grid-template-columns: minmax(0, 1.35fr) minmax(310px, 0.65fr);
-  gap: 70px;
+  grid-template-columns: minmax(0, 0.82fr) minmax(260px, 0.38fr);
+  gap: 56px;
   align-items: center;
 }
 
 .hero-copy {
   min-width: 0;
+  width: 100%;
+  padding-block: clamp(82px, 12vh, 142px);
+}
+
+.hero-copy h1 {
+  max-width: 780px;
 }
 
 .hero-intro,
 .page-summary {
-  max-width: 690px;
+  max-width: 620px;
   margin-bottom: 0;
   color: var(--muted);
   font-size: clamp(1rem, 1.5vw, 1.2rem);
@@ -283,130 +304,229 @@ em {
   border-color: var(--accent);
 }
 
-.atom-visual {
-  --electron-x: 0px;
-  --electron-y: 0px;
-  --electron-x-reverse: 0px;
-  --electron-y-reverse: 0px;
-  --nucleus-x: 0px;
-  --nucleus-y: 0px;
-  --electron-third-x: 0px;
-  --electron-third-y: 0px;
+.hero-note {
+  display: grid;
+  justify-self: end;
+  width: min(100%, 310px);
+  border-left: 1px solid color-mix(in srgb, var(--accent) 42%, var(--line));
+  color: color-mix(in srgb, var(--ink) 78%, transparent);
+}
+
+.hero-note span {
+  padding: 16px 0 16px 22px;
+  border-bottom: 1px solid color-mix(in srgb, var(--line) 76%, transparent);
+  font-size: 0.78rem;
+  font-weight: 720;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.hero-note span:last-child {
+  border-bottom: 0;
+}
+
+.catalyst-field {
+  --field-x: 70%;
+  --field-y: 42%;
+  --drift-x: 0px;
+  --drift-y: 0px;
+  --counter-x: 0px;
+  --counter-y: 0px;
   --tilt-x: 0deg;
   --tilt-y: 0deg;
-  --glow-x: 50%;
-  --glow-y: 42%;
-  position: relative;
-  min-height: min(48vh, 440px);
+  position: absolute;
+  inset: 0;
   overflow: hidden;
-  border: 1px solid var(--line);
-  border-radius: 24px;
+  color: var(--accent);
   background:
     radial-gradient(
-      circle at var(--glow-x) var(--glow-y),
-      rgba(169, 83, 44, 0.23),
-      transparent 34%
+      circle at var(--field-x) var(--field-y),
+      color-mix(in srgb, var(--accent) 22%, transparent),
+      transparent 30%
     ),
-    var(--surface);
-  box-shadow: var(--shadow);
-  perspective: 800px;
+    radial-gradient(
+      circle at 83% 24%,
+      color-mix(in srgb, #2f8f8a 18%, transparent),
+      transparent 28%
+    ),
+    linear-gradient(
+      115deg,
+      var(--paper) 0%,
+      var(--paper) 39%,
+      color-mix(in srgb, var(--surface) 62%, transparent) 100%
+    );
+  perspective: 1200px;
   touch-action: pan-y;
 }
 
-.atom-scene {
+.catalyst-field::before {
   position: absolute;
   inset: 0;
-  transform: rotateX(var(--tilt-x)) rotateY(var(--tilt-y));
-  transform-style: preserve-3d;
-  transition: transform 0.16s ease-out;
+  content: "";
+  background-image:
+    linear-gradient(
+      color-mix(in srgb, var(--line) 56%, transparent) 1px,
+      transparent 1px
+    ),
+    linear-gradient(
+      90deg,
+      color-mix(in srgb, var(--line) 42%, transparent) 1px,
+      transparent 1px
+    );
+  background-position:
+    var(--counter-x) var(--counter-y),
+    var(--counter-x) var(--counter-y);
+  background-size: 64px 64px;
+  mask-image: linear-gradient(90deg, transparent 0%, #000 42%, #000 100%);
+  opacity: 0.42;
 }
 
-.orbital {
+.catalyst-field::after {
   position: absolute;
-  top: 42%;
-  left: 50%;
-  width: 250px;
-  height: 105px;
-  border: 1px solid color-mix(in srgb, var(--accent) 55%, transparent);
-  border-radius: 50%;
+  inset: auto -8% -22% 28%;
+  height: 42%;
+  content: "";
+  transform: translate(var(--counter-x), var(--counter-y)) skewY(-8deg);
+  background:
+    linear-gradient(
+      120deg,
+      transparent,
+      color-mix(in srgb, var(--accent) 12%, transparent),
+      transparent
+    ),
+    repeating-linear-gradient(
+      90deg,
+      color-mix(in srgb, var(--accent) 18%, transparent) 0 1px,
+      transparent 1px 44px
+    );
+  opacity: 0.62;
 }
 
-.orbital-one {
-  transform: translate(-50%, -50%);
-}
-
-.orbital-two {
-  transform: translate(-50%, -50%) rotate(60deg);
-}
-
-.orbital-three {
-  transform: translate(-50%, -50%) rotate(-60deg);
-}
-
-.atom {
+.field-glow {
   position: absolute;
-  width: 18px;
-  height: 18px;
-  border: 4px solid var(--paper);
-  border-radius: 50%;
-  background: var(--accent);
-  box-shadow: 0 7px 18px rgba(29, 36, 33, 0.22);
-}
-
-.atom-center {
-  top: calc(42% - 17px);
-  left: calc(50% - 17px);
-  width: 34px;
-  height: 34px;
-  transform: translate(var(--nucleus-x), var(--nucleus-y));
-  transition: transform 0.2s ease-out;
-}
-
-.atom-one {
-  top: 29%;
-  left: 23%;
-  transform: translate(var(--electron-x), var(--electron-y));
-  transition: transform 0.12s ease-out;
-}
-
-.atom-two {
-  top: 48%;
-  right: 20%;
-  transform: translate(var(--electron-x-reverse), var(--electron-y-reverse));
+  inset: 0;
+  transform: translate(var(--drift-x), var(--drift-y));
+  background:
+    radial-gradient(
+      ellipse at 74% 43%,
+      color-mix(in srgb, var(--accent) 32%, transparent),
+      transparent 25%
+    ),
+    radial-gradient(
+      ellipse at 60% 62%,
+      color-mix(in srgb, #2f8f8a 20%, transparent),
+      transparent 27%
+    );
+  filter: blur(4px);
+  opacity: 0.76;
   transition: transform 0.18s ease-out;
 }
 
-.atom-three {
-  top: 63%;
-  left: 36%;
-  transform: translate(var(--electron-third-x), var(--electron-third-y));
-  transition: transform 0.24s ease-out;
+.field-svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  transform: rotateX(var(--tilt-x)) rotateY(var(--tilt-y));
+  transform-style: preserve-3d;
+  transition: transform 0.18s ease-out;
 }
 
-.surface-grid {
-  position: absolute;
-  right: -30px;
-  bottom: -70px;
-  left: -30px;
-  height: 180px;
-  opacity: 0.45;
-  transform: perspective(300px) rotateX(62deg);
-  background-image:
-    linear-gradient(var(--line) 1px, transparent 1px),
-    linear-gradient(90deg, var(--line) 1px, transparent 1px);
-  background-size: 32px 32px;
+.field-lattice {
+  transform: translate(590px, 336px) skewX(-14deg) scale(1.18);
+  color: color-mix(in srgb, var(--accent) 72%, var(--muted));
+  opacity: 0.74;
 }
 
-.interaction-hint {
+.field-lattice circle {
+  fill: currentColor;
+  stroke: color-mix(in srgb, var(--paper) 74%, transparent);
+  stroke-width: 2;
+}
+
+.field-lattice line {
+  stroke: currentColor;
+  stroke-opacity: 0.26;
+  stroke-width: 1.4;
+}
+
+.field-orbits {
+  color: color-mix(in srgb, #2f8f8a 70%, var(--accent));
+  opacity: 0.5;
+  transform: translate(var(--drift-x), var(--drift-y));
+  transition: transform 0.2s ease-out;
+}
+
+.field-orbits ellipse {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+}
+
+.reaction-path {
+  fill: none;
+  stroke: url("#path-gradient");
+  stroke-linecap: round;
+  stroke-width: 3;
+  stroke-dasharray: 10 14;
+  animation: path-flow 9s linear infinite;
+}
+
+.reaction-path-secondary {
+  opacity: 0.42;
+  stroke-width: 2;
+  animation-duration: 13s;
+}
+
+.molecule {
+  color: color-mix(in srgb, var(--ink) 72%, var(--accent));
+  transform: translate(var(--counter-x), var(--counter-y));
+  transition: transform 0.18s ease-out;
+}
+
+.molecule circle {
+  fill: var(--paper);
+  stroke: currentColor;
+  stroke-width: 2;
+}
+
+.molecule line {
+  stroke: currentColor;
+  stroke-width: 2;
+}
+
+.molecule-two {
+  opacity: 0.72;
+}
+
+.field-particles span {
   position: absolute;
-  right: 18px;
-  bottom: 15px;
-  color: var(--muted);
-  font-size: 0.62rem;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  opacity: 0.65;
-  text-transform: uppercase;
+  top: calc(16% + ((var(--i) * 37) % 68) * 1%);
+  left: calc(40% + ((var(--i) * 23) % 55) * 1%);
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: color-mix(in srgb, #2f8f8a 70%, var(--accent));
+  opacity: 0.28;
+  transform: translate(var(--drift-x), var(--drift-y));
+  animation: particle-drift 7s ease-in-out infinite;
+  animation-delay: calc(var(--i) * -0.38s);
+}
+
+@keyframes path-flow {
+  to {
+    stroke-dashoffset: -96;
+  }
+}
+
+@keyframes particle-drift {
+  50% {
+    opacity: 0.58;
+    transform: translate(
+      calc(var(--drift-x) + 10px),
+      calc(var(--drift-y) - 14px)
+    );
+  }
 }
 
 .content-page,
@@ -639,10 +759,21 @@ em {
   padding: 28px;
 }
 
-.publication-card h3 {
+.publication-title {
+  display: inline-flex;
   max-width: 840px;
   margin-bottom: 18px;
+  color: var(--ink);
   font-size: clamp(1.25rem, 2.2vw, 1.9rem);
+  font-weight: 650;
+  line-height: 1.08;
+  letter-spacing: -0.035em;
+  text-wrap: balance;
+  transition: color 0.2s ease;
+}
+
+.publication-title:hover {
+  color: var(--accent);
 }
 
 .publication-authors {
@@ -656,8 +787,20 @@ em {
 }
 
 .publication-meta {
+  margin-bottom: 8px;
+  color: var(--muted);
+}
+
+.publication-doi,
+.publication-note {
   margin-bottom: 0;
   color: var(--muted);
+  font-size: 0.82rem;
+}
+
+.publication-note {
+  margin-top: 12px;
+  padding-left: 28px;
 }
 
 .fun-page {
@@ -1577,7 +1720,7 @@ footer a {
   }
 
   .hero {
-    grid-template-columns: minmax(0, 1.15fr) minmax(290px, 0.85fr);
+    grid-template-columns: minmax(0, 1fr) minmax(220px, 0.38fr);
     gap: 40px;
   }
 
@@ -1680,18 +1823,63 @@ footer a {
     padding-block: 58px;
   }
 
+  .hero-page {
+    min-height: calc(100vh - 70px);
+    padding-block: 0;
+  }
+
   .hero {
+    min-height: calc(100vh - 70px);
     grid-template-columns: 1fr;
-    gap: 54px;
+    gap: 28px;
+    align-content: center;
+  }
+
+  .hero-copy {
+    padding-block: 74px 22px;
+  }
+
+  .hero-note {
+    width: min(100%, 360px);
+    justify-self: start;
+  }
+
+  .hero-note span {
+    padding-block: 12px;
+  }
+
+  .catalyst-field::before {
+    mask-image: linear-gradient(90deg, transparent 0%, #000 18%, #000 100%);
+  }
+
+  .field-lattice {
+    transform: translate(360px, 360px) skewX(-14deg) scale(1.05);
+  }
+
+  .field-orbits {
+    transform: translate(calc(var(--drift-x) - 120px), var(--drift-y));
   }
 
   h1 {
-    font-size: clamp(2.9rem, 14vw, 4.2rem);
+    font-size: clamp(2.65rem, 12vw, 3.55rem);
     overflow-wrap: anywhere;
   }
 
-  .atom-visual {
-    min-height: 330px;
+  .hero-copy h1 {
+    max-width: 100%;
+  }
+
+  .hero-title-tail span {
+    display: block;
+  }
+
+  .hero-intro {
+    max-width: 30ch;
+    font-size: 1rem;
+  }
+
+  .hero-note {
+    display: none;
   }
 
   .page-intro {

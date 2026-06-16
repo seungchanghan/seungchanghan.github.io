@@ -114,7 +114,8 @@ const publications = [
     journal: "Nature Catalysis",
     volume: "9",
     pages: "471-481",
-    year: "2026"
+    year: "2026",
+    doi: "10.1038/s41929-026-01526-7"
   }
 ];
 
@@ -485,70 +486,135 @@ function calculateCaffeineCurve({
   return {times, body};
 }
 
-function AtomVisual() {
-  const visualRef = useRef(null);
+function CatalystField() {
+  const fieldRef = useRef(null);
 
   const handlePointerMove = event => {
-    const visual = visualRef.current;
-    if (!visual) return;
+    const field = fieldRef.current;
+    if (!field) return;
 
-    const bounds = visual.getBoundingClientRect();
+    const bounds = field.getBoundingClientRect();
     const x = (event.clientX - bounds.left) / bounds.width - 0.5;
     const y = (event.clientY - bounds.top) / bounds.height - 0.5;
 
-    visual.style.setProperty("--electron-x", `${x * 34}px`);
-    visual.style.setProperty("--electron-y", `${y * 34}px`);
-    visual.style.setProperty("--electron-x-reverse", `${x * -25}px`);
-    visual.style.setProperty("--electron-y-reverse", `${y * -25}px`);
-    visual.style.setProperty("--nucleus-x", `${x * 4}px`);
-    visual.style.setProperty("--nucleus-y", `${y * 4}px`);
-    visual.style.setProperty("--electron-third-x", `${x * 20}px`);
-    visual.style.setProperty("--electron-third-y", `${y * -19}px`);
-    visual.style.setProperty("--tilt-x", `${y * -5}deg`);
-    visual.style.setProperty("--tilt-y", `${x * 7}deg`);
-    visual.style.setProperty("--glow-x", `${(x + 0.5) * 100}%`);
-    visual.style.setProperty("--glow-y", `${(y + 0.5) * 100}%`);
+    field.style.setProperty("--field-x", `${(x + 0.5) * 100}%`);
+    field.style.setProperty("--field-y", `${(y + 0.5) * 100}%`);
+    field.style.setProperty("--drift-x", `${x * 32}px`);
+    field.style.setProperty("--drift-y", `${y * 24}px`);
+    field.style.setProperty("--counter-x", `${x * -20}px`);
+    field.style.setProperty("--counter-y", `${y * -16}px`);
+    field.style.setProperty("--tilt-x", `${y * -3.5}deg`);
+    field.style.setProperty("--tilt-y", `${x * 4.5}deg`);
   };
 
   const resetPointer = () => {
-    const visual = visualRef.current;
-    if (!visual) return;
+    const field = fieldRef.current;
+    if (!field) return;
 
-    [
-      "--electron-x",
-      "--electron-y",
-      "--electron-x-reverse",
-      "--electron-y-reverse",
-      "--nucleus-x",
-      "--nucleus-y",
-      "--electron-third-x",
-      "--electron-third-y"
-    ].forEach(property => visual.style.setProperty(property, "0px"));
-    visual.style.setProperty("--tilt-x", "0deg");
-    visual.style.setProperty("--tilt-y", "0deg");
-    visual.style.setProperty("--glow-x", "50%");
-    visual.style.setProperty("--glow-y", "42%");
+    field.style.setProperty("--field-x", "70%");
+    field.style.setProperty("--field-y", "42%");
+    field.style.setProperty("--drift-x", "0px");
+    field.style.setProperty("--drift-y", "0px");
+    field.style.setProperty("--counter-x", "0px");
+    field.style.setProperty("--counter-y", "0px");
+    field.style.setProperty("--tilt-x", "0deg");
+    field.style.setProperty("--tilt-y", "0deg");
   };
+
+  const latticeNodes = [
+    [58, 68],
+    [110, 58],
+    [164, 71],
+    [218, 58],
+    [272, 72],
+    [326, 58],
+    [84, 118],
+    [138, 104],
+    [192, 118],
+    [246, 104],
+    [300, 118],
+    [112, 168],
+    [166, 154],
+    [220, 168],
+    [274, 154],
+    [328, 168]
+  ];
 
   return (
     <div
-      className="atom-visual"
-      ref={visualRef}
+      className="catalyst-field"
+      ref={fieldRef}
       onPointerMove={handlePointerMove}
       onPointerLeave={resetPointer}
-      aria-label="Interactive abstract atomistic interface illustration"
+      aria-label="Interactive abstract catalytic interface background"
+      aria-hidden="true"
     >
-      <div className="atom-scene">
-        <div className="orbital orbital-one" />
-        <div className="orbital orbital-two" />
-        <div className="orbital orbital-three" />
-        <span className="atom atom-center" />
-        <span className="atom atom-one" />
-        <span className="atom atom-two" />
-        <span className="atom atom-three" />
-        <div className="surface-grid" />
+      <div className="field-glow" />
+      <svg className="field-svg" viewBox="0 0 1200 720" focusable="false">
+        <defs>
+          <linearGradient id="path-gradient" x1="0%" x2="100%">
+            <stop offset="0%" stopColor="currentColor" stopOpacity="0.08" />
+            <stop offset="42%" stopColor="currentColor" stopOpacity="0.42" />
+            <stop offset="100%" stopColor="currentColor" stopOpacity="0.14" />
+          </linearGradient>
+        </defs>
+        <g className="field-lattice">
+          {latticeNodes.map(([cx, cy], index) => (
+            <circle
+              cx={cx}
+              cy={cy}
+              r={index % 3 === 0 ? 6 : 4.5}
+              key={`${cx}-${cy}`}
+            />
+          ))}
+          {latticeNodes.slice(0, -1).map(([x1, y1], index) => {
+            const [x2, y2] = latticeNodes[index + 1];
+            return <line x1={x1} y1={y1} x2={x2} y2={y2} key={index} />;
+          })}
+        </g>
+        <g className="field-orbits">
+          <ellipse cx="805" cy="304" rx="205" ry="74" />
+          <ellipse
+            cx="805"
+            cy="304"
+            rx="205"
+            ry="74"
+            transform="rotate(58 805 304)"
+          />
+          <ellipse
+            cx="805"
+            cy="304"
+            rx="205"
+            ry="74"
+            transform="rotate(-56 805 304)"
+          />
+        </g>
+        <path
+          className="reaction-path"
+          d="M356 490 C 470 394, 568 430, 650 332 S 846 222, 1006 186"
+        />
+        <path
+          className="reaction-path reaction-path-secondary"
+          d="M248 252 C 386 196, 484 286, 594 236 S 812 152, 958 254"
+        />
+        <g className="molecule molecule-one">
+          <circle cx="760" cy="304" r="16" />
+          <circle cx="811" cy="304" r="12" />
+          <circle cx="861" cy="304" r="12" />
+          <line x1="776" y1="304" x2="799" y2="304" />
+          <line x1="823" y1="304" x2="849" y2="304" />
+        </g>
+        <g className="molecule molecule-two">
+          <circle cx="1008" cy="188" r="10" />
+          <circle cx="1044" cy="174" r="8" />
+          <line x1="1018" y1="184" x2="1035" y2="177" />
+        </g>
+      </svg>
+      <div className="field-particles">
+        {Array.from({length: 18}, (_, index) => (
+          <span key={index} style={{"--i": index}} />
+        ))}
       </div>
-      <span className="interaction-hint">Move your cursor</span>
     </div>
   );
 }
@@ -752,23 +818,38 @@ function TimePicker({value, onChange, label}) {
 
 function HomePage() {
   return (
-    <section className="page hero section-shell">
-      <div className="hero-copy">
-        <p className="eyebrow">Ph.D. Student · Physical Chemistry</p>
-        <h1>
-          Computational insight into catalytic <em>interfaces.</em>
-        </h1>
-        <p className="hero-intro">
-          I study electrochemical CO₂ reduction on copper using first-principles
-          calculations and machine-learned interatomic potentials.
-        </p>
-        <div className="hero-actions">
-          <a className="button primary" href="/#/research">
-            View research <span aria-hidden="true">→</span>
-          </a>
+    <section className="page hero-page">
+      <CatalystField />
+      <div className="hero section-shell">
+        <div className="hero-copy">
+          <h1>
+            <span>Modeling catalytic</span>
+            <span>
+              <em>interfaces,</em>
+            </span>
+            <span className="hero-title-tail">
+              <span>atom by</span> <span>atom.</span>
+            </span>
+          </h1>
+          <p className="hero-intro">
+            I build computational pictures of electrochemical CO₂ reduction,
+            from electronic structure to machine-learned dynamics.
+          </p>
+          <div className="hero-actions">
+            <a className="button primary" href="/#/research">
+              View research <span aria-hidden="true">→</span>
+            </a>
+            <a className="button secondary" href="/#/about">
+              About me
+            </a>
+          </div>
+        </div>
+        <div className="hero-note" aria-hidden="true">
+          <span>Cu surface</span>
+          <span>CO2RR pathway</span>
+          <span>ML potentials</span>
         </div>
       </div>
-      <AtomVisual />
     </section>
   );
 }
@@ -777,17 +858,15 @@ function AboutPage() {
   return (
     <section className="page content-page section-shell">
       <PageIntro eyebrow="About me" title="Seungchang Han">
-        Ph.D. student in Physical Chemistry and Integrative Data Science at
-        Korea University, working at the intersection of computational
-        chemistry, atomistic simulation, and machine learning for catalytic
-        interfaces.
+        Ph.D. student at Korea University focused on computational chemistry for
+        catalytic interfaces.
       </PageIntro>
       <div className="about-layout">
         <article className="about-profile">
           <p>
-            My research uses density functional theory, molecular simulation,
-            and machine-learned interatomic potentials to connect microscopic
-            surface chemistry with electrocatalytic performance.
+            I work with first-principles calculations, molecular simulation, and
+            machine-learned potentials, with a practical interest in teaching
+            and reusable scientific tools.
           </p>
           <dl className="profile-details">
             {profileDetails.map(item => (
@@ -838,9 +917,9 @@ function AboutPage() {
 function ResearchPage() {
   return (
     <section className="page content-page section-shell">
-      <PageIntro eyebrow="Research" title="What I work on">
-        Connecting electronic-structure calculations with atomistic machine
-        learning to study catalytic environments at realistic scales.
+      <PageIntro eyebrow="Research" title="Catalysis, models, and scale">
+        A compact view of the questions, tools, and papers behind my current
+        work.
       </PageIntro>
       <div className="research-grid">
         {researchAreas.map(area => (
@@ -882,16 +961,25 @@ function ResearchPage() {
         <div className="publication-list">
           {publications.map(publication => (
             <article className="publication-card" key={publication.title}>
-              <h3>{publication.title}</h3>
+              <a
+                className="publication-title"
+                href={`https://doi.org/${publication.doi}`}
+                target="_blank"
+                rel="noreferrer"
+              >
+                {publication.title}
+              </a>
               <p className="publication-authors">{publication.authors}</p>
               <p className="publication-meta">
                 <em>{publication.journal}</em>{" "}
                 <strong>{publication.volume}</strong>, {publication.pages} (
                 {publication.year})
               </p>
+              <p className="publication-doi">doi: {publication.doi}</p>
             </article>
           ))}
         </div>
+        <p className="publication-note">†: equally contributed</p>
       </div>
     </section>
   );
