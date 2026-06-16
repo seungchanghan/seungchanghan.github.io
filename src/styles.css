@@ -1131,14 +1131,28 @@ input[type="range"] {
   font-weight: 700;
 }
 
-.energy-tool-grid {
+.energy-equivalent-layout,
+.thermo-tool-grid {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 18px;
 }
 
-.energy-tool-grid .wide {
+.energy-equivalent-layout {
+  grid-template-columns: minmax(260px, 0.42fr) minmax(0, 1fr);
+}
+
+.thermo-tool-grid {
+  grid-template-columns: minmax(360px, 0.9fr) minmax(460px, 1.1fr);
+}
+
+.boltzmann-panel,
+.thermo-tool-grid .wide {
   grid-column: 1 / -1;
+}
+
+.energy-input-panel {
+  position: sticky;
+  top: 96px;
 }
 
 .tool-input-grid {
@@ -1152,8 +1166,7 @@ input[type="range"] {
 }
 
 .tool-input-grid label,
-.frequency-field,
-.checkbox-label {
+.frequency-field {
   display: grid;
   color: var(--muted);
   font-size: 0.68rem;
@@ -1161,60 +1174,109 @@ input[type="range"] {
   gap: 5px;
 }
 
-.checkbox-label {
-  min-height: 38px;
-  padding: 0 9px;
-  border: 1px solid var(--line);
-  border-radius: 6px;
-  grid-template-columns: auto 1fr;
-  align-items: center;
-  background: var(--paper);
-}
-
-.checkbox-label input {
-  accent-color: var(--accent);
-}
-
-.tool-result-list {
-  display: grid;
+.constant-source-panel,
+.educational-note,
+.ase-reference,
+.boltzmann-panel {
+  padding-top: 18px;
   margin-top: 18px;
-  overflow: hidden;
   border: 1px solid var(--line);
   border-radius: 10px;
   background: var(--surface);
-}
-
-.tool-result-list.compact {
-  margin-top: 10px;
-}
-
-.tool-result-row {
-  display: flex;
-  min-width: 0;
-  padding: 9px 11px;
-  align-items: center;
-  justify-content: space-between;
-  gap: 18px;
-}
-
-.tool-result-row + .tool-result-row {
-  border-top: 1px solid var(--line);
-}
-
-.tool-result-row span {
-  min-width: 0;
   color: var(--muted);
-  font-size: 0.68rem;
+  font-size: 0.72rem;
+  line-height: 1.55;
 }
 
-.tool-result-row strong {
+.constant-source-panel,
+.educational-note,
+.ase-reference {
+  padding: 16px;
+}
+
+.constant-source-panel h3,
+.educational-note h3,
+.boltzmann-panel h2 {
+  margin-bottom: 10px;
+  font-size: 1rem;
+  letter-spacing: -0.015em;
+}
+
+.constant-source-panel p,
+.educational-note p,
+.ase-reference,
+.boltzmann-panel p {
+  margin-bottom: 8px;
+}
+
+.constant-source-panel p:last-child,
+.educational-note p:last-child,
+.boltzmann-panel p:last-child {
+  margin-bottom: 0;
+}
+
+.energy-card-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.energy-value-card {
+  display: grid;
+  min-height: 128px;
+  padding: 16px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  align-content: start;
+  background: var(--paper);
+  gap: 8px;
+}
+
+.energy-value-card.compact {
+  min-height: 94px;
+}
+
+.energy-value-card span {
+  color: var(--accent);
+  font-size: 0.68rem;
+  font-weight: 760;
+}
+
+.energy-value-card strong {
   overflow: hidden;
   color: var(--ink);
   font-family: "SFMono-Regular", Consolas, monospace;
-  font-size: 0.72rem;
+  font-size: clamp(0.94rem, 1.6vw, 1.25rem);
   font-weight: 650;
-  text-align: right;
   text-overflow: ellipsis;
+}
+
+.energy-value-card p {
+  margin-bottom: 0;
+  color: var(--muted);
+  font-size: 0.68rem;
+  line-height: 1.45;
+}
+
+.boltzmann-panel {
+  padding: 20px;
+}
+
+.boltzmann-grid,
+.thermo-result-grid {
+  display: grid;
+  margin-top: 16px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.thermo-result-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.ase-reference a {
+  color: var(--accent);
+  font-weight: 700;
 }
 
 .meeting-share-bar {
@@ -1863,8 +1925,19 @@ footer a {
     grid-template-columns: 1fr;
   }
 
-  .energy-tool-grid {
+  .energy-equivalent-layout,
+  .thermo-tool-grid {
     grid-template-columns: 1fr;
+  }
+
+  .energy-input-panel {
+    position: static;
+  }
+
+  .energy-card-grid,
+  .boltzmann-grid,
+  .thermo-result-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .meeting-layout {
@@ -2143,6 +2216,9 @@ footer a {
   .time-window,
   .tool-input-grid,
   .tool-input-grid.three,
+  .energy-card-grid,
+  .boltzmann-grid,
+  .thermo-result-grid,
   .result-stats {
     grid-template-columns: 1fr;
   }

@@ -189,6 +189,40 @@ const energyUnits = [
   "K"
 ];
 
+const energyOutputMeta = {
+  J: "Energy per particle in SI joules.",
+  eV: "Electronvolt per particle.",
+  Eh: "Hartree atomic unit of energy.",
+  "J/mol": "Molar energy after multiplying by Avogadro's constant.",
+  "kJ/mol": "Molar energy in kilojoules.",
+  "kcal/mol": "Thermochemical kilocalories per mole.",
+  "cm^-1": "Spectroscopic wavenumber from E = h c nu-tilde.",
+  THz: "Temporal frequency equivalent from E = h nu.",
+  Hz: "Frequency equivalent in cycles per second.",
+  nm: "Photon wavelength from lambda = h c / |E|.",
+  K: "Temperature equivalent from E = kB T.",
+  "E/kBT": "Dimensionless thermal energy at the selected T."
+};
+
+const conversionSources = [
+  "NIST/CODATA 2022 constants: c, h, kB, NA, e.",
+  "Hartree energy: CODATA 2022 Eh = 27.211386245981 eV.",
+  "Thermochemical calorie: 1 cal = 4.184 J."
+];
+
+const symmetryOptions = [
+  {label: "C1 / Cs / Ci", value: 1},
+  {label: "C2 / C2v", value: 2},
+  {label: "C3v", value: 3},
+  {label: "D2h / C4v", value: 4},
+  {label: "D3h / D3d", value: 6},
+  {label: "D4h", value: 8},
+  {label: "D5h", value: 10},
+  {label: "Td", value: 12},
+  {label: "Oh", value: 24},
+  {label: "Ih", value: 60}
+];
+
 const C_LIGHT = 299792458;
 const H_PLANCK = 6.62607015e-34;
 const K_BOLTZMANN = 1.380649e-23;
@@ -308,17 +342,14 @@ function cmInvToEv(value) {
   return (H_PLANCK * C_LIGHT * 100 * value) / EV_J;
 }
 
-function calculateHarmonicThermo({frequencies, unit, temperature, ignoreImag}) {
-  const notes = [];
+function calculateHarmonicThermo({
+  frequencies,
+  unit,
+  temperature,
+  symmetryNumber
+}) {
   const realModes = parseFrequencies(frequencies)
-    .filter(value => {
-      if (value >= 0) return true;
-      if (ignoreImag) {
-        notes.push(`Ignored imaginary mode ${value} ${unit}.`);
-        return false;
-      }
-      return true;
-    })
+    .filter(value => value >= 0)
     .map(value => frequencyToCmInv(value, unit))
     .filter(value => value >= 0);
   const vibEv = realModes.map(cmInvToEv);
@@ -333,6 +364,7 @@ function calculateHarmonicThermo({frequencies, unit, temperature, ignoreImag}) {
   }, 0);
   const internalEnergy = zpe + thermal;
   const ts = temperature * entropy;
+  const symmetryPenalty = K_B_EV * temperature * Math.log(symmetryNumber);
 
   return {
     modeCount: realModes.length,
@@ -341,9 +373,9 @@ function calculateHarmonicThermo({frequencies, unit, temperature, ignoreImag}) {
       ["E to U / eV", internalEnergy],
       ["T S / eV", ts],
       ["E to F / eV", internalEnergy - ts],
-      ["S / eV K^-1", entropy]
-    ],
-    notes
+      ["S / eV K^-1", entropy],
+      ["Ideal-gas symmetry term / eV", symmetryPenalty]
+    ]
   };
 }
 
@@ -1791,19 +1823,10 @@ function MeetingPlanner() {
   );
 }
 
-function EnergyTool() {
+function EnergyEquivalentsTool() {
   const [energyValue, setEnergyValue] = useState("1");
   const [energyUnit, setEnergyUnit] = useState("eV");
   const [energyTemperature, setEnergyTemperature] = useState("298.15");
-  const [redheadTp, setRedheadTp] = useState("500");
-  const [redheadBeta, setRedheadBeta] = useState("1");
-  const [redheadBetaUnit, setRedheadBetaUnit] = useState("K/s");
-  const [redheadNu, setRedheadNu] = useState("");
-  const [thermoFrequencies, setThermoFrequencies] =
-    useState("500 800 1200 1600");
-  const [thermoUnit, setThermoUnit] = useState("cm^-1");
-  const [thermoTemperature, setThermoTemperature] = useState("298.15");
-  const [ignoreImag, setIgnoreImag] = useState(true);
 
   const converted = useMemo(
     () =>
@@ -1815,48 +1838,17 @@ function EnergyTool() {
     [energyValue, energyUnit, energyTemperature]
   );
 
-  const redheadRows = useMemo(
-    () =>
-      calculateRedhead({
-        peakTemperature: redheadTp,
-        heatingRate: redheadBeta,
-        betaUnit: redheadBetaUnit,
-        prefactor: redheadNu
-      }),
-    [redheadTp, redheadBeta, redheadBetaUnit, redheadNu]
-  );
-
-  const thermo = useMemo(
-    () =>
-      calculateHarmonicThermo({
-        frequencies: thermoFrequencies,
-        unit: thermoUnit,
-        temperature: Math.max(parseNumber(thermoTemperature, 298.15), 1e-9),
-        ignoreImag
-      }),
-    [thermoFrequencies, thermoUnit, thermoTemperature, ignoreImag]
-  );
-
-  const renderRows = rows =>
-    rows.map(([label, value]) => (
-      <div className="tool-result-row" key={label}>
-        <span>{label}</span>
-        <strong>{formatScientific(value)}</strong>
-      </div>
-    ));
-
   return (
     <>
       <p className="experiment-description">
-        Browser version of the conversion, Redhead TPD, and harmonic
-        thermochemistry parts of{" "}
-        <code>user-input/energy_tool_thermo_added.py</code>. ASE ideal-gas
-        thermochemistry is not included because it depends on Python/ASE
-        molecular geometry routines.
+        Browser version of the strict energy conversion section in{" "}
+        <code>user-input/energy_tool_thermo_added.py</code>. Constants follow
+        NIST/CODATA 2022 values, with the thermochemical calorie definition used
+        for kcal.
       </p>
-      <div className="energy-tool-grid">
+      <div className="energy-equivalent-layout">
         <form
-          className="control-panel"
+          className="control-panel energy-input-panel"
           onSubmit={event => event.preventDefault()}
         >
           <div className="control-heading">
@@ -1865,7 +1857,7 @@ function EnergyTool() {
               <h2>Energy equivalents</h2>
             </div>
           </div>
-          <div className="tool-input-grid three">
+          <div className="tool-input-grid">
             <label>
               Value
               <input
@@ -1888,7 +1880,7 @@ function EnergyTool() {
               </select>
             </label>
             <label>
-              T (K)
+              Temperature for E/kBT
               <input
                 type="number"
                 min="1"
@@ -1897,15 +1889,102 @@ function EnergyTool() {
               />
             </label>
           </div>
-          <div className="tool-result-list">{renderRows(converted.rows)}</div>
-          <div className="tool-result-list compact">
-            {renderRows(converted.boltzmann)}
-          </div>
           {converted.note ? (
             <p className="model-note">{converted.note}</p>
           ) : null}
+          <div className="constant-source-panel">
+            <h3>Conversion constants</h3>
+            {conversionSources.map(source => (
+              <p key={source}>{source}</p>
+            ))}
+          </div>
         </form>
 
+        <div className="energy-card-grid">
+          {converted.rows.map(([label, value]) => (
+            <article className="energy-value-card" key={label}>
+              <span>{label}</span>
+              <strong>{formatScientific(value)}</strong>
+              <p>{energyOutputMeta[label]}</p>
+            </article>
+          ))}
+        </div>
+
+        <section className="boltzmann-panel">
+          <div>
+            <p className="eyebrow">Two-state Boltzmann interpretation</p>
+            <h2>N and p values</h2>
+          </div>
+          <p>
+            These values only make sense when the converted energy is
+            interpreted as an energy gap Delta E = E_high - E_low between two
+            states with equal degeneracy. N_high/N_low is the population ratio.
+            p_low and p_high are the normalized fractions of the lower and
+            higher state.
+          </p>
+          <div className="boltzmann-grid">
+            {converted.boltzmann.map(([label, value]) => (
+              <div className="energy-value-card compact" key={label}>
+                <span>{label}</span>
+                <strong>{formatScientific(value)}</strong>
+              </div>
+            ))}
+          </div>
+        </section>
+      </div>
+    </>
+  );
+}
+
+function ThermochemistryTool() {
+  const [redheadTp, setRedheadTp] = useState("500");
+  const [redheadBeta, setRedheadBeta] = useState("1");
+  const [redheadBetaUnit, setRedheadBetaUnit] = useState("K/s");
+  const [redheadNu, setRedheadNu] = useState("");
+  const [thermoFrequencies, setThermoFrequencies] =
+    useState("500 800 1200 1600");
+  const [thermoUnit, setThermoUnit] = useState("cm^-1");
+  const [thermoTemperature, setThermoTemperature] = useState("298.15");
+  const [symmetryNumber, setSymmetryNumber] = useState(1);
+
+  const redheadRows = useMemo(
+    () =>
+      calculateRedhead({
+        peakTemperature: redheadTp,
+        heatingRate: redheadBeta,
+        betaUnit: redheadBetaUnit,
+        prefactor: redheadNu
+      }),
+    [redheadTp, redheadBeta, redheadBetaUnit, redheadNu]
+  );
+
+  const thermo = useMemo(
+    () =>
+      calculateHarmonicThermo({
+        frequencies: thermoFrequencies,
+        unit: thermoUnit,
+        temperature: Math.max(parseNumber(thermoTemperature, 298.15), 1e-9),
+        symmetryNumber: Number(symmetryNumber)
+      }),
+    [thermoFrequencies, thermoUnit, thermoTemperature, symmetryNumber]
+  );
+
+  const renderRows = rows =>
+    rows.map(([label, value]) => (
+      <div className="tool-result-row" key={label}>
+        <span>{label}</span>
+        <strong>{formatScientific(value)}</strong>
+      </div>
+    ));
+
+  return (
+    <>
+      <p className="experiment-description">
+        Browser version of the Redhead TPD and thermochemistry parts of{" "}
+        <code>user-input/energy_tool_thermo_added.py</code>. Harmonic and
+        ideal-gas sections are based on the ASE thermochemistry documentation.
+      </p>
+      <div className="thermo-tool-grid">
         <form
           className="control-panel"
           onSubmit={event => event.preventDefault()}
@@ -1957,6 +2036,23 @@ function EnergyTool() {
             </label>
           </div>
           <div className="tool-result-list">{renderRows(redheadRows)}</div>
+          <section className="educational-note">
+            <h3>Where the equation comes from</h3>
+            <p>
+              Thermal desorption is modeled from the Polanyi-Wigner rate law:
+              the coverage decreases with an Arrhenius desorption rate. For
+              first-order desorption with linear heating beta = dT/dt, the rate
+              peak occurs at T_p. Redhead's peak-maximum approximation solves
+              that condition as E_des = R T_p [ln(nu T_p / beta) - 3.64].
+            </p>
+            <p>
+              T_p is the observed TPD peak temperature. beta is the heating rate
+              in K/s. nu is the first-order prefactor; when omitted, this page
+              uses the transition-state-like thermal estimate nu = kB T_p / h.
+              Outputs are the same desorption barrier in molar units and eV per
+              molecule.
+            </p>
+          </section>
         </form>
 
         <form
@@ -1969,6 +2065,19 @@ function EnergyTool() {
               <h2>Harmonic correction</h2>
             </div>
           </div>
+          <p className="ase-reference">
+            Based on{" "}
+            <a
+              href="https://ase-lib.org/ase/thermochemistry/thermochemistry.html"
+              target="_blank"
+              rel="noreferrer"
+            >
+              ASE thermochemistry
+            </a>
+            . The harmonic block treats retained real frequencies as independent
+            harmonic modes. The ideal-gas symmetry selector previews the
+            symmetry-number free-energy term used by ideal-gas thermochemistry.
+          </p>
           <label className="frequency-field">
             Frequencies
             <textarea
@@ -1997,25 +2106,32 @@ function EnergyTool() {
                 onChange={event => setThermoTemperature(event.target.value)}
               />
             </label>
-            <label className="checkbox-label">
-              <input
-                type="checkbox"
-                checked={ignoreImag}
-                onChange={event => setIgnoreImag(event.target.checked)}
-              />
-              Ignore imaginary modes
+            <label>
+              Symmetry
+              <select
+                value={symmetryNumber}
+                onChange={event => setSymmetryNumber(event.target.value)}
+              >
+                {symmetryOptions.map(option => (
+                  <option value={option.value} key={option.label}>
+                    {option.label} / sigma={option.value}
+                  </option>
+                ))}
+              </select>
             </label>
           </div>
-          <div className="tool-result-list">
-            <div className="tool-result-row">
+          <div className="thermo-result-grid">
+            <div className="energy-value-card compact">
               <span>Modes used</span>
               <strong>{thermo.modeCount}</strong>
             </div>
-            {renderRows(thermo.rows)}
+            {thermo.rows.map(([label, value]) => (
+              <div className="energy-value-card compact" key={label}>
+                <span>{label}</span>
+                <strong>{formatScientific(value)}</strong>
+              </div>
+            ))}
           </div>
-          {thermo.notes.length > 0 ? (
-            <p className="model-note">{thermo.notes.join(" ")}</p>
-          ) : null}
         </form>
       </div>
     </>
@@ -2351,12 +2467,22 @@ function ForFunPage() {
 
         <ExperimentAccordion
           index="03"
-          title="Energy tools"
-          summary="Convert energy units, estimate Redhead TPD energies, and compute harmonic corrections"
+          title="Energy equivalents"
+          summary="Convert energy, wavelength, frequency, wavenumber, and thermal units"
           isOpen={openExperiment === "03"}
           onToggle={() => toggleExperiment("03")}
         >
-          <EnergyTool />
+          <EnergyEquivalentsTool />
+        </ExperimentAccordion>
+
+        <ExperimentAccordion
+          index="04"
+          title="Thermochemistry tools"
+          summary="Estimate Redhead TPD energies and harmonic thermochemistry corrections"
+          isOpen={openExperiment === "04"}
+          onToggle={() => toggleExperiment("04")}
+        >
+          <ThermochemistryTool />
         </ExperimentAccordion>
       </div>
     </section>
