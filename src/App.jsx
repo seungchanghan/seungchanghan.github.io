@@ -61,8 +61,8 @@ function getFallbackFooterQuote() {
 
 function normalizeFooterQuote(value) {
   const quote = Array.isArray(value) ? value[0] : value;
-  const text = String(quote?.content ?? "").trim();
-  const author = String(quote?.author ?? "").trim();
+  const text = String(quote?.content ?? quote?.quote ?? quote?.q ?? "").trim();
+  const author = String(quote?.author ?? quote?.a ?? "").trim();
   if (!text || !author || text.length > 150 || author.length > 80) return null;
   return {text, author};
 }
@@ -3117,9 +3117,7 @@ function App() {
 
   useEffect(() => {
     let ignore = false;
-    fetch(
-      "https://api.quotable.io/quotes/random?tags=science|technology|wisdom&maxLength=120"
-    )
+    fetch("https://dummyjson.com/quotes/random")
       .then(response => (response.ok ? response.json() : null))
       .then(data => {
         const quote = normalizeFooterQuote(data);

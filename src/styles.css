@@ -705,9 +705,6 @@ em {
   opacity: 0.5;
   filter: saturate(0.86) contrast(0.9);
   pointer-events: none;
-  transition:
-    opacity 0.25s ease,
-    transform 0.25s ease;
 }
 
 .fun-experiment.open {
@@ -716,8 +713,7 @@ em {
 }
 
 .fun-experiment.open::before {
-  opacity: 0.58;
-  transform: scale(1.01);
+  opacity: 0.5;
 }
 
 .experiment-summary {
@@ -825,12 +821,6 @@ em {
   z-index: 1;
   padding: 0 18px 18px;
   border-top: 1px solid var(--line);
-  transform: translateY(-8px);
-  transition: transform 0.36s cubic-bezier(0.22, 1, 0.36, 1);
-}
-
-.fun-experiment.open .experiment-body {
-  transform: translateY(0);
 }
 
 .experiment-description {
