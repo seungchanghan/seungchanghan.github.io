@@ -394,6 +394,14 @@ em {
   font-size: clamp(2.8rem, 5vw, 4.8rem);
 }
 
+.about-page .page-intro h1 {
+  max-width: 8.5ch;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: clamp(3rem, 5.4vw, 5.2rem);
+  font-weight: 600;
+  line-height: 0.96;
+}
+
 .page-intro .eyebrow {
   padding-top: 10px;
 }

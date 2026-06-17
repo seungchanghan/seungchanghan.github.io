@@ -1497,7 +1497,7 @@ function HomePage() {
 
 function AboutPage() {
   return (
-    <section className="page content-page section-shell">
+    <section className="page content-page section-shell about-page">
       <PageIntro eyebrow="About me" title="Seungchang Han">
         Ph.D. student at Korea University studying catalytic interfaces through
         rigorous atomistic modeling.
@@ -1510,8 +1510,7 @@ function AboutPage() {
             atomistic models can remain physically meaningful when surfaces,
             interfaces, and reaction environments become complex. I am also
             interested in connecting calculations to experimentally relevant
-            conditions, and I bring university-level teaching experience to how
-            I explain and organize scientific ideas.
+            conditions.
           </p>
           <dl className="profile-details">
             {profileDetails.map(item => (
