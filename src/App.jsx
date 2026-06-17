@@ -1,6 +1,11 @@
 import {useEffect, useMemo, useRef, useState} from "react";
 import {createPortal} from "react-dom";
 import {gsap} from "gsap";
+import funBgCoffeeUrl from "./assets/fun-bg-coffee.webp";
+import funBgEquivalentsUrl from "./assets/fun-bg-equivalents.webp";
+import funBgThermoUrl from "./assets/fun-bg-thermo.webp";
+import funBgTimeUrl from "./assets/fun-bg-time.webp";
+import funBgTpdUrl from "./assets/fun-bg-tpd.webp";
 import heroBackgroundUrl from "../user-input/main.webp";
 
 const pages = [
@@ -1068,6 +1073,7 @@ function ExperimentAccordion({
   index,
   title,
   summary,
+  backgroundImage,
   isOpen,
   onToggle,
   children
@@ -1075,7 +1081,14 @@ function ExperimentAccordion({
   const contentId = `experiment-${index}-content`;
 
   return (
-    <section className={isOpen ? "fun-experiment open" : "fun-experiment"}>
+    <section
+      className={isOpen ? "fun-experiment open" : "fun-experiment"}
+      style={
+        backgroundImage
+          ? {"--experiment-bg": `url(${backgroundImage})`}
+          : undefined
+      }
+    >
       <button
         className="experiment-summary"
         type="button"
@@ -2750,6 +2763,7 @@ function ForFunPage() {
           index="01"
           title="Caffeine curve"
           summary="Estimate active caffeine remaining throughout the day"
+          backgroundImage={funBgCoffeeUrl}
           isOpen={openExperiment === "01"}
           onToggle={() => toggleExperiment("01")}
         >
@@ -2958,6 +2972,7 @@ function ForFunPage() {
           index="02"
           title="Across time"
           summary="Find a meeting time across time zones and share it by URL"
+          backgroundImage={funBgTimeUrl}
           isOpen={openExperiment === "02"}
           onToggle={() => toggleExperiment("02")}
         >
@@ -2968,6 +2983,7 @@ function ForFunPage() {
           index="03"
           title="Energy equivalents"
           summary="Convert energy, wavelength, frequency, wavenumber, and thermal units"
+          backgroundImage={funBgEquivalentsUrl}
           isOpen={openExperiment === "03"}
           onToggle={() => toggleExperiment("03")}
         >
@@ -2978,6 +2994,7 @@ function ForFunPage() {
           index="04"
           title="Redhead TPD analysis"
           summary="Estimate first-order desorption energy from a TPD peak"
+          backgroundImage={funBgTpdUrl}
           isOpen={openExperiment === "04"}
           onToggle={() => toggleExperiment("04")}
         >
@@ -2988,6 +3005,7 @@ function ForFunPage() {
           index="05"
           title="Thermochemistry"
           summary="Calculate harmonic E -> F or ideal-gas E -> G corrections"
+          backgroundImage={funBgThermoUrl}
           isOpen={openExperiment === "05"}
           onToggle={() => toggleExperiment("05")}
         >
