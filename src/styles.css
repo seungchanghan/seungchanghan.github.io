@@ -701,7 +701,7 @@ em {
       color-mix(in srgb, var(--surface) 84%, transparent) 0%,
       color-mix(in srgb, var(--surface) 74%, transparent) 100%
     ),
-    var(--experiment-bg) center / cover no-repeat;
+    var(--experiment-bg) center top / 100% auto no-repeat;
   opacity: 0.5;
   filter: saturate(0.86) contrast(0.9);
   pointer-events: none;
@@ -2117,10 +2117,12 @@ footer a {
 }
 
 .footer-quote {
+  display: grid;
   max-width: min(560px, 52vw);
   color: color-mix(in srgb, var(--muted) 86%, var(--ink));
   font-family: Georgia, "Times New Roman", serif;
   font-size: 0.78rem;
+  gap: 2px;
   line-height: 1.45;
   text-align: right;
 }
@@ -2198,7 +2200,7 @@ footer a {
         color-mix(in srgb, var(--surface) 88%, transparent) 0%,
         color-mix(in srgb, var(--surface) 78%, transparent) 100%
       ),
-      var(--experiment-bg) center / cover no-repeat;
+      var(--experiment-bg) center top / 100% auto no-repeat;
     opacity: 0.48;
   }
 

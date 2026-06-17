@@ -3182,7 +3182,8 @@ function App() {
       <footer>
         <span>© {new Date().getFullYear()} Seungchang Han</span>
         <span className="footer-quote">
-          &quot;{footerQuote.text}&quot; - {footerQuote.author}
+          <span>&quot;{footerQuote.text}&quot;</span>
+          <span>- {footerQuote.author}</span>
         </span>
       </footer>
     </div>
