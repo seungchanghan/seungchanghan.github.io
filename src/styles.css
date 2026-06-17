@@ -146,21 +146,24 @@ em {
 .logo {
   position: relative;
   flex: 0 0 auto;
-  width: 122px;
-  overflow: hidden;
+  width: var(--logo-expanded-width, max-content);
+  overflow: visible;
+  line-height: 1.1;
   font-size: 1.08rem;
   font-weight: 720;
-  letter-spacing: -0.025em;
+  letter-spacing: 0;
   white-space: nowrap;
-  transition: width 0.24s ease;
+  transition: width 0.26s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 .logo-full,
 .logo-short {
   display: block;
+  white-space: nowrap;
+  will-change: opacity, transform;
   transition:
     opacity 0.24s ease,
-    transform 0.24s ease;
+    transform 0.26s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 .logo-short {
@@ -168,21 +171,22 @@ em {
   top: 0;
   left: 0;
   opacity: 0;
-  transform: translateY(8px);
+  transform: translate3d(0, 7px, 0);
 }
 
 .logo.collapsed {
-  width: 24px;
+  width: 1.72rem;
+  overflow: hidden;
 }
 
 .logo.collapsed .logo-full {
   opacity: 0;
-  transform: translateY(-8px);
+  transform: translate3d(-3px, -7px, 0);
 }
 
 .logo.collapsed .logo-short {
   opacity: 1;
-  transform: translateY(0);
+  transform: translate3d(0, 0, 0);
 }
 
 .site-nav {

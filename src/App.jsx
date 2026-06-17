@@ -1,4 +1,4 @@
-import {useEffect, useMemo, useRef, useState} from "react";
+import {useEffect, useLayoutEffect, useMemo, useRef, useState} from "react";
 import {createPortal} from "react-dom";
 import {gsap} from "gsap";
 import funBgCoffeeUrl from "./assets/fun-bg-coffee.webp";
@@ -130,7 +130,7 @@ const researchAreas = [
     description:
       "A central question is where standard density-functional approximations fail, and how GW, RPA, QMC, and related many-body methods can sharpen physical understanding.",
     tags: ["Many-body theory", "GW", "RPA", "QMC"],
-    toolkit: ["FHI-aims"]
+    toolkit: ["VASP", "FHI-aims", "CASINO"]
   },
   {
     number: "03",
@@ -154,21 +154,6 @@ const researchAreas = [
     description:
       "I use descriptor models to interpret catalytic activity, emphasizing physically grounded explanations over purely predictive correlations.",
     tags: ["Descriptors", "Activity", "Reproducibility"]
-  }
-];
-
-const methodToolkit = [
-  {
-    name: "Electronic structure / DFT",
-    tools: ["VASP", "Quantum ESPRESSO", "FHI-aims"]
-  },
-  {
-    name: "Atomistic simulation & workflows",
-    tools: ["ASE", "CatKit", "Python workflows"]
-  },
-  {
-    name: "Machine-learned interatomic potentials",
-    tools: ["GAP", "MACE", "MTP"]
   }
 ];
 
@@ -1600,25 +1585,6 @@ function ResearchPage() {
             )}
           </article>
         ))}
-      </div>
-      <div className="research-section">
-        <div className="section-heading">
-          <p className="eyebrow">Methods</p>
-          <h2>Computational toolkit</h2>
-        </div>
-        <div className="methods-grid">
-          {methodToolkit.map((method, index) => (
-            <article className="method-card" key={method.name}>
-              <span className="card-number">0{index + 1}</span>
-              <h2>{method.name}</h2>
-              <ul className="method-tags">
-                {method.tools.map(tool => (
-                  <li key={tool}>{tool}</li>
-                ))}
-              </ul>
-            </article>
-          ))}
-        </div>
       </div>
       <div className="research-section">
         <div className="section-heading">
@@ -3228,6 +3194,8 @@ function App() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [isLogoCollapsed, setIsLogoCollapsed] = useState(false);
   const [footerQuote, setFooterQuote] = useState(getFallbackFooterQuote);
+  const logoRef = useRef(null);
+  const fullLogoRef = useRef(null);
   const page = usePageRouter();
   const CurrentPage = pageComponents[page];
 
@@ -3262,16 +3230,35 @@ function App() {
     return () => window.removeEventListener("scroll", syncLogoState);
   }, []);
 
+  useLayoutEffect(() => {
+    const logo = logoRef.current;
+    const fullLogo = fullLogoRef.current;
+    if (!logo || !fullLogo) return undefined;
+
+    const syncExpandedWidth = () => {
+      logo.style.setProperty(
+        "--logo-expanded-width",
+        `${Math.ceil(fullLogo.getBoundingClientRect().width)}px`
+      );
+    };
+
+    syncExpandedWidth();
+    const resizeObserver = new ResizeObserver(syncExpandedWidth);
+    resizeObserver.observe(fullLogo);
+    return () => resizeObserver.disconnect();
+  }, []);
+
   return (
     <div className="app-shell">
       <header className="site-header">
         <a
+          ref={logoRef}
           className={isLogoCollapsed ? "logo collapsed" : "logo"}
           href="/#/home"
           onClick={() => setMenuOpen(false)}
           aria-label="Seungchang Han"
         >
-          <span className="logo-full" aria-hidden="true">
+          <span ref={fullLogoRef} className="logo-full" aria-hidden="true">
             Seungchang Han
           </span>
           <span className="logo-short" aria-hidden="true">
