@@ -121,28 +121,32 @@ const researchAreas = [
     ),
     description:
       "I study adsorption and electrochemical interfacial structure in CO2 reduction, with attention to copper and broader catalytic material systems.",
-    tags: ["Electrochemistry", "Adsorption", "Interfaces"]
+    tags: ["Electrochemistry", "Adsorption", "Interfaces"],
+    toolkit: ["VASP", "Quantum ESPRESSO", "CatKit"]
   },
   {
     number: "02",
     title: "Beyond conventional DFT",
     description:
       "A central question is where standard density-functional approximations fail, and how GW, RPA, QMC, and related many-body methods can sharpen physical understanding.",
-    tags: ["Many-body theory", "GW", "RPA", "QMC"]
+    tags: ["Many-body theory", "GW", "RPA", "QMC"],
+    toolkit: ["FHI-aims"]
   },
   {
     number: "03",
     title: "Statistical atomistic modeling",
     description:
       "Static structures are often too narrow for realistic interfaces, so I use statistical sampling and Monte Carlo approaches to describe configurational complexity.",
-    tags: ["Monte Carlo", "Surface design", "Sampling"]
+    tags: ["Monte Carlo", "Surface design", "Sampling"],
+    toolkit: ["ASE", "Python"]
   },
   {
     number: "04",
     title: "Machine-learned interatomic potentials",
     description:
       "MLIPs provide a practical route from first-principles data to larger-scale simulations, while requiring careful tests for extrapolation and hidden failure modes.",
-    tags: ["MLIP", "Validation", "Scaling"]
+    tags: ["MLIP", "Validation", "Scaling"],
+    toolkit: ["GAP", "MACE", "MTP"]
   },
   {
     number: "05",
@@ -165,10 +169,6 @@ const methodToolkit = [
   {
     name: "Machine-learned interatomic potentials",
     tools: ["GAP", "MACE", "MTP"]
-  },
-  {
-    name: "Statistical sampling",
-    tools: ["Monte Carlo methods", "Statistical surface sampling"]
   }
 ];
 
@@ -1591,6 +1591,13 @@ function ResearchPage() {
                 <li key={tag}>{tag}</li>
               ))}
             </ul>
+            {area.toolkit && (
+              <ul className="toolkit-tags" aria-label="Toolkit">
+                {area.toolkit.map(tool => (
+                  <li key={tool}>{tool}</li>
+                ))}
+              </ul>
+            )}
           </article>
         ))}
       </div>
@@ -3219,6 +3226,7 @@ const pageComponents = {
 function App() {
   const [isDark, setIsDark] = useDarkMode();
   const [menuOpen, setMenuOpen] = useState(false);
+  const [isLogoCollapsed, setIsLogoCollapsed] = useState(false);
   const [footerQuote, setFooterQuote] = useState(getFallbackFooterQuote);
   const page = usePageRouter();
   const CurrentPage = pageComponents[page];
@@ -3244,11 +3252,31 @@ function App() {
         : `${pages.find(item => item.id === page)?.label} | Seungchang Han`;
   }, [page]);
 
+  useEffect(() => {
+    const syncLogoState = () => {
+      setIsLogoCollapsed(window.scrollY > 60);
+    };
+
+    syncLogoState();
+    window.addEventListener("scroll", syncLogoState, {passive: true});
+    return () => window.removeEventListener("scroll", syncLogoState);
+  }, []);
+
   return (
     <div className="app-shell">
       <header className="site-header">
-        <a className="logo" href="/#/home" onClick={() => setMenuOpen(false)}>
-          Seungchang Han
+        <a
+          className={isLogoCollapsed ? "logo collapsed" : "logo"}
+          href="/#/home"
+          onClick={() => setMenuOpen(false)}
+          aria-label="Seungchang Han"
+        >
+          <span className="logo-full" aria-hidden="true">
+            Seungchang Han
+          </span>
+          <span className="logo-short" aria-hidden="true">
+            SH
+          </span>
         </a>
         <button
           className="menu-button"

@@ -144,10 +144,45 @@ em {
 }
 
 .logo {
+  position: relative;
   flex: 0 0 auto;
+  width: 122px;
+  overflow: hidden;
   font-size: 1.08rem;
   font-weight: 720;
   letter-spacing: -0.025em;
+  white-space: nowrap;
+  transition: width 0.24s ease;
+}
+
+.logo-full,
+.logo-short {
+  display: block;
+  transition:
+    opacity 0.24s ease,
+    transform 0.24s ease;
+}
+
+.logo-short {
+  position: absolute;
+  top: 0;
+  left: 0;
+  opacity: 0;
+  transform: translateY(8px);
+}
+
+.logo.collapsed {
+  width: 24px;
+}
+
+.logo.collapsed .logo-full {
+  opacity: 0;
+  transform: translateY(-8px);
+}
+
+.logo.collapsed .logo-short {
+  opacity: 1;
+  transform: translateY(0);
 }
 
 .site-nav {
@@ -577,13 +612,18 @@ em {
   font-size: 0.88rem;
 }
 
-.research-card ul {
+.research-card ul,
+.toolkit-tags {
   display: flex;
   padding: 0;
   margin: auto 0 0;
   gap: 7px;
   flex-wrap: wrap;
   list-style: none;
+}
+
+.research-card .toolkit-tags {
+  margin-top: 10px;
 }
 
 .research-card li {
@@ -593,6 +633,11 @@ em {
   color: var(--muted);
   font-size: 0.67rem;
   font-weight: 650;
+}
+
+.research-card .toolkit-tags li {
+  border: 1px solid var(--line);
+  background: transparent;
 }
 
 .method-tags {
