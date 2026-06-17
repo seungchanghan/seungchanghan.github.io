@@ -852,7 +852,8 @@ em {
   padding: 26px;
   border: 1px solid var(--line);
   border-radius: 16px;
-  background: var(--paper);
+  background: color-mix(in srgb, var(--paper) 88%, transparent);
+  backdrop-filter: blur(8px);
 }
 
 .control-heading {
@@ -899,7 +900,7 @@ em {
   border-radius: 10px;
   grid-template-columns: 1fr 1fr 1fr;
   gap: 9px;
-  background: var(--surface);
+  background: color-mix(in srgb, var(--surface) 82%, transparent);
 }
 
 .intake-row legend {
@@ -1031,7 +1032,7 @@ input[type="range"] {
   padding: 14px;
   border: 1px solid var(--line);
   border-radius: 9px;
-  background: var(--surface);
+  background: color-mix(in srgb, var(--surface) 82%, transparent);
 }
 
 .result-stats span,
@@ -1359,7 +1360,7 @@ input[type="range"] {
   margin-top: 18px;
   border: 1px solid var(--line);
   border-radius: 10px;
-  background: var(--surface);
+  background: color-mix(in srgb, var(--surface) 78%, transparent);
   color: var(--muted);
   font-size: 0.72rem;
   line-height: 1.55;
@@ -1406,7 +1407,7 @@ input[type="range"] {
   border: 1px solid var(--line);
   border-radius: 10px;
   align-content: start;
-  background: var(--paper);
+  background: color-mix(in srgb, var(--paper) 86%, transparent);
   gap: 8px;
 }
 
@@ -1456,7 +1457,7 @@ input[type="range"] {
   align-items: center;
   justify-content: space-between;
   gap: 10px;
-  background: var(--surface);
+  background: color-mix(in srgb, var(--surface) 82%, transparent);
 }
 
 .tool-result-row span {
@@ -1575,7 +1576,8 @@ input[type="range"] {
   padding: 26px;
   border: 1px solid var(--line);
   border-radius: 16px;
-  background: var(--paper);
+  background: color-mix(in srgb, var(--paper) 88%, transparent);
+  backdrop-filter: blur(8px);
 }
 
 .identity-fields {
@@ -1598,7 +1600,7 @@ input[type="range"] {
   border-radius: 10px;
   grid-template-columns: 1.45fr 0.8fr 0.8fr;
   gap: 9px;
-  background: var(--surface);
+  background: color-mix(in srgb, var(--surface) 82%, transparent);
 }
 
 .selected-date {
