@@ -764,6 +764,94 @@ function isValidTimeZone(value) {
   }
 }
 
+function TimeZoneCombobox({value, onChange, options}) {
+  const [isOpen, setIsOpen] = useState(false);
+  const comboRef = useRef(null);
+  const normalizedValue = value.trim().toLowerCase();
+  const filteredOptions = useMemo(() => {
+    if (!normalizedValue) return options.slice(0, 80);
+    return options
+      .filter(zone =>
+        zone.replaceAll("_", " ").toLowerCase().includes(normalizedValue)
+      )
+      .slice(0, 80);
+  }, [normalizedValue, options]);
+
+  useEffect(() => {
+    if (!isOpen) return undefined;
+
+    const handlePointerDown = event => {
+      if (!comboRef.current?.contains(event.target)) {
+        setIsOpen(false);
+      }
+    };
+
+    document.addEventListener("pointerdown", handlePointerDown);
+    return () => document.removeEventListener("pointerdown", handlePointerDown);
+  }, [isOpen]);
+
+  const chooseTimeZone = zone => {
+    onChange(zone);
+    setIsOpen(false);
+  };
+
+  return (
+    <div className="timezone-combobox" ref={comboRef}>
+      <div className="timezone-input-row">
+        <input
+          type="text"
+          value={value}
+          placeholder="Search or choose time zone"
+          required
+          role="combobox"
+          aria-autocomplete="list"
+          aria-expanded={isOpen}
+          aria-controls="meeting-time-zone-options"
+          onFocus={() => setIsOpen(true)}
+          onChange={event => {
+            onChange(event.target.value);
+            setIsOpen(true);
+          }}
+        />
+        <button
+          className="timezone-menu-button"
+          type="button"
+          aria-label="Show time zones"
+          aria-expanded={isOpen}
+          onClick={() => setIsOpen(open => !open)}
+        >
+          <span aria-hidden="true">⌄</span>
+        </button>
+      </div>
+      {isOpen && (
+        <div
+          className="timezone-options"
+          id="meeting-time-zone-options"
+          role="listbox"
+        >
+          {filteredOptions.length > 0 ? (
+            filteredOptions.map(zone => (
+              <button
+                className="timezone-option"
+                type="button"
+                role="option"
+                aria-selected={zone === value}
+                key={zone}
+                onMouseDown={event => event.preventDefault()}
+                onClick={() => chooseTimeZone(zone)}
+              >
+                {zone}
+              </button>
+            ))
+          ) : (
+            <span className="timezone-empty">No matching time zones</span>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function formatCalendarDate(dateValue) {
   if (!dateValue) return "Choose a date";
   const {year, month, day} = parseDateValue(dateValue);
@@ -1935,18 +2023,11 @@ function MeetingPlanner() {
             </label>
             <label>
               Time zone
-              <input
-                list="meeting-time-zone-options"
+              <TimeZoneCombobox
                 value={timeZone}
-                onChange={event => setTimeZone(event.target.value)}
-                placeholder="Search time zone"
-                required
+                onChange={setTimeZone}
+                options={supportedTimeZones}
               />
-              <datalist id="meeting-time-zone-options">
-                {supportedTimeZones.map(zone => (
-                  <option value={zone} key={zone} />
-                ))}
-              </datalist>
             </label>
           </div>
 
