@@ -34,6 +34,39 @@ const profileDetails = [
   {label: "Languages", value: "Korean, English"}
 ];
 
+const fallbackFooterQuotes = [
+  {
+    text: "Somewhere, something incredible is waiting to be known.",
+    author: "Carl Sagan"
+  },
+  {
+    text: "The important thing is not to stop questioning.",
+    author: "Albert Einstein"
+  },
+  {
+    text: "Nothing in life is to be feared, it is only to be understood.",
+    author: "Marie Curie"
+  },
+  {
+    text: "Research is to see what everybody else has seen, and to think what nobody else has thought.",
+    author: "Albert Szent-Gyorgyi"
+  }
+];
+
+function getFallbackFooterQuote() {
+  return fallbackFooterQuotes[
+    Math.floor(Math.random() * fallbackFooterQuotes.length)
+  ];
+}
+
+function normalizeFooterQuote(value) {
+  const quote = Array.isArray(value) ? value[0] : value;
+  const text = String(quote?.content ?? "").trim();
+  const author = String(quote?.author ?? "").trim();
+  if (!text || !author || text.length > 150 || author.length > 80) return null;
+  return {text, author};
+}
+
 const education = [
   {
     institution: "Korea University",
@@ -3078,8 +3111,25 @@ const pageComponents = {
 function App() {
   const [isDark, setIsDark] = useDarkMode();
   const [menuOpen, setMenuOpen] = useState(false);
+  const [footerQuote, setFooterQuote] = useState(getFallbackFooterQuote);
   const page = usePageRouter();
   const CurrentPage = pageComponents[page];
+
+  useEffect(() => {
+    let ignore = false;
+    fetch(
+      "https://api.quotable.io/quotes/random?tags=science|technology|wisdom&maxLength=120"
+    )
+      .then(response => (response.ok ? response.json() : null))
+      .then(data => {
+        const quote = normalizeFooterQuote(data);
+        if (!ignore && quote) setFooterQuote(quote);
+      })
+      .catch(() => {});
+    return () => {
+      ignore = true;
+    };
+  }, []);
 
   useEffect(() => {
     document.title =
@@ -3133,6 +3183,9 @@ function App() {
 
       <footer>
         <span>© {new Date().getFullYear()} Seungchang Han</span>
+        <span className="footer-quote">
+          &quot;{footerQuote.text}&quot; - {footerQuote.author}
+        </span>
       </footer>
     </div>
   );
