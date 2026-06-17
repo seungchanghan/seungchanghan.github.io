@@ -2786,7 +2786,7 @@ function ForFunPage() {
 
   return (
     <section className="page fun-page section-shell">
-      <PageIntro eyebrow="For fun" title="Small experiments">
+      <PageIntro eyebrow="For fun" title="Side calculations">
         Interactive tools and side projects built from questions I wanted to
         explore. Open an experiment to try it.
       </PageIntro>
