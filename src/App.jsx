@@ -116,44 +116,59 @@ const researchAreas = [
     number: "01",
     title: (
       <>
-        CO<sub>2</sub> reduction on copper
+        Catalytic interfaces and ECO<sub>2</sub>RR
       </>
     ),
     description:
-      "Copper surfaces, interfacial structure, and selectivity in electrochemical conversion.",
-    tags: ["Electrocatalysis", "Interfaces"]
+      "I study adsorption and electrochemical interfacial structure in CO2 reduction, with attention to copper and broader catalytic material systems.",
+    tags: ["Electrochemistry", "Adsorption", "Interfaces"]
   },
   {
     number: "02",
-    title: "Machine-learned interatomic potentials",
+    title: "Beyond conventional DFT",
     description:
-      "Models that carry first-principles accuracy into larger and longer atomistic simulations.",
-    tags: ["Active learning", "MLIP"]
+      "A central question is where standard density-functional approximations fail, and how GW, RPA, QMC, and related many-body methods can sharpen physical understanding.",
+    tags: ["Many-body theory", "GW", "RPA", "QMC"]
   },
   {
     number: "03",
-    title: "Atomistic materials modeling",
+    title: "Statistical atomistic modeling",
     description:
-      "Adsorption, reconstruction, solvation, and defects as microscopic drivers of performance.",
-    tags: ["DFT", "Thermodynamics"]
+      "Static structures are often too narrow for realistic interfaces, so I use statistical sampling and Monte Carlo approaches to describe configurational complexity.",
+    tags: ["Monte Carlo", "Surface design", "Sampling"]
+  },
+  {
+    number: "04",
+    title: "Machine-learned interatomic potentials",
+    description:
+      "MLIPs provide a practical route from first-principles data to larger-scale simulations, while requiring careful tests for extrapolation and hidden failure modes.",
+    tags: ["MLIP", "Validation", "Scaling"]
+  },
+  {
+    number: "05",
+    title: "Catalytic descriptors and interpretation",
+    description:
+      "I use descriptor models to interpret catalytic activity, emphasizing physically grounded explanations over purely predictive correlations.",
+    tags: ["Descriptors", "Activity", "Reproducibility"]
   }
 ];
 
 const methodToolkit = [
   {
-    name: "Density functional theory",
-    description:
-      "Electronic-structure calculations for adsorption and reaction energetics."
+    name: "Electronic structure / DFT",
+    tools: ["VASP", "Quantum ESPRESSO", "FHI-aims"]
   },
   {
-    name: "Atomistic simulation",
-    description:
-      "Molecular dynamics and statistical sampling for dynamic interfaces."
+    name: "Atomistic simulation & workflows",
+    tools: ["ASE", "CatKit", "Python workflows"]
   },
   {
-    name: "Machine learning potentials",
-    description:
-      "Data-driven interatomic models for realistic length and time scales."
+    name: "Machine-learned interatomic potentials",
+    tools: ["GAP", "MACE", "MTP"]
+  },
+  {
+    name: "Statistical sampling",
+    tools: ["Monte Carlo methods", "Statistical surface sampling"]
   }
 ];
 
@@ -1462,8 +1477,9 @@ function HomePage() {
             </span>
           </h1>
           <p className="hero-intro">
-            I build computational pictures of electrochemical CO₂ reduction,
-            from electronic structure to machine-learned dynamics.
+            Rigorous atomistic simulation of catalytic interfaces, with a focus
+            on electrochemical CO₂ reduction, beyond-DFT electronic structure,
+            and MLIP-enabled statistical modeling.
           </p>
           <div className="hero-actions">
             <a className="button primary" href="/#/research">
@@ -1483,15 +1499,19 @@ function AboutPage() {
   return (
     <section className="page content-page section-shell">
       <PageIntro eyebrow="About me" title="Seungchang Han">
-        Ph.D. student at Korea University focused on computational chemistry for
-        catalytic interfaces.
+        Ph.D. student at Korea University studying catalytic interfaces through
+        rigorous atomistic modeling.
       </PageIntro>
       <div className="about-layout">
         <article className="about-profile">
           <p>
-            I work with first-principles calculations, molecular simulation, and
-            machine-learned potentials, with a practical interest in teaching
-            and reusable scientific tools.
+            I try to use simulation as a careful way of reasoning about
+            chemistry, not as a substitute for interpretation. My work asks how
+            atomistic models can remain physically meaningful when surfaces,
+            interfaces, and reaction environments become complex. I am also
+            interested in connecting calculations to experimentally relevant
+            conditions, and I bring university-level teaching experience to how
+            I explain and organize scientific ideas.
           </p>
           <dl className="profile-details">
             {profileDetails.map(item => (
@@ -1553,9 +1573,13 @@ function AboutPage() {
 function ResearchPage() {
   return (
     <section className="page content-page section-shell">
-      <PageIntro eyebrow="Research" title="Catalysis, models, and scale">
-        A compact view of the questions, tools, and papers behind my current
-        work.
+      <PageIntro
+        eyebrow="Research"
+        title="Catalytic interfaces and atomistic rigor"
+      >
+        My research centers on ECO2RR and related catalytic interfaces, using
+        electronic-structure theory, statistical sampling, and MLIPs to examine
+        what atomistic models can reliably explain.
       </PageIntro>
       <div className="research-grid">
         {researchAreas.map(area => (
@@ -1581,7 +1605,11 @@ function ResearchPage() {
             <article className="method-card" key={method.name}>
               <span className="card-number">0{index + 1}</span>
               <h2>{method.name}</h2>
-              <p>{method.description}</p>
+              <ul className="method-tags">
+                {method.tools.map(tool => (
+                  <li key={tool}>{tool}</li>
+                ))}
+              </ul>
             </article>
           ))}
         </div>
