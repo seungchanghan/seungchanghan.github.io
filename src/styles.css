@@ -2299,7 +2299,7 @@ input[type="range"] {
 
 .contact-page::after {
   z-index: -1;
-  background: color-mix(in srgb, var(--paper) 58%, transparent);
+  background: color-mix(in srgb, var(--paper) 48%, transparent);
 }
 
 .contact-inner {
