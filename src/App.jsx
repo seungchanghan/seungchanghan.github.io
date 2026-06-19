@@ -1,6 +1,7 @@
 import {useEffect, useLayoutEffect, useMemo, useRef, useState} from "react";
 import {createPortal} from "react-dom";
 import {gsap} from "gsap";
+import PlotDigitizer from "./PlotDigitizer";
 import funBgCoffeeUrl from "./assets/fun-bg-coffee.webp";
 import funBgEquivalentsUrl from "./assets/fun-bg-equivalents.webp";
 import funBgThermoUrl from "./assets/fun-bg-thermo.webp";
@@ -3143,6 +3144,20 @@ function ForFunPage() {
           onToggle={() => toggleExperiment("05")}
         >
           <ThermochemistryTool />
+        </ExperimentAccordion>
+
+        <ExperimentAccordion
+          index="06"
+          title="Plot digitizer"
+          summary="Extract editable data points from plot images in the browser"
+          isOpen={openExperiment === "06"}
+          onToggle={() => toggleExperiment("06")}
+        >
+          <p className="experiment-description">
+            Paste or upload a plot image, detect rough samples, calibrate axes,
+            edit points, then export CSV. Processing stays in the browser.
+          </p>
+          <PlotDigitizer />
         </ExperimentAccordion>
       </div>
     </section>

@@ -1333,6 +1333,125 @@ input[type="range"] {
   font-weight: 700;
 }
 
+.digitizer-tool {
+  display: grid;
+  gap: 18px;
+}
+
+.digitizer-toolbar,
+.digitizer-actions,
+.digitizer-calibration {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: end;
+}
+
+.digitizer-toolbar {
+  padding: 18px;
+}
+
+.digitizer-toolbar label,
+.digitizer-side label {
+  min-width: 130px;
+}
+
+.digitizer-toolbar button,
+.digitizer-side button,
+.digitizer-actions button {
+  min-height: 38px;
+  padding: 8px 12px;
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  background: var(--tool-field);
+  color: var(--ink);
+  font-size: 0.72rem;
+  font-weight: 750;
+}
+
+.digitizer-toolbar button:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+
+.digitizer-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(270px, 0.34fr);
+  gap: 18px;
+}
+
+.digitizer-stage {
+  position: relative;
+  overflow: auto;
+  min-height: 360px;
+  padding: 0;
+  background: var(--tool-subpanel);
+}
+
+.digitizer-stage canvas,
+.digitizer-stage svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.digitizer-stage svg {
+  position: absolute;
+  inset: 0;
+  touch-action: none;
+}
+
+.digitizer-stage circle {
+  fill: var(--accent);
+  stroke: var(--paper);
+  stroke-width: 2;
+  cursor: grab;
+}
+
+.digitizer-stage circle.selected {
+  fill: #5f9d8e;
+}
+
+.digitizer-stage rect {
+  fill: color-mix(in srgb, var(--accent) 12%, transparent);
+  stroke: var(--accent);
+  stroke-dasharray: 6 4;
+}
+
+.digitizer-side {
+  display: grid;
+  padding: 18px;
+  align-content: start;
+  gap: 16px;
+}
+
+.digitizer-calibration button.active {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.digitizer-table {
+  overflow-x: auto;
+  padding: 0;
+}
+
+.digitizer-table table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.72rem;
+}
+
+.digitizer-table th,
+.digitizer-table td {
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--line);
+  text-align: left;
+}
+
+.digitizer-table input {
+  min-width: 92px;
+}
+
 .energy-equivalent-layout,
 .thermo-tool-grid {
   display: grid;
@@ -2476,6 +2595,10 @@ footer a {
   }
 
   .meeting-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .digitizer-grid {
     grid-template-columns: 1fr;
   }
 }
