@@ -1,7 +1,6 @@
 import {useEffect, useLayoutEffect, useMemo, useRef, useState} from "react";
 import {createPortal} from "react-dom";
 import {gsap} from "gsap";
-import PlotDigitizer from "./PlotDigitizer";
 import funBgCoffeeUrl from "./assets/fun-bg-coffee.webp";
 import funBgEquivalentsUrl from "./assets/fun-bg-equivalents.webp";
 import funBgThermoUrl from "./assets/fun-bg-thermo.webp";
@@ -3105,7 +3104,7 @@ function ForFunPage() {
         <ExperimentAccordion
           index="02"
           title="Across time"
-          summary="Find a meeting time across time zones and share it by URL"
+          summary="Plan meetings across time zones"
           backgroundImage={funBgTimeUrl}
           isOpen={openExperiment === "02"}
           onToggle={() => toggleExperiment("02")}
@@ -3116,7 +3115,7 @@ function ForFunPage() {
         <ExperimentAccordion
           index="03"
           title="Energy equivalents"
-          summary="Convert energy, wavelength, frequency, wavenumber, and thermal units"
+          summary="Convert energy and spectral units"
           backgroundImage={funBgEquivalentsUrl}
           isOpen={openExperiment === "03"}
           onToggle={() => toggleExperiment("03")}
@@ -3127,7 +3126,7 @@ function ForFunPage() {
         <ExperimentAccordion
           index="04"
           title="Redhead TPD analysis"
-          summary="Estimate first-order desorption energy from a TPD peak"
+          summary="Estimate desorption energy"
           backgroundImage={funBgTpdUrl}
           isOpen={openExperiment === "04"}
           onToggle={() => toggleExperiment("04")}
@@ -3138,26 +3137,12 @@ function ForFunPage() {
         <ExperimentAccordion
           index="05"
           title="Thermochemistry"
-          summary="Calculate harmonic E -> F or ideal-gas E -> G corrections"
+          summary="Calculate E to F or G corrections"
           backgroundImage={funBgThermoUrl}
           isOpen={openExperiment === "05"}
           onToggle={() => toggleExperiment("05")}
         >
           <ThermochemistryTool />
-        </ExperimentAccordion>
-
-        <ExperimentAccordion
-          index="06"
-          title="Plot digitizer"
-          summary="Extract editable data points from plot images in the browser"
-          isOpen={openExperiment === "06"}
-          onToggle={() => toggleExperiment("06")}
-        >
-          <p className="experiment-description">
-            Paste or upload a plot image, detect rough samples, calibrate axes,
-            edit points, then export CSV. Processing stays in the browser.
-          </p>
-          <PlotDigitizer />
         </ExperimentAccordion>
       </div>
     </section>
