@@ -6,7 +6,7 @@ type Detection = {points: PixelPoint[]; note: string};
 const isForeground = (r: number, g: number, b: number) => {
   const max = Math.max(r, g, b);
   const min = Math.min(r, g, b);
-  return max < 120 || (max - min > 45 && max < 245);
+  return max < 120 || (max - min > 45 && min < 235);
 };
 
 export const detectPlotPoints = (

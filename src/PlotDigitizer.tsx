@@ -40,6 +40,7 @@ export default function PlotDigitizer() {
     () => makeCsv(dataPoints, plotType),
     [dataPoints, plotType]
   );
+  const selectedCount = points.filter(point => point.selected).length;
 
   useEffect(() => {
     const onPaste = async (event: ClipboardEvent) => {
@@ -187,8 +188,8 @@ export default function PlotDigitizer() {
   return (
     <div className="digitizer-tool">
       <div className="digitizer-toolbar control-panel">
-        <label>
-          Image
+        <label className="digitizer-upload">
+          <span>Upload image</span>
           <input
             type="file"
             accept="image/*"
@@ -198,7 +199,7 @@ export default function PlotDigitizer() {
             }
           />
         </label>
-        <label>
+        <label className="digitizer-type">
           Type
           <select
             value={plotType}
@@ -214,10 +215,20 @@ export default function PlotDigitizer() {
         <button type="button" onClick={deleteSelected}>
           Delete selected
         </button>
+        <div className="digitizer-status" aria-live="polite">
+          <span>{points.length} pts</span>
+          <span>{selectedCount} selected</span>
+        </div>
       </div>
 
       <div className="digitizer-grid">
         <div className="digitizer-stage results-panel">
+          {!image && (
+            <div className="digitizer-empty">
+              <strong>Paste or upload a plot image</strong>
+              <span>Ctrl+V works from the clipboard.</span>
+            </div>
+          )}
           <canvas ref={canvasRef} />
           {image && (
             <svg
@@ -248,7 +259,11 @@ export default function PlotDigitizer() {
         </div>
 
         <div className="digitizer-side control-panel">
-          <p className="model-note">{note} Shift-drag selects a rectangle.</p>
+          <div className="digitizer-panel-heading">
+            <p className="eyebrow">Calibration</p>
+            <strong>Reference points</strong>
+          </div>
+          <p className="model-note">{note}</p>
           <div className="digitizer-calibration">
             {(["x1", "x2", "y1", "y2"] as CalKey[]).map(key => (
               <button
@@ -313,6 +328,9 @@ export default function PlotDigitizer() {
               />
             </label>
           </div>
+          <p className="digitizer-hint">
+            Pick x1/x2 and y1/y2 on tick marks. Shift-drag selects points.
+          </p>
           <div className="digitizer-actions">
             <button
               type="button"
@@ -328,6 +346,13 @@ export default function PlotDigitizer() {
       </div>
 
       <div className="digitizer-table results-panel">
+        <div className="digitizer-table-head">
+          <div>
+            <p className="eyebrow">Data</p>
+            <strong>CSV preview</strong>
+          </div>
+          <span>{dataPoints.length} rows</span>
+        </div>
         <table>
           <thead>
             <tr>

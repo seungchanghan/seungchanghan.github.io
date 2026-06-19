@@ -1343,17 +1343,46 @@ input[type="range"] {
 .digitizer-calibration {
   display: flex;
   flex-wrap: wrap;
-  gap: 10px;
+  gap: 12px;
   align-items: end;
 }
 
 .digitizer-toolbar {
-  padding: 18px;
+  padding: 16px;
+  align-items: center;
 }
 
 .digitizer-toolbar label,
 .digitizer-side label {
   min-width: 130px;
+}
+
+.digitizer-upload {
+  position: relative;
+  display: grid;
+  min-height: 64px;
+  padding: 12px 16px;
+  border: 1px dashed color-mix(in srgb, var(--accent) 44%, var(--line));
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--paper) 78%, transparent);
+  place-content: center;
+}
+
+.digitizer-upload span {
+  color: var(--accent);
+  font-size: 0.72rem;
+  font-weight: 800;
+}
+
+.digitizer-upload input {
+  position: absolute;
+  inset: 0;
+  cursor: pointer;
+  opacity: 0;
+}
+
+.digitizer-type {
+  max-width: 150px;
 }
 
 .digitizer-toolbar button,
@@ -1366,6 +1395,23 @@ input[type="range"] {
   background: var(--tool-field);
   color: var(--ink);
   font-size: 0.72rem;
+  font-weight: 750;
+}
+
+.digitizer-status {
+  display: flex;
+  margin-left: auto;
+  gap: 8px;
+}
+
+.digitizer-status span,
+.digitizer-table-head > span {
+  padding: 5px 9px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--tool-subpanel);
+  color: var(--muted);
+  font-size: 0.65rem;
   font-weight: 750;
 }
 
@@ -1386,6 +1432,27 @@ input[type="range"] {
   min-height: 360px;
   padding: 0;
   background: var(--tool-subpanel);
+}
+
+.digitizer-empty {
+  position: absolute;
+  inset: 18px;
+  display: grid;
+  border: 1px dashed var(--line);
+  border-radius: 12px;
+  color: var(--muted);
+  gap: 4px;
+  place-content: center;
+  text-align: center;
+}
+
+.digitizer-empty strong {
+  color: var(--ink);
+  font-size: 0.9rem;
+}
+
+.digitizer-empty span {
+  font-size: 0.7rem;
 }
 
 .digitizer-stage canvas,
@@ -1425,14 +1492,44 @@ input[type="range"] {
   gap: 16px;
 }
 
+.digitizer-panel-heading,
+.digitizer-table-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.digitizer-panel-heading strong,
+.digitizer-table-head strong {
+  font-size: 0.9rem;
+}
+
+.digitizer-panel-heading .eyebrow,
+.digitizer-table-head .eyebrow {
+  margin-bottom: 2px;
+}
+
 .digitizer-calibration button.active {
   border-color: var(--accent);
   color: var(--accent);
 }
 
+.digitizer-hint {
+  margin: -6px 0 0;
+  color: var(--muted);
+  font-size: 0.68rem;
+  line-height: 1.45;
+}
+
 .digitizer-table {
   overflow-x: auto;
-  padding: 0;
+  padding: 0 0 6px;
+}
+
+.digitizer-table-head {
+  padding: 16px 18px 12px;
+  border-bottom: 1px solid var(--line);
 }
 
 .digitizer-table table {
