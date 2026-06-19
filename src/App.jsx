@@ -1452,6 +1452,15 @@ function HomePage() {
               About me
             </a>
           </div>
+          <a
+            className="hero-publication"
+            href="https://doi.org/10.1038/s41929-026-01526-7"
+            target="_blank"
+            rel="noreferrer"
+          >
+            Selected publication: Nature Catalysis, 2026
+            <span aria-hidden="true">↗</span>
+          </a>
         </div>
       </div>
     </section>
@@ -1553,7 +1562,12 @@ function ResearchPage() {
       </PageIntro>
       <div className="research-grid">
         {researchAreas.map(area => (
-          <article className="research-card" key={area.number}>
+          <article
+            className={
+              area.number === "01" ? "research-card featured" : "research-card"
+            }
+            key={area.number}
+          >
             <span className="card-number">{area.number}</span>
             <h2>{area.title}</h2>
             <p>{area.description}</p>
