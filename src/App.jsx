@@ -2247,7 +2247,8 @@ function EnergyEquivalentsTool() {
         <code>user-input/energy_tool_thermo_added.py</code>. Constants follow
         NIST/CODATA 2022 values, with the thermochemical calorie definition used
         for kcal. Use this as a calculation aid for checking scale and units; do
-        not cite these browser outputs directly in literature.
+        not cite these browser outputs directly in literature.{" "}
+        <SourceCodeLink />
       </p>
       <div className="energy-equivalent-layout">
         <form
@@ -2345,6 +2346,18 @@ function EnergyEquivalentsTool() {
   );
 }
 
+function SourceCodeLink() {
+  return (
+    <a
+      href="https://github.com/seungchanghan/seungchanghan.github.io/blob/main/user-input/energy_tool_thermo_added.py"
+      target="_blank"
+      rel="noreferrer"
+    >
+      View the original Python script ↗
+    </a>
+  );
+}
+
 function EquationBlock({children}) {
   return <div className="equation-block">{children}</div>;
 }
@@ -2374,7 +2387,7 @@ function RedheadTool() {
         keeps the same constants, units, default prefactor, and 3.64 analytical
         approximation. This is for exploratory interpretation only; do not
         report it as a literature-grade desorption barrier without independent
-        kinetic validation.
+        kinetic validation. <SourceCodeLink />
       </p>
       <div className="energy-equivalent-layout redhead-layout">
         <form
@@ -2540,7 +2553,8 @@ function ThermochemistryTool() {
         the adsorbate E {"->"} F correction. Ideal-gas mode gives E {"->"} G and
         exposes the extra translational/rotational inputs that the ASE ideal-gas
         model needs. Use these values to audit corrections and inputs; cite the
-        underlying thermochemistry method, not this page output.
+        underlying thermochemistry method, not this page output.{" "}
+        <SourceCodeLink />
       </p>
       <div className="thermo-tool-grid">
         <form
