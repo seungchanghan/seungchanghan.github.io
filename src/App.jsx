@@ -2247,9 +2247,9 @@ function EnergyEquivalentsTool() {
         <code>user-input/energy_tool_thermo_added.py</code>. Constants follow
         NIST/CODATA 2022 values, with the thermochemical calorie definition used
         for kcal. Use this as a calculation aid for checking scale and units; do
-        not cite these browser outputs directly in literature.{" "}
-        <SourceCodeLink />
+        not cite these browser outputs directly in literature.
       </p>
+      <SourceCodeNote />
       <div className="energy-equivalent-layout">
         <form
           className="control-panel energy-input-panel"
@@ -2346,15 +2346,17 @@ function EnergyEquivalentsTool() {
   );
 }
 
-function SourceCodeLink() {
+function SourceCodeNote() {
   return (
-    <a
-      href="https://github.com/seungchanghan/seungchanghan.github.io/blob/main/user-input/energy_tool_thermo_added.py"
-      target="_blank"
-      rel="noreferrer"
-    >
-      View the original Python script ↗
-    </a>
+    <p className="experiment-description source-link-note">
+      <a
+        href="https://github.com/seungchanghan/seungchanghan.github.io/blob/main/user-input/energy_tool_thermo_added.py"
+        target="_blank"
+        rel="noreferrer"
+      >
+        View the original Python script ↗
+      </a>
+    </p>
   );
 }
 
@@ -2387,8 +2389,9 @@ function RedheadTool() {
         keeps the same constants, units, default prefactor, and 3.64 analytical
         approximation. This is for exploratory interpretation only; do not
         report it as a literature-grade desorption barrier without independent
-        kinetic validation. <SourceCodeLink />
+        kinetic validation.
       </p>
+      <SourceCodeNote />
       <div className="energy-equivalent-layout redhead-layout">
         <form
           className="control-panel energy-input-panel"
@@ -2553,9 +2556,9 @@ function ThermochemistryTool() {
         the adsorbate E {"->"} F correction. Ideal-gas mode gives E {"->"} G and
         exposes the extra translational/rotational inputs that the ASE ideal-gas
         model needs. Use these values to audit corrections and inputs; cite the
-        underlying thermochemistry method, not this page output.{" "}
-        <SourceCodeLink />
+        underlying thermochemistry method, not this page output.
       </p>
+      <SourceCodeNote />
       <div className="thermo-tool-grid">
         <form
           className="control-panel thermo-input-panel"
