@@ -6,6 +6,7 @@ import funBgEquivalentsUrl from "./assets/fun-bg-equivalents.webp";
 import funBgThermoUrl from "./assets/fun-bg-thermo.webp";
 import funBgTimeUrl from "./assets/fun-bg-time.webp";
 import funBgTpdUrl from "./assets/fun-bg-tpd.webp";
+import contactBackgroundUrl from "./assets/contact-bg.webp";
 import heroBackgroundUrl from "../user-input/main.webp";
 
 const pages = [
@@ -22,50 +23,27 @@ const profileLinks = {
   github: "https://github.com/seungchanghan"
 };
 
-const contactLocation = "145, Anam-ro, Seongbuk-gu, Seoul, Republic of Korea";
+const contactLocation =
+  "Korea University, 145, Anam-ro, Seongbuk-gu, Seoul, Republic of Korea";
 
 const profileDetails = [
   {
     label: "Role",
     value: "Ph.D. Student in Physical Chemistry and Integrative Data Science"
   },
-  {label: "Institution", value: "Korea University"},
+  {
+    label: "Institution",
+    value: (
+      <>
+        Ringe Lab
+        <br />
+        Department of Chemistry, Korea University
+      </>
+    )
+  },
   {label: "Location", value: "Seoul, South Korea"},
   {label: "Languages", value: "Korean, English"}
 ];
-
-const fallbackFooterQuotes = [
-  {
-    text: "Somewhere, something incredible is waiting to be known.",
-    author: "Carl Sagan"
-  },
-  {
-    text: "The important thing is not to stop questioning.",
-    author: "Albert Einstein"
-  },
-  {
-    text: "Nothing in life is to be feared, it is only to be understood.",
-    author: "Marie Curie"
-  },
-  {
-    text: "Research is to see what everybody else has seen, and to think what nobody else has thought.",
-    author: "Albert Szent-Gyorgyi"
-  }
-];
-
-function getFallbackFooterQuote() {
-  return fallbackFooterQuotes[
-    Math.floor(Math.random() * fallbackFooterQuotes.length)
-  ];
-}
-
-function normalizeFooterQuote(value) {
-  const quote = Array.isArray(value) ? value[0] : value;
-  const text = String(quote?.content ?? quote?.quote ?? quote?.q ?? "").trim();
-  const author = String(quote?.author ?? quote?.a ?? "").trim();
-  if (!text || !author || text.length > 150 || author.length > 80) return null;
-  return {text, author};
-}
 
 const education = [
   {
@@ -1483,7 +1461,15 @@ function HomePage() {
 function AboutPage() {
   return (
     <section className="page content-page section-shell about-page">
-      <PageIntro eyebrow="About me" title="Seungchang Han">
+      <PageIntro
+        eyebrow="About me"
+        title={
+          <span className="name-title">
+            <span>Seungchang Han</span>
+            <span lang="ko">한승창</span>
+          </span>
+        }
+      >
         Ph.D. student at Korea University studying catalytic interfaces through
         rigorous atomistic modeling.
       </PageIntro>
@@ -3132,49 +3118,54 @@ function ForFunPage() {
 
 function ContactPage() {
   return (
-    <section className="page contact-page section-shell">
-      <PageIntro eyebrow="Contact" title="Let's talk research.">
-        Open to conversations about computational catalysis, machine learning
-        potentials, and atomistic materials modeling.
-      </PageIntro>
-      <div className="contact-card">
-        <p>
-          For research conversations, collaborations, or current work, choose a
-          route below.
-        </p>
-        <div className="contact-grid" aria-label="Contact links">
-          <a
-            className="contact-link"
-            href={`mailto:${profileLinks.email}`}
-            aria-label="Send email"
-          >
-            <MailIcon />
-            <span>Academic mail</span>
-          </a>
-          <a
-            className="contact-link"
-            href={profileLinks.linkedin}
-            target="_blank"
-            rel="noreferrer"
-            aria-label="Open professional profile"
-          >
-            <LinkedInIcon />
-            <span>Professional profile</span>
-          </a>
-          <a
-            className="contact-link"
-            href={profileLinks.github}
-            target="_blank"
-            rel="noreferrer"
-            aria-label="Open code profile"
-          >
-            <GitHubIcon />
-            <span>Code archive</span>
-          </a>
-        </div>
-        <div className="contact-location">
-          <LocationIcon />
-          <span>{contactLocation}</span>
+    <section
+      className="page contact-page"
+      style={{"--contact-bg": `url(${contactBackgroundUrl})`}}
+    >
+      <div className="section-shell contact-inner">
+        <PageIntro eyebrow="Contact" title="Let's talk research.">
+          Open to conversations about computational catalysis, machine learning
+          potentials, and atomistic materials modeling.
+        </PageIntro>
+        <div className="contact-card">
+          <p>
+            For research conversations, collaborations, or current work, choose
+            a route below.
+          </p>
+          <div className="contact-grid" aria-label="Contact links">
+            <a
+              className="contact-link"
+              href={`mailto:${profileLinks.email}`}
+              aria-label="Send email"
+            >
+              <MailIcon />
+              <span>Academic mail</span>
+            </a>
+            <a
+              className="contact-link"
+              href={profileLinks.linkedin}
+              target="_blank"
+              rel="noreferrer"
+              aria-label="Open professional profile"
+            >
+              <LinkedInIcon />
+              <span>Professional profile</span>
+            </a>
+            <a
+              className="contact-link"
+              href={profileLinks.github}
+              target="_blank"
+              rel="noreferrer"
+              aria-label="Open code profile"
+            >
+              <GitHubIcon />
+              <span>Code archive</span>
+            </a>
+          </div>
+          <div className="contact-location">
+            <LocationIcon />
+            <span>{contactLocation}</span>
+          </div>
         </div>
       </div>
     </section>
@@ -3193,25 +3184,10 @@ function App() {
   const [isDark, setIsDark] = useDarkMode();
   const [menuOpen, setMenuOpen] = useState(false);
   const [isLogoCollapsed, setIsLogoCollapsed] = useState(false);
-  const [footerQuote, setFooterQuote] = useState(getFallbackFooterQuote);
   const logoRef = useRef(null);
   const fullLogoRef = useRef(null);
   const page = usePageRouter();
   const CurrentPage = pageComponents[page];
-
-  useEffect(() => {
-    let ignore = false;
-    fetch("https://dummyjson.com/quotes/random")
-      .then(response => (response.ok ? response.json() : null))
-      .then(data => {
-        const quote = normalizeFooterQuote(data);
-        if (!ignore && quote) setFooterQuote(quote);
-      })
-      .catch(() => {});
-    return () => {
-      ignore = true;
-    };
-  }, []);
 
   useEffect(() => {
     document.title =
@@ -3222,7 +3198,7 @@ function App() {
 
   useEffect(() => {
     const syncLogoState = () => {
-      setIsLogoCollapsed(window.scrollY > 60);
+      setIsLogoCollapsed(window.scrollY > window.innerHeight * 0.38);
     };
 
     syncLogoState();
@@ -3304,9 +3280,11 @@ function App() {
 
       <footer>
         <span>© {new Date().getFullYear()} Seungchang Han</span>
-        <span className="footer-quote">
-          <span>&quot;{footerQuote.text}&quot;</span>
-          <span>- {footerQuote.author}</span>
+        <span className="footer-affiliation">
+          Affiliated Research Group:{" "}
+          <a href="https://www.ringelab.com/" target="_blank" rel="noreferrer">
+            ringelab.com
+          </a>
         </span>
       </footer>
     </div>

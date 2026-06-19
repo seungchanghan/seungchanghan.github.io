@@ -423,31 +423,66 @@ em {
 .page-intro {
   display: grid;
   margin-bottom: 46px;
-  grid-template-columns: 0.38fr 1fr 0.85fr;
-  gap: 36px;
-  align-items: start;
+  grid-template-columns: minmax(120px, 0.24fr) minmax(0, 1fr);
+  column-gap: clamp(28px, 5vw, 72px);
+  row-gap: 16px;
+  align-items: end;
 }
 
 .page-intro h1 {
+  position: relative;
   margin-bottom: 0;
   font-size: clamp(2.8rem, 5vw, 4.8rem);
 }
 
+.page-intro h1::before {
+  position: absolute;
+  top: -18px;
+  left: 0;
+  width: 44px;
+  height: 1px;
+  content: "";
+  background: var(--accent);
+}
+
 .about-page .page-intro h1 {
-  max-width: 8.5ch;
+  max-width: 12.5ch;
   font-family: Georgia, "Times New Roman", serif;
   font-size: clamp(3rem, 5.4vw, 5.2rem);
   font-weight: 600;
-  line-height: 0.96;
+  line-height: 1;
 }
 
 .page-intro .eyebrow {
-  padding-top: 10px;
+  margin-bottom: 0;
+  padding-bottom: 0.46em;
 }
 
 .page-summary {
-  padding-top: 8px;
+  max-width: 56ch;
+  padding-top: 0;
+  grid-column: 2;
   font-size: 0.94rem;
+}
+
+.name-title {
+  display: grid;
+  gap: 0.08em;
+}
+
+.name-title > span {
+  display: block;
+  white-space: nowrap;
+}
+
+.name-title [lang="ko"] {
+  color: color-mix(in srgb, var(--ink) 86%, var(--accent-dark));
+  font-family:
+    "Noto Serif KR", "Apple SD Gothic Neo", "Malgun Gothic", Georgia, serif;
+  font-size: 0.44em;
+  font-weight: 680;
+  letter-spacing: 0;
+  line-height: 1.16;
 }
 
 .research-grid,
@@ -2172,14 +2207,41 @@ input[type="range"] {
 }
 
 .contact-page {
+  position: relative;
+  overflow: clip;
+  min-height: calc(100vh - 148px);
+  padding-block: clamp(60px, 9vh, 108px);
+  isolation: isolate;
+}
+
+.contact-page::before,
+.contact-page::after {
+  position: absolute;
+  inset: 0;
+  content: "";
+}
+
+.contact-page::before {
+  z-index: -2;
+  background: var(--contact-bg) center / cover no-repeat;
+  filter: blur(10px) saturate(0.94) contrast(0.92);
+  transform: scale(1.045);
+}
+
+.contact-page::after {
+  z-index: -1;
+  background: color-mix(in srgb, var(--paper) 72%, transparent);
+}
+
+.contact-inner {
   display: grid;
-  grid-template-columns: 1.15fr 0.85fr;
-  gap: 80px;
+  grid-template-columns: minmax(0, 1.06fr) minmax(320px, 0.82fr);
+  gap: clamp(42px, 7vw, 86px);
   align-items: center;
 }
 
 .contact-page .page-intro {
-  display: block;
+  grid-template-columns: minmax(96px, 0.22fr) minmax(0, 1fr);
   margin-bottom: 0;
 }
 
@@ -2187,7 +2249,8 @@ input[type="range"] {
   padding: 32px;
   border: 1px solid var(--line);
   border-radius: 14px;
-  background: var(--surface);
+  background: color-mix(in srgb, var(--surface) 90%, transparent);
+  backdrop-filter: blur(16px);
   color: var(--muted);
 }
 
@@ -2284,14 +2347,8 @@ footer a {
   color: var(--accent);
 }
 
-.footer-quote {
-  display: grid;
-  max-width: min(560px, 52vw);
+.footer-affiliation {
   color: color-mix(in srgb, var(--muted) 86%, var(--ink));
-  font-family: Georgia, "Times New Roman", serif;
-  font-size: 0.78rem;
-  gap: 2px;
-  line-height: 1.45;
   text-align: right;
 }
 
@@ -2571,9 +2628,13 @@ footer a {
     margin-top: 8px;
   }
 
-  .contact-page {
+  .contact-inner {
     grid-template-columns: 1fr;
     gap: 38px;
+  }
+
+  .contact-page .page-intro {
+    display: block;
   }
 
   .contact-grid {
@@ -2591,8 +2652,7 @@ footer a {
     gap: 4px;
   }
 
-  .footer-quote {
-    max-width: 100%;
+  .footer-affiliation {
     text-align: left;
   }
 }
