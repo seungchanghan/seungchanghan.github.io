@@ -1340,7 +1340,7 @@ input[type="range"] {
 
 .digitizer-toolbar,
 .digitizer-actions,
-.digitizer-calibration {
+.digitizer-mode-switch {
   display: flex;
   flex-wrap: wrap;
   gap: 12px;
@@ -1398,6 +1398,27 @@ input[type="range"] {
   font-weight: 750;
 }
 
+.digitizer-mode-switch {
+  padding: 3px;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  background: var(--tool-subpanel);
+  gap: 3px;
+}
+
+.digitizer-mode-switch button {
+  min-height: 32px;
+  border-color: transparent;
+  background: transparent;
+}
+
+.digitizer-mode-switch button.active,
+.digitizer-calibration button.active {
+  border-color: color-mix(in srgb, var(--accent) 32%, transparent);
+  background: var(--tool-field);
+  color: var(--accent);
+}
+
 .digitizer-status {
   display: flex;
   margin-left: auto;
@@ -1434,6 +1455,22 @@ input[type="range"] {
   background: var(--tool-subpanel);
 }
 
+.digitizer-stage-tip {
+  position: absolute;
+  z-index: 3;
+  top: 12px;
+  left: 12px;
+  max-width: calc(100% - 24px);
+  padding: 6px 9px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--paper) 88%, transparent);
+  color: var(--muted);
+  font-size: 0.65rem;
+  font-weight: 750;
+  pointer-events: none;
+}
+
 .digitizer-empty {
   position: absolute;
   inset: 18px;
@@ -1468,6 +1505,17 @@ input[type="range"] {
   touch-action: none;
 }
 
+.digitizer-overlay.mode-select {
+  cursor: crosshair;
+}
+
+.digitizer-overlay.mode-x1,
+.digitizer-overlay.mode-x2,
+.digitizer-overlay.mode-y1,
+.digitizer-overlay.mode-y2 {
+  cursor: cell;
+}
+
 .digitizer-stage circle {
   fill: var(--accent);
   stroke: var(--paper);
@@ -1483,6 +1531,21 @@ input[type="range"] {
   fill: color-mix(in srgb, var(--accent) 12%, transparent);
   stroke: var(--accent);
   stroke-dasharray: 6 4;
+}
+
+.digitizer-stage .calibration-marker rect {
+  fill: color-mix(in srgb, var(--accent-dark) 72%, transparent);
+  stroke: var(--paper);
+  stroke-width: 2;
+}
+
+.digitizer-stage .calibration-marker text {
+  fill: var(--accent-dark);
+  font-size: 13px;
+  font-weight: 800;
+  paint-order: stroke;
+  stroke: var(--paper);
+  stroke-width: 4px;
 }
 
 .digitizer-side {
@@ -1510,9 +1573,25 @@ input[type="range"] {
   margin-bottom: 2px;
 }
 
-.digitizer-calibration button.active {
-  border-color: var(--accent);
-  color: var(--accent);
+.digitizer-calibration {
+  display: grid;
+  gap: 10px;
+}
+
+.calibration-step {
+  display: grid;
+  padding: 10px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  grid-template-columns: minmax(0, 1fr) minmax(86px, 0.42fr);
+  gap: 10px;
+  background: var(--tool-subpanel);
+  align-items: end;
+}
+
+.calibration-step button {
+  width: 100%;
+  text-align: left;
 }
 
 .digitizer-hint {

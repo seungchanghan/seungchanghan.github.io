@@ -15,14 +15,28 @@ import {
 import type {Calibration, PixelPoint, PlotType} from "./plotDigitizer/types";
 
 type CalKey = "x1" | "x2" | "y1" | "y2";
+type DigitizerMode = "edit" | "select" | CalKey;
+
+const calibrationSteps: {key: CalKey; label: string; valueLabel: string}[] = [
+  {key: "x1", label: "1. X reference left", valueLabel: "x1 value"},
+  {key: "x2", label: "2. X reference right", valueLabel: "x2 value"},
+  {key: "y1", label: "3. Y reference low", valueLabel: "y1 value"},
+  {key: "y2", label: "4. Y reference high", valueLabel: "y2 value"}
+];
 
 export default function PlotDigitizer() {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const rectRef = useRef<{
+    x1: number;
+    y1: number;
+    x2: number;
+    y2: number;
+  } | null>(null);
   const [plotType, setPlotType] = useState<PlotType>("xy");
   const [image, setImage] = useState<HTMLImageElement | null>(null);
   const [points, setPoints] = useState<PixelPoint[]>([]);
   const [calibration, setCalibration] = useState<Calibration>(emptyCalibration);
-  const [calPick, setCalPick] = useState<CalKey | "">("");
+  const [mode, setMode] = useState<DigitizerMode>("edit");
   const [dragId, setDragId] = useState<string | null>(null);
   const [rect, setRect] = useState<{
     x1: number;
@@ -55,9 +69,7 @@ export default function PlotDigitizer() {
     setImage(next);
     setCalibration(emptyCalibration());
     setPoints([]);
-    setNote(
-      "Image loaded. Choose plot type, then run detection or add points manually."
-    );
+    setNote("Image loaded. Detect points or click the plot to add points.");
     requestAnimationFrame(() => draw(next));
   };
 
@@ -105,12 +117,15 @@ export default function PlotDigitizer() {
   const onPointerDown = (event: React.PointerEvent<SVGSVGElement>) => {
     if (!image) return;
     const {px, py} = localPoint(event);
-    if (event.shiftKey) {
-      setRect({x1: px, y1: py, x2: px, y2: py});
+    if (mode === "select") {
+      const nextRect = {x1: px, y1: py, x2: px, y2: py};
+      rectRef.current = nextRect;
+      setRect(nextRect);
+      event.currentTarget.setPointerCapture(event.pointerId);
       return;
     }
     const hit = nearestPoint(points, px, py);
-    if (calPick) {
+    if (isCalibrationMode(mode)) {
       const point = hit ?? {
         id: pointId(),
         series: plotType === "bar" ? "bars" : "series 1",
@@ -118,8 +133,8 @@ export default function PlotDigitizer() {
         py
       };
       if (!hit) setPoints(current => [...current, point]);
-      placeCalibration(calPick as CalKey, point);
-      setCalPick("");
+      placeCalibration(mode, point);
+      setMode("edit");
       return;
     }
     if (hit) {
@@ -146,7 +161,11 @@ export default function PlotDigitizer() {
 
   const onPointerMove = (event: React.PointerEvent<SVGSVGElement>) => {
     const {px, py} = localPoint(event);
-    if (rect) setRect({...rect, x2: px, y2: py});
+    if (rectRef.current) {
+      const nextRect = {...rectRef.current, x2: px, y2: py};
+      rectRef.current = nextRect;
+      setRect(nextRect);
+    }
     if (dragId)
       setPoints(current =>
         current.map(point => (point.id === dragId ? {...point, px, py} : point))
@@ -154,14 +173,15 @@ export default function PlotDigitizer() {
   };
 
   const onPointerUp = () => {
-    if (rect) {
+    if (rectRef.current) {
       const selected = new Set(
-        pointsInRect(points, rect).map(point => point.id)
+        pointsInRect(points, rectRef.current).map(point => point.id)
       );
       setPoints(current =>
         current.map(point => ({...point, selected: selected.has(point.id)}))
       );
     }
+    rectRef.current = null;
     setRect(null);
     setDragId(null);
   };
@@ -210,11 +230,27 @@ export default function PlotDigitizer() {
           </select>
         </label>
         <button type="button" onClick={detect} disabled={!image}>
-          Detect
+          Auto-detect
         </button>
         <button type="button" onClick={deleteSelected}>
           Delete selected
         </button>
+        <div className="digitizer-mode-switch" aria-label="Editing mode">
+          <button
+            type="button"
+            className={mode === "edit" ? "active" : ""}
+            onClick={() => setMode("edit")}
+          >
+            Edit points
+          </button>
+          <button
+            type="button"
+            className={mode === "select" ? "active" : ""}
+            onClick={() => setMode("select")}
+          >
+            Select box
+          </button>
+        </div>
         <div className="digitizer-status" aria-live="polite">
           <span>{points.length} pts</span>
           <span>{selectedCount} selected</span>
@@ -229,9 +265,19 @@ export default function PlotDigitizer() {
               <span>Ctrl+V works from the clipboard.</span>
             </div>
           )}
+          {image && (
+            <div className="digitizer-stage-tip">
+              {mode === "select"
+                ? "Drag a box around points to select them."
+                : isCalibrationMode(mode)
+                  ? `Click the ${mode.toUpperCase()} reference point on the plot.`
+                  : "Click to add. Drag points to move."}
+            </div>
+          )}
           <canvas ref={canvasRef} />
           {image && (
             <svg
+              className={`digitizer-overlay mode-${mode}`}
               viewBox={`0 0 ${image.naturalWidth} ${image.naturalHeight}`}
               onPointerDown={onPointerDown}
               onPointerMove={onPointerMove}
@@ -246,6 +292,24 @@ export default function PlotDigitizer() {
                   className={point.selected ? "selected" : ""}
                 />
               ))}
+              {calibrationSteps.map(step => {
+                const axis = step.key[0] as "x" | "y";
+                const point =
+                  calibration[axis][step.key[1] === "1" ? "p1" : "p2"];
+                return point ? (
+                  <g className="calibration-marker" key={step.key}>
+                    <rect
+                      x={point.px - 7}
+                      y={point.py - 7}
+                      width="14"
+                      height="14"
+                    />
+                    <text x={point.px + 10} y={point.py - 10}>
+                      {step.key.toUpperCase()}
+                    </text>
+                  </g>
+                ) : null;
+              })}
               {rect && (
                 <rect
                   x={Math.min(rect.x1, rect.x2)}
@@ -265,71 +329,47 @@ export default function PlotDigitizer() {
           </div>
           <p className="model-note">{note}</p>
           <div className="digitizer-calibration">
-            {(["x1", "x2", "y1", "y2"] as CalKey[]).map(key => (
-              <button
-                type="button"
-                className={calPick === key ? "active" : ""}
-                onClick={() => setCalPick(key)}
-                key={key}
-              >
-                Pick {key}
-              </button>
+            {calibrationSteps.map(step => (
+              <div className="calibration-step" key={step.key}>
+                <button
+                  type="button"
+                  className={mode === step.key ? "active" : ""}
+                  onClick={() => setMode(step.key)}
+                >
+                  {step.label}
+                </button>
+                <label>
+                  {step.valueLabel}
+                  <input
+                    type="number"
+                    value={
+                      step.key === "x1"
+                        ? calibration.x.v1
+                        : step.key === "x2"
+                          ? calibration.x.v2
+                          : step.key === "y1"
+                            ? calibration.y.v1
+                            : calibration.y.v2
+                    }
+                    onChange={event => {
+                      const value = Number(event.target.value);
+                      setCalibration(current =>
+                        step.key === "x1"
+                          ? {...current, x: {...current.x, v1: value}}
+                          : step.key === "x2"
+                            ? {...current, x: {...current.x, v2: value}}
+                            : step.key === "y1"
+                              ? {...current, y: {...current.y, v1: value}}
+                              : {...current, y: {...current.y, v2: value}}
+                      );
+                    }}
+                  />
+                </label>
+              </div>
             ))}
-            <label>
-              x1 value
-              <input
-                type="number"
-                value={calibration.x.v1}
-                onChange={e =>
-                  setCalibration(c => ({
-                    ...c,
-                    x: {...c.x, v1: Number(e.target.value)}
-                  }))
-                }
-              />
-            </label>
-            <label>
-              x2 value
-              <input
-                type="number"
-                value={calibration.x.v2}
-                onChange={e =>
-                  setCalibration(c => ({
-                    ...c,
-                    x: {...c.x, v2: Number(e.target.value)}
-                  }))
-                }
-              />
-            </label>
-            <label>
-              y1 value
-              <input
-                type="number"
-                value={calibration.y.v1}
-                onChange={e =>
-                  setCalibration(c => ({
-                    ...c,
-                    y: {...c.y, v1: Number(e.target.value)}
-                  }))
-                }
-              />
-            </label>
-            <label>
-              y2 value
-              <input
-                type="number"
-                value={calibration.y.v2}
-                onChange={e =>
-                  setCalibration(c => ({
-                    ...c,
-                    y: {...c.y, v2: Number(e.target.value)}
-                  }))
-                }
-              />
-            </label>
           </div>
           <p className="digitizer-hint">
-            Pick x1/x2 and y1/y2 on tick marks. Shift-drag selects points.
+            Use Select box, drag over points, then Delete selected.
           </p>
           <div className="digitizer-actions">
             <button
@@ -417,3 +457,6 @@ export default function PlotDigitizer() {
 
 const round = (value: number) =>
   Number.isFinite(value) ? Number(value.toFixed(6)) : 0;
+
+const isCalibrationMode = (mode: DigitizerMode): mode is CalKey =>
+  mode === "x1" || mode === "x2" || mode === "y1" || mode === "y2";

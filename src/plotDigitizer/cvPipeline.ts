@@ -13,13 +13,9 @@ export const detectPlotPoints = (
   imageData: ImageData,
   plotType: PlotType
 ): Detection => {
-  const cv = (window as unknown as {cv?: unknown}).cv;
-  const note = cv
-    ? "OpenCV.js detected; lightweight pixel fallback still used for portability."
-    : "OpenCV.js unavailable; using lightweight pixel fallback.";
   return plotType === "bar"
-    ? {points: detectBars(imageData), note}
-    : {points: detectXY(imageData), note};
+    ? {points: detectBars(imageData), note: "Rough bar detection complete."}
+    : {points: detectXY(imageData), note: "Rough curve detection complete."};
 };
 
 const detectXY = ({data, width, height}: ImageData): PixelPoint[] => {
