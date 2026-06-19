@@ -664,7 +664,6 @@ em {
 
 .research-card.featured h2 {
   max-width: 14ch;
-  font-family: Georgia, "Times New Roman", serif;
   font-size: clamp(2rem, 3.2vw, 3rem);
   font-weight: 620;
 }
