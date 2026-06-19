@@ -35,7 +35,9 @@ const profileDetails = [
     label: "Institution",
     value: (
       <>
-        Ringe Lab
+        <a href="https://www.ringelab.com/" target="_blank" rel="noreferrer">
+          Ringe Lab
+        </a>
         <br />
         Department of Chemistry, Korea University
       </>
@@ -1623,9 +1625,9 @@ function ResearchPage() {
 }
 
 function CaffeineChart({curves, intakes, eliminationHalfLife, halfLifeRange}) {
-  const width = 960;
-  const height = 430;
-  const padding = {top: 28, right: 24, bottom: 54, left: 64};
+  const width = 760;
+  const height = 390;
+  const padding = {top: 26, right: 18, bottom: 50, left: 50};
   const plotWidth = width - padding.left - padding.right;
   const plotHeight = height - padding.top - padding.bottom;
   const maxValue = Math.max(40, ...curves.upper.map(value => value * 1.12));
@@ -1647,7 +1649,7 @@ function CaffeineChart({curves, intakes, eliminationHalfLife, halfLifeRange}) {
         ).toFixed(2)}`
     )
     .join(" ")} Z`;
-  const tickStep = Math.max(1, Math.round(60 / curves.stepMinutes));
+  const tickStep = Math.max(1, Math.round(120 / curves.stepMinutes));
   const yTicks = Array.from({length: 5}, (_, index) => (maxValue / 4) * index);
 
   return (

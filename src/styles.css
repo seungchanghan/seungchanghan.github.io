@@ -567,6 +567,15 @@ em {
   line-height: 1.35;
 }
 
+.profile-details dd a {
+  color: var(--accent);
+}
+
+.profile-details dd a:hover,
+.profile-details dd a:focus-visible {
+  color: var(--accent-dark);
+}
+
 .about-stack {
   display: grid;
   gap: 18px;
@@ -852,12 +861,12 @@ em {
   background:
     linear-gradient(
       180deg,
-      color-mix(in srgb, var(--surface) 84%, transparent) 0%,
-      color-mix(in srgb, var(--surface) 64%, transparent) 100%
+      color-mix(in srgb, var(--surface) 92%, transparent) 0%,
+      color-mix(in srgb, var(--surface) 84%, transparent) 100%
     ),
     var(--experiment-bg) center top / 100% auto no-repeat;
-  opacity: 0.62;
-  filter: saturate(0.98) contrast(0.96);
+  opacity: 0.42;
+  filter: saturate(0.9) contrast(0.92);
   pointer-events: none;
 }
 
@@ -867,7 +876,7 @@ em {
 }
 
 .fun-experiment.open::before {
-  opacity: 0.5;
+  opacity: 0.3;
 }
 
 .experiment-summary {
@@ -1206,7 +1215,7 @@ input[type="range"] {
 
 .chart-wrap {
   padding: 12px 10px 8px;
-  overflow-x: auto;
+  overflow: hidden;
   border: 1px solid var(--line);
   border-radius: 10px;
   background: var(--surface);
@@ -1215,7 +1224,7 @@ input[type="range"] {
 .caffeine-chart {
   display: block;
   width: 100%;
-  min-width: 620px;
+  max-width: 100%;
   height: auto;
 }
 
@@ -1462,6 +1471,7 @@ input[type="range"] {
   min-height: 30px;
   align-items: center;
   gap: 7px;
+  flex-wrap: wrap;
   color: var(--ink);
   font-family: Georgia, "Times New Roman", serif;
   font-size: clamp(1.05rem, 1.8vw, 1.38rem);
@@ -1580,12 +1590,11 @@ input[type="range"] {
 }
 
 .energy-value-card strong {
-  overflow: hidden;
   color: var(--ink);
   font-family: "SFMono-Regular", Consolas, monospace;
   font-size: clamp(0.94rem, 1.6vw, 1.25rem);
   font-weight: 650;
-  text-overflow: ellipsis;
+  overflow-wrap: anywhere;
 }
 
 .energy-value-card p {
@@ -1603,29 +1612,33 @@ input[type="range"] {
 }
 
 .tool-result-row {
-  display: flex;
+  display: grid;
   min-height: 44px;
   padding: 10px 12px;
   border: 1px solid var(--line);
   border-radius: 8px;
   align-items: center;
-  justify-content: space-between;
+  grid-template-columns: minmax(0, 1fr) auto;
   gap: 10px;
   background: color-mix(in srgb, var(--surface) 70%, transparent);
 }
 
 .tool-result-row span {
+  min-width: 0;
   color: var(--muted);
   font-size: 0.68rem;
   font-weight: 700;
+  overflow-wrap: anywhere;
 }
 
 .tool-result-row strong {
+  min-width: 0;
   color: var(--ink);
   font-family: "SFMono-Regular", Consolas, monospace;
   font-size: 0.75rem;
   font-weight: 650;
   text-align: right;
+  overflow-wrap: anywhere;
 }
 
 .boltzmann-panel {
@@ -2470,11 +2483,11 @@ footer a {
     background:
       linear-gradient(
         180deg,
-        color-mix(in srgb, var(--surface) 88%, transparent) 0%,
-        color-mix(in srgb, var(--surface) 66%, transparent) 100%
+        color-mix(in srgb, var(--surface) 94%, transparent) 0%,
+        color-mix(in srgb, var(--surface) 88%, transparent) 100%
       ),
       var(--experiment-bg) center top / 100% auto no-repeat;
-    opacity: 0.48;
+    opacity: 0.34;
   }
 
   .menu-button {
@@ -2686,6 +2699,37 @@ footer a {
     font-size: 0.9rem;
   }
 
+  .chart-wrap {
+    padding: 10px 6px 8px;
+  }
+
+  .chart-label,
+  .axis-title {
+    font-size: 10px;
+  }
+
+  .chart-legend {
+    padding-inline: 6px;
+    gap: 8px 12px;
+  }
+
+  .equation-line {
+    gap: 5px;
+  }
+
+  .tool-detail-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .tool-result-row {
+    grid-template-columns: 1fr;
+    align-items: start;
+  }
+
+  .tool-result-row strong {
+    text-align: left;
+  }
+
   .model-explanation {
     display: block;
   }
@@ -2764,10 +2808,21 @@ footer a {
   .tool-input-grid,
   .tool-input-grid.three,
   .energy-card-grid,
+  .redhead-layout .energy-card-grid,
   .boltzmann-grid,
   .thermo-result-grid,
   .result-stats {
     grid-template-columns: 1fr;
+  }
+
+  .energy-value-card {
+    min-height: 0;
+  }
+
+  .energy-value-card strong {
+    font-size: 1rem;
+    overflow-wrap: normal;
+    word-break: normal;
   }
 
   .result-stats {
