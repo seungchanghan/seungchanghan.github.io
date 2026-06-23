@@ -73,6 +73,32 @@ button {
   cursor: pointer;
 }
 
+:where(a, button, input, textarea, select):focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+}
+
+.skip-link {
+  position: fixed;
+  z-index: 100;
+  top: 10px;
+  left: 10px;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  background: var(--paper);
+  box-shadow: var(--shadow);
+  color: var(--ink);
+  font-size: 0.78rem;
+  font-weight: 750;
+  transform: translateY(-150%);
+  transition: transform 0.2s ease;
+}
+
+.skip-link:focus-visible {
+  transform: translateY(0);
+}
+
 h1,
 h2,
 h3,
@@ -247,6 +273,10 @@ em {
 .page-stage {
   display: grid;
   min-height: calc(100vh - 148px);
+}
+
+.page-stage:focus {
+  outline: none;
 }
 
 .page {
@@ -819,10 +849,17 @@ em {
 }
 
 .publication-doi,
-.publication-note {
+.publication-note,
+.publication-context {
   margin-bottom: 0;
   color: var(--muted);
   font-size: 0.82rem;
+}
+
+.publication-context {
+  max-width: 66ch;
+  margin-bottom: 10px;
+  color: color-mix(in srgb, var(--muted) 84%, var(--ink));
 }
 
 .publication-note {
@@ -1058,17 +1095,33 @@ em {
 }
 
 .add-button,
+.reset-button,
 .remove-button {
   border: 1px solid var(--line);
   background: var(--tool-field);
   font-weight: 700;
 }
 
-.add-button {
+.add-button,
+.reset-button {
   padding: 8px 12px;
   border-radius: 7px;
-  color: var(--accent);
   font-size: 0.75rem;
+}
+
+.add-button {
+  margin-left: auto;
+  color: var(--accent);
+}
+
+.reset-button {
+  color: var(--muted);
+}
+
+.add-button:hover,
+.reset-button:hover {
+  border-color: var(--accent);
+  color: var(--accent);
 }
 
 .intake-list {
@@ -2842,6 +2895,9 @@ footer a {
 
   .experiment-summary small {
     font-size: 0.7rem;
+    overflow: visible;
+    text-overflow: clip;
+    white-space: normal;
   }
 
   .menu-button span {
@@ -3131,6 +3187,7 @@ footer a {
 
   .control-heading {
     align-items: flex-start;
+    flex-wrap: wrap;
   }
 
   .availability-form,
@@ -3191,7 +3248,9 @@ footer a {
   *,
   *::before,
   *::after {
-    animation-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
     transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
   }
 }

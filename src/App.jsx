@@ -157,7 +157,9 @@ const publications = [
     volume: "9",
     pages: "471-481",
     year: "2026",
-    doi: "10.1038/s41929-026-01526-7"
+    doi: "10.1038/s41929-026-01526-7",
+    context:
+      "Examines where descriptor models clarify electrochemical CO2 reduction trends, and where they can mislead without careful physical interpretation."
   }
 ];
 
@@ -1558,9 +1560,10 @@ function ResearchPage() {
         eyebrow="Research"
         title="Catalytic interfaces and atomistic rigor"
       >
-        My research centers on ECO2RR and related catalytic interfaces, using
-        electronic-structure theory, statistical sampling, and MLIPs to examine
-        what atomistic models can reliably explain.
+        My research centers on electrochemical CO<sub>2</sub> reduction and
+        related catalytic interfaces, using electronic-structure theory,
+        statistical sampling, and MLIPs to examine what atomistic models can
+        reliably explain.
       </PageIntro>
       <div className="research-grid">
         {researchAreas.map(area => (
@@ -1613,6 +1616,7 @@ function ResearchPage() {
                   <strong>{publication.volume}</strong>, {publication.pages} (
                   {publication.year})
                 </p>
+                <p className="publication-context">{publication.context}</p>
                 <p className="publication-doi">doi: {publication.doi}</p>
               </article>
             </a>
@@ -2786,7 +2790,7 @@ function ThermochemistryTool() {
 function ForFunPage() {
   const hasSharedMeeting = useMemo(() => Boolean(getMeetingDataFromUrl()), []);
   const [openExperiment, setOpenExperiment] = useState(
-    hasSharedMeeting ? "02" : null
+    hasSharedMeeting ? "02" : "01"
   );
   const [intakes, setIntakes] = useState(defaultIntakes);
   const [eliminationHalfLife, setEliminationHalfLife] = useState(6);
@@ -2877,6 +2881,15 @@ function ForFunPage() {
     ]);
   };
 
+  const resetCaffeineInputs = () => {
+    setIntakes(defaultIntakes.map(intake => ({...intake})));
+    setEliminationHalfLife(6);
+    setHalfLifeRange(1);
+    setAbsorptionHalfLife(30);
+    setPlotStart("06:00");
+    setPlotEnd("24:00");
+  };
+
   const toggleExperiment = experimentId => {
     clearMeetingDataFromUrl();
     setOpenExperiment(current =>
@@ -2922,6 +2935,13 @@ function ForFunPage() {
                   onClick={addIntake}
                 >
                   + Add
+                </button>
+                <button
+                  className="reset-button"
+                  type="button"
+                  onClick={resetCaffeineInputs}
+                >
+                  Reset
                 </button>
               </div>
 
@@ -3219,6 +3239,9 @@ function App() {
   const [isLogoCollapsed, setIsLogoCollapsed] = useState(false);
   const logoRef = useRef(null);
   const fullLogoRef = useRef(null);
+  const menuButtonRef = useRef(null);
+  const mainRef = useRef(null);
+  const hasMountedRef = useRef(false);
   const page = usePageRouter();
   const CurrentPage = pageComponents[page];
 
@@ -3227,7 +3250,27 @@ function App() {
       page === "home"
         ? "Seungchang Han | Computational Materials Research"
         : `${pages.find(item => item.id === page)?.label} | Seungchang Han`;
+
+    if (hasMountedRef.current) {
+      mainRef.current?.focus({preventScroll: true});
+    } else {
+      hasMountedRef.current = true;
+    }
   }, [page]);
+
+  useEffect(() => {
+    if (!menuOpen) return undefined;
+
+    const closeOnEscape = event => {
+      if (event.key === "Escape") {
+        setMenuOpen(false);
+        menuButtonRef.current?.focus();
+      }
+    };
+
+    window.addEventListener("keydown", closeOnEscape);
+    return () => window.removeEventListener("keydown", closeOnEscape);
+  }, [menuOpen]);
 
   useEffect(() => {
     const syncLogoState = () => {
@@ -3259,6 +3302,9 @@ function App() {
 
   return (
     <div className="app-shell">
+      <a className="skip-link" href="#main-content">
+        Skip to content
+      </a>
       <header className="site-header">
         <a
           ref={logoRef}
@@ -3275,16 +3321,22 @@ function App() {
           </span>
         </a>
         <button
+          ref={menuButtonRef}
           className="menu-button"
           type="button"
           aria-label="Toggle navigation"
+          aria-controls="site-navigation"
           aria-expanded={menuOpen}
           onClick={() => setMenuOpen(open => !open)}
         >
           <span />
           <span />
         </button>
-        <nav className={menuOpen ? "site-nav open" : "site-nav"}>
+        <nav
+          id="site-navigation"
+          className={menuOpen ? "site-nav open" : "site-nav"}
+          aria-label="Primary navigation"
+        >
           {pages.map(item => (
             <a
               className={page === item.id ? "active" : ""}
@@ -3307,8 +3359,13 @@ function App() {
         </nav>
       </header>
 
-      <main className="page-stage">
-        <CurrentPage />
+      <main
+        id="main-content"
+        className="page-stage"
+        ref={mainRef}
+        tabIndex="-1"
+      >
+        <CurrentPage key={page} />
       </main>
 
       <footer>
