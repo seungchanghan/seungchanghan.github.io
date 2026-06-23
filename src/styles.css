@@ -3085,6 +3085,15 @@ footer a {
     justify-content: space-between;
   }
 
+  .identity-fields,
+  .availability-row {
+    grid-template-columns: 1fr;
+  }
+
+  .availability-row label {
+    grid-template-rows: auto 38px auto;
+  }
+
   .result-stats {
     grid-template-columns: 1fr 1fr 1fr;
   }
