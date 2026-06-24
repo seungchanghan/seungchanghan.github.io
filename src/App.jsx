@@ -7,6 +7,7 @@ import funBgThermoUrl from "./assets/fun-bg-thermo.webp";
 import funBgTimeUrl from "./assets/fun-bg-time.webp";
 import funBgTpdUrl from "./assets/fun-bg-tpd.webp";
 import contactBackgroundUrl from "./assets/contact-bg.webp";
+import ringeLabLogoUrl from "./assets/ringelab-logo.webp";
 import heroBackgroundUrl from "../user-input/main.webp";
 
 const pages = [
@@ -1014,6 +1015,7 @@ function useDarkMode() {
 
 function getPageFromHash() {
   const page = window.location.hash.replace("#/", "") || "home";
+  if (page === "landing") return page;
   return pages.some(item => item.id === page) ? page : "home";
 }
 
@@ -3225,12 +3227,70 @@ function ContactPage() {
   );
 }
 
+function ArrowIcon() {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <path d="M5 12h13" />
+      <path d="m13 6 6 6-6 6" />
+    </svg>
+  );
+}
+
+function LandingPage() {
+  return (
+    <section className="page landing-page">
+      <div className="section-shell landing-shell">
+        <div className="landing-copy">
+          <div className="landing-mark" aria-hidden="true">
+            <span>Seungchang Han</span>
+          </div>
+          <h1>Welcome.</h1>
+          <p>
+            Thanks for scanning the QR code. Choose where you would like to go
+            next.
+          </p>
+        </div>
+
+        <div className="landing-choice-grid" aria-label="Destination links">
+          <a className="landing-choice personal" href="/#/home">
+            <span className="choice-logo choice-logo-text" aria-hidden="true">
+              SH
+            </span>
+            <span>
+              <strong>Seungchang Han</strong>
+              <small>Personal academic portfolio</small>
+            </span>
+            <ArrowIcon />
+          </a>
+
+          <a
+            className="landing-choice lab"
+            href="https://www.ringelab.com/"
+            target="_blank"
+            rel="noreferrer"
+          >
+            <span className="choice-logo choice-logo-image" aria-hidden="true">
+              <img src={ringeLabLogoUrl} alt="" />
+            </span>
+            <span>
+              <strong>Ringe Lab</strong>
+              <small>Research group website</small>
+            </span>
+            <ArrowIcon />
+          </a>
+        </div>
+      </div>
+    </section>
+  );
+}
+
 const pageComponents = {
   home: HomePage,
   about: AboutPage,
   research: ResearchPage,
   fun: ForFunPage,
-  contact: ContactPage
+  contact: ContactPage,
+  landing: LandingPage
 };
 
 function App() {
@@ -3246,10 +3306,21 @@ function App() {
   const CurrentPage = pageComponents[page];
 
   useEffect(() => {
+    const pageTitle =
+      page === "landing"
+        ? "Welcome"
+        : pages.find(item => item.id === page)?.label;
+    const robotsMeta = document.querySelector('meta[name="robots"]');
+
     document.title =
       page === "home"
         ? "Seungchang Han | Computational Materials Research"
-        : `${pages.find(item => item.id === page)?.label} | Seungchang Han`;
+        : `${pageTitle} | Seungchang Han`;
+
+    robotsMeta?.setAttribute(
+      "content",
+      page === "landing" ? "noindex, nofollow" : "index, follow"
+    );
 
     if (hasMountedRef.current) {
       mainRef.current?.focus({preventScroll: true});

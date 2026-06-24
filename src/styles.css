@@ -473,6 +473,164 @@ em {
   align-self: start;
 }
 
+.landing-page {
+  display: grid;
+  align-self: stretch;
+  min-height: calc(100vh - 148px);
+  padding-block: clamp(48px, 8vh, 92px);
+  place-items: center;
+}
+
+.landing-shell {
+  display: grid;
+  grid-template-columns: minmax(0, 0.8fr) minmax(320px, 0.72fr);
+  gap: clamp(34px, 6vw, 82px);
+  align-items: center;
+}
+
+.landing-copy {
+  max-width: 680px;
+}
+
+.landing-mark {
+  display: inline-flex;
+  margin-bottom: 28px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--accent);
+  color: var(--ink);
+  font-size: 0.94rem;
+  font-weight: 720;
+  letter-spacing: 0;
+  line-height: 1.1;
+}
+
+.landing-copy h1 {
+  max-width: 8ch;
+  margin-bottom: 20px;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: clamp(3.8rem, 8vw, 7.1rem);
+  font-weight: 560;
+  letter-spacing: -0.045em;
+}
+
+.landing-copy p {
+  max-width: 42ch;
+  margin-bottom: 0;
+  color: var(--muted-strong);
+  font-size: clamp(1rem, 1.45vw, 1.18rem);
+}
+
+.landing-choice-grid {
+  display: grid;
+  gap: 14px;
+}
+
+.landing-choice {
+  display: grid;
+  min-height: 126px;
+  padding: 24px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  grid-template-columns: 74px minmax(0, 1fr) 28px;
+  gap: 20px;
+  align-items: center;
+  background: var(--surface);
+  color: var(--ink);
+  transition:
+    transform 0.22s ease,
+    border-color 0.22s ease,
+    box-shadow 0.22s ease,
+    background 0.22s ease;
+}
+
+.landing-choice:hover,
+.landing-choice:focus-visible {
+  transform: translateY(-4px);
+  border-color: color-mix(in srgb, var(--accent) 54%, var(--line));
+  box-shadow: var(--shadow);
+}
+
+.landing-choice:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+}
+
+.landing-choice.personal {
+  background:
+    linear-gradient(
+      135deg,
+      color-mix(in srgb, var(--accent) 11%, transparent),
+      transparent 46%
+    ),
+    var(--surface);
+}
+
+.landing-choice.lab {
+  background:
+    linear-gradient(
+      135deg,
+      color-mix(in srgb, #5f9d8e 13%, transparent),
+      transparent 48%
+    ),
+    var(--surface);
+}
+
+.choice-logo {
+  display: grid;
+  width: 68px;
+  height: 68px;
+  border: 1px solid var(--line);
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--paper) 82%, transparent);
+  place-items: center;
+}
+
+.choice-logo-text {
+  color: var(--accent);
+  font-size: 1.05rem;
+  font-weight: 780;
+  letter-spacing: 0;
+}
+
+.choice-logo-image img {
+  display: block;
+  width: 52px;
+  height: 52px;
+  object-fit: contain;
+}
+
+.landing-choice strong,
+.landing-choice small {
+  display: block;
+  min-width: 0;
+}
+
+.landing-choice strong {
+  margin-bottom: 6px;
+  font-size: clamp(1.2rem, 2vw, 1.58rem);
+  font-weight: 650;
+  letter-spacing: -0.025em;
+  line-height: 1.12;
+}
+
+.landing-choice small {
+  color: var(--muted-strong);
+  font-size: 0.78rem;
+  font-weight: 650;
+  line-height: 1.35;
+}
+
+.landing-choice svg {
+  width: 24px;
+  height: 24px;
+  color: var(--accent);
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 1.8;
+}
+
 .page-intro {
   display: grid;
   margin-bottom: 46px;
@@ -2789,6 +2947,18 @@ footer a {
     gap: 18px;
   }
 
+  .landing-shell {
+    grid-template-columns: 1fr;
+  }
+
+  .landing-copy {
+    max-width: 760px;
+  }
+
+  .landing-copy h1 {
+    max-width: none;
+  }
+
   .hero {
     grid-template-columns: minmax(0, 1fr);
   }
@@ -3011,6 +3181,42 @@ footer a {
     font-size: 1rem;
   }
 
+  .landing-page {
+    align-self: start;
+    min-height: calc(100vh - 132px);
+    padding-block: 42px;
+  }
+
+  .landing-shell {
+    gap: 30px;
+  }
+
+  .landing-mark {
+    margin-bottom: 22px;
+  }
+
+  .landing-copy h1 {
+    margin-bottom: 16px;
+    font-size: clamp(3.2rem, 15vw, 4.8rem);
+  }
+
+  .landing-choice {
+    min-height: 112px;
+    padding: 20px;
+    grid-template-columns: 62px minmax(0, 1fr) 24px;
+    gap: 16px;
+  }
+
+  .choice-logo {
+    width: 58px;
+    height: 58px;
+  }
+
+  .choice-logo-image img {
+    width: 45px;
+    height: 45px;
+  }
+
   .page-intro {
     display: block;
     margin-bottom: 36px;
@@ -3186,6 +3392,27 @@ footer a {
 @media (max-width: 450px) {
   .logo {
     font-size: 0.9rem;
+  }
+
+  .landing-choice {
+    min-height: 106px;
+    padding: 16px;
+    grid-template-columns: 52px minmax(0, 1fr) 22px;
+    gap: 12px;
+  }
+
+  .choice-logo {
+    width: 50px;
+    height: 50px;
+  }
+
+  .choice-logo-image img {
+    width: 39px;
+    height: 39px;
+  }
+
+  .landing-choice small {
+    font-size: 0.72rem;
   }
 
   .hero-actions {
