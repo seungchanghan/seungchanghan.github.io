@@ -490,6 +490,9 @@ em {
 
 .landing-copy {
   max-width: 680px;
+  transition:
+    opacity 0.32s ease,
+    transform 0.42s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 .landing-mark {
@@ -526,6 +529,7 @@ em {
 }
 
 .landing-choice {
+  position: relative;
   display: grid;
   min-height: 126px;
   padding: 24px;
@@ -536,11 +540,37 @@ em {
   align-items: center;
   background: var(--surface);
   color: var(--ink);
+  overflow: hidden;
   transition:
-    transform 0.22s ease,
-    border-color 0.22s ease,
-    box-shadow 0.22s ease,
-    background 0.22s ease;
+    opacity 0.28s ease,
+    transform 0.42s cubic-bezier(0.22, 1, 0.36, 1),
+    border-color 0.32s ease,
+    box-shadow 0.32s ease,
+    background 0.32s ease,
+    filter 0.32s ease;
+}
+
+.landing-choice::after {
+  position: absolute;
+  inset: 0;
+  content: "";
+  background: linear-gradient(
+    110deg,
+    transparent 0%,
+    color-mix(in srgb, #ffffff 32%, transparent) 42%,
+    transparent 70%
+  );
+  opacity: 0;
+  pointer-events: none;
+  transform: translateX(-55%);
+  transition:
+    opacity 0.26s ease,
+    transform 0.48s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.landing-choice > * {
+  position: relative;
+  z-index: 1;
 }
 
 .landing-choice:hover,
@@ -553,6 +583,43 @@ em {
 .landing-choice:focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: 3px;
+}
+
+.landing-choice:hover::after,
+.landing-choice:focus-visible::after {
+  opacity: 0.78;
+  transform: translateX(56%);
+}
+
+.landing-page.leaving {
+  pointer-events: none;
+}
+
+.landing-page.leaving .landing-copy {
+  opacity: 0;
+  transform: translateX(-18px);
+}
+
+.landing-page.leaving .landing-choice.lab {
+  opacity: 0;
+  filter: blur(3px);
+  transform: translateY(10px) scale(0.985);
+}
+
+.landing-page.leaving .landing-choice.personal {
+  z-index: 2;
+  border-color: var(--accent);
+  box-shadow: 0 30px 80px color-mix(in srgb, var(--accent) 20%, transparent);
+  transform: translateY(-6px) scale(1.045);
+}
+
+.landing-page.leaving .landing-choice.personal::after {
+  opacity: 0.88;
+  transform: translateX(78%);
+}
+
+.landing-page.leaving .landing-choice.personal svg {
+  transform: translateX(5px);
 }
 
 .landing-choice.personal {
@@ -629,6 +696,7 @@ em {
   stroke-linecap: round;
   stroke-linejoin: round;
   stroke-width: 1.8;
+  transition: transform 0.26s ease;
 }
 
 .page-intro {

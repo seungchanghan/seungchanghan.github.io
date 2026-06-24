@@ -3237,8 +3237,30 @@ function ArrowIcon() {
 }
 
 function LandingPage() {
+  const [isLeaving, setIsLeaving] = useState(false);
+
+  const handlePersonalClick = event => {
+    event.preventDefault();
+
+    const prefersReducedMotion = window.matchMedia?.(
+      "(prefers-reduced-motion: reduce)"
+    ).matches;
+
+    if (prefersReducedMotion) {
+      window.location.href = "/#/home";
+      return;
+    }
+
+    setIsLeaving(true);
+    window.setTimeout(() => {
+      window.location.href = "/#/home";
+    }, 420);
+  };
+
   return (
-    <section className="page landing-page">
+    <section
+      className={isLeaving ? "page landing-page leaving" : "page landing-page"}
+    >
       <div className="section-shell landing-shell">
         <div className="landing-copy">
           <div className="landing-mark" aria-hidden="true">
@@ -3252,7 +3274,11 @@ function LandingPage() {
         </div>
 
         <div className="landing-choice-grid" aria-label="Destination links">
-          <a className="landing-choice personal" href="/#/home">
+          <a
+            className="landing-choice personal"
+            href="/#/home"
+            onClick={handlePersonalClick}
+          >
             <span className="choice-logo choice-logo-text" aria-hidden="true">
               SH
             </span>
