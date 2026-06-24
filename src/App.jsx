@@ -3237,10 +3237,33 @@ function ArrowIcon() {
 }
 
 function LandingPage() {
-  const [isLeaving, setIsLeaving] = useState(false);
+  const landingRef = useRef(null);
+  const landingCopyRef = useRef(null);
+  const personalChoiceRef = useRef(null);
+  const labChoiceRef = useRef(null);
+  const transitionTimelineRef = useRef(null);
+  const isTransitioningRef = useRef(false);
+
+  useEffect(() => {
+    return () => {
+      transitionTimelineRef.current?.kill();
+    };
+  }, []);
 
   const handlePersonalClick = event => {
+    if (
+      event.defaultPrevented ||
+      event.button !== 0 ||
+      event.metaKey ||
+      event.altKey ||
+      event.ctrlKey ||
+      event.shiftKey
+    ) {
+      return;
+    }
+
     event.preventDefault();
+    if (isTransitioningRef.current) return;
 
     const prefersReducedMotion = window.matchMedia?.(
       "(prefers-reduced-motion: reduce)"
@@ -3251,18 +3274,81 @@ function LandingPage() {
       return;
     }
 
-    setIsLeaving(true);
-    window.setTimeout(() => {
+    const landing = landingRef.current;
+    const copy = landingCopyRef.current;
+    const personalChoice = personalChoiceRef.current;
+    const labChoice = labChoiceRef.current;
+
+    if (!landing || !copy || !personalChoice || !labChoice) {
       window.location.href = "/#/home";
-    }, 420);
+      return;
+    }
+
+    isTransitioningRef.current = true;
+    landing.classList.add("is-transitioning");
+    transitionTimelineRef.current?.kill();
+
+    transitionTimelineRef.current = gsap
+      .timeline({
+        defaults: {ease: "power3.out"},
+        onComplete: () => {
+          window.location.href = "/#/home";
+        }
+      })
+      .to(
+        copy,
+        {
+          autoAlpha: 0,
+          x: -16,
+          duration: 0.24,
+          ease: "power2.out"
+        },
+        0
+      )
+      .to(
+        labChoice,
+        {
+          autoAlpha: 0,
+          y: 8,
+          duration: 0.22,
+          ease: "power2.out"
+        },
+        0.03
+      )
+      .to(
+        personalChoice,
+        {
+          y: -2,
+          scale: 1.018,
+          duration: 0.28
+        },
+        0
+      )
+      .to(
+        personalChoice.querySelector("svg"),
+        {
+          x: 5,
+          duration: 0.2,
+          ease: "power2.out"
+        },
+        0.02
+      )
+      .to(
+        landing,
+        {
+          autoAlpha: 0,
+          y: -10,
+          duration: 0.22,
+          ease: "power2.in"
+        },
+        0.34
+      );
   };
 
   return (
-    <section
-      className={isLeaving ? "page landing-page leaving" : "page landing-page"}
-    >
+    <section className="page landing-page" ref={landingRef}>
       <div className="section-shell landing-shell">
-        <div className="landing-copy">
+        <div className="landing-copy" ref={landingCopyRef}>
           <div className="landing-mark" aria-hidden="true">
             <span>Seungchang Han</span>
           </div>
@@ -3278,6 +3364,7 @@ function LandingPage() {
             className="landing-choice personal"
             href="/#/home"
             onClick={handlePersonalClick}
+            ref={personalChoiceRef}
           >
             <span className="choice-logo choice-logo-text" aria-hidden="true">
               SH
@@ -3294,6 +3381,7 @@ function LandingPage() {
             href="https://www.ringelab.com/"
             target="_blank"
             rel="noreferrer"
+            ref={labChoiceRef}
           >
             <span className="choice-logo choice-logo-image" aria-hidden="true">
               <img src={ringeLabLogoUrl} alt="" />
