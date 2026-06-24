@@ -2840,6 +2840,7 @@ input[type="range"] {
   overflow: clip;
   min-height: calc(100vh - 148px);
   padding-block: clamp(60px, 9vh, 108px);
+  animation: none;
   isolation: isolate;
 }
 
@@ -2867,6 +2868,7 @@ input[type="range"] {
   grid-template-columns: minmax(0, 1.06fr) minmax(320px, 0.82fr);
   gap: clamp(42px, 7vw, 86px);
   align-items: center;
+  animation: page-enter 0.35s ease both;
 }
 
 .contact-page .page-intro {
