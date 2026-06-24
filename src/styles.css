@@ -4,8 +4,9 @@
   --surface: #efede6;
   --surface-strong: #e4e0d5;
   --ink: #1d2421;
-  --muted: #68706c;
-  --line: #d7d5ce;
+  --muted: #545e59;
+  --muted-strong: #3f4944;
+  --line: #cfccc3;
   --accent: #a9532c;
   --accent-dark: #873f20;
   --header: rgba(247, 246, 242, 0.92);
@@ -29,7 +30,8 @@
   --surface: #252e2a;
   --surface-strong: #303a35;
   --ink: #f7f6f2;
-  --muted: #b8bfbb;
+  --muted: #c2c9c5;
+  --muted-strong: #dde2df;
   --line: #3c4741;
   --accent: #e09570;
   --accent-dark: #f0ac88;
@@ -331,7 +333,7 @@ em {
 .page-summary {
   max-width: 620px;
   margin-bottom: 0;
-  color: var(--muted);
+  color: var(--muted-strong);
   font-size: clamp(1rem, 1.5vw, 1.2rem);
 }
 
@@ -564,7 +566,7 @@ em {
 
 .about-profile > p {
   margin-bottom: 30px;
-  color: var(--muted);
+  color: var(--muted-strong);
 }
 
 .profile-details {
@@ -650,7 +652,7 @@ em {
 
 .timeline-item p {
   margin-bottom: 10px;
-  color: var(--muted);
+  color: var(--muted-strong);
 }
 
 .timeline-item ul {
@@ -732,7 +734,7 @@ em {
 .research-card > p,
 .method-card > p {
   margin-bottom: 24px;
-  color: var(--muted);
+  color: var(--muted-strong);
   font-size: 0.88rem;
 }
 
@@ -859,7 +861,7 @@ em {
 .publication-context {
   max-width: 66ch;
   margin-bottom: 10px;
-  color: color-mix(in srgb, var(--muted) 84%, var(--ink));
+  color: var(--muted-strong);
 }
 
 .publication-note {
@@ -963,7 +965,7 @@ em {
 }
 
 .experiment-summary small {
-  color: var(--muted);
+  color: var(--muted-strong);
   font-size: 0.76rem;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -1038,7 +1040,7 @@ em {
 .experiment-description {
   max-width: 760px;
   margin: 18px 8px;
-  color: var(--muted);
+  color: var(--muted-strong);
   font-size: 0.78rem;
 }
 
@@ -1249,7 +1251,7 @@ input[type="range"] {
   padding-top: 18px;
   margin: 20px 0 0;
   border-top: 1px solid var(--line);
-  color: var(--muted);
+  color: var(--muted-strong);
   font-size: 0.67rem;
   line-height: 1.55;
 }
@@ -1378,7 +1380,7 @@ input[type="range"] {
   border-top: 1px solid var(--line);
   justify-content: space-between;
   gap: 30px;
-  color: var(--muted);
+  color: var(--muted-strong);
   font-size: 0.72rem;
 }
 
@@ -2659,7 +2661,7 @@ input[type="range"] {
 
 .contact-page::after {
   z-index: -1;
-  background: color-mix(in srgb, var(--paper) 25%, transparent);
+  background: color-mix(in srgb, var(--paper) 68%, transparent);
 }
 
 .contact-inner {
@@ -2678,9 +2680,10 @@ input[type="range"] {
   padding: 32px;
   border: 1px solid var(--line);
   border-radius: 14px;
-  background: color-mix(in srgb, var(--surface) 90%, transparent);
+  background: color-mix(in srgb, var(--surface) 96%, transparent);
   backdrop-filter: blur(16px);
-  color: var(--muted);
+  color: var(--muted-strong);
+  box-shadow: var(--shadow);
 }
 
 .contact-card p {
@@ -2777,7 +2780,7 @@ footer a {
 }
 
 .footer-affiliation {
-  color: color-mix(in srgb, var(--muted) 86%, var(--ink));
+  color: var(--muted-strong);
   text-align: right;
 }
 
