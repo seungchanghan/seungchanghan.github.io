@@ -304,7 +304,17 @@ em {
   min-height: calc(100vh - 78px);
   overflow: clip;
   padding-block: 0;
-  animation: none;
+  animation: hero-page-enter 0.42s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@keyframes hero-page-enter {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
 }
 
 .hero {
@@ -323,6 +333,19 @@ em {
   width: 100%;
   max-width: 780px;
   padding-block: clamp(82px, 12vh, 142px);
+  animation: hero-copy-enter 0.48s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@keyframes hero-copy-enter {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .hero-copy h1 {
