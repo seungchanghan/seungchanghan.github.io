@@ -3354,8 +3354,8 @@ function LandingPage() {
           </div>
           <h1>Welcome.</h1>
           <p>
-            Thanks for scanning the QR code. Choose where you would like to go
-            next.
+            Thanks for scanning the QR code. I am currently a member of Ringe
+            Lab at Korea University. Choose where you would like to go next.
           </p>
         </div>
 
@@ -3490,7 +3490,11 @@ function App() {
       <a className="skip-link" href="#main-content">
         Skip to content
       </a>
-      <header className="site-header">
+      <header
+        className={
+          page === "landing" ? "site-header landing-header" : "site-header"
+        }
+      >
         <a
           ref={logoRef}
           className={isLogoCollapsed ? "logo collapsed" : "logo"}
@@ -3519,7 +3523,13 @@ function App() {
         </button>
         <nav
           id="site-navigation"
-          className={menuOpen ? "site-nav open" : "site-nav"}
+          className={
+            page === "landing"
+              ? "site-nav landing-nav"
+              : menuOpen
+                ? "site-nav open"
+                : "site-nav"
+          }
           aria-label="Primary navigation"
         >
           {pages.map(item => (
