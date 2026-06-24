@@ -3388,7 +3388,7 @@ function LandingPage() {
             </span>
             <span>
               <strong>Ringe Lab</strong>
-              <small>Research group website</small>
+              <small>Led by Stefan Ringe</small>
             </span>
             <ArrowIcon />
           </a>
