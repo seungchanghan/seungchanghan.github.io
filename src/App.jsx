@@ -1,4 +1,4 @@
-import {useEffect, useLayoutEffect, useMemo, useRef, useState} from "react";
+import {useEffect, useMemo, useRef, useState} from "react";
 import {createPortal} from "react-dom";
 import {gsap} from "gsap";
 import funBgCoffeeUrl from "./assets/fun-bg-coffee.webp";
@@ -3367,11 +3367,11 @@ function LandingPage() {
             ref={personalChoiceRef}
           >
             <span className="choice-logo choice-logo-text" aria-hidden="true">
-              SH
+              Seungchang Han
             </span>
             <span>
-              <strong>Seungchang Han</strong>
-              <small>Personal academic portfolio</small>
+              <strong>Academic portfolio</strong>
+              <small>Computational materials research</small>
             </span>
             <ArrowIcon />
           </a>
@@ -3410,9 +3410,6 @@ const pageComponents = {
 function App() {
   const [isDark, setIsDark] = useDarkMode();
   const [menuOpen, setMenuOpen] = useState(false);
-  const [isLogoCollapsed, setIsLogoCollapsed] = useState(false);
-  const logoRef = useRef(null);
-  const fullLogoRef = useRef(null);
   const menuButtonRef = useRef(null);
   const mainRef = useRef(null);
   const hasMountedRef = useRef(false);
@@ -3457,34 +3454,6 @@ function App() {
     return () => window.removeEventListener("keydown", closeOnEscape);
   }, [menuOpen]);
 
-  useEffect(() => {
-    const syncLogoState = () => {
-      setIsLogoCollapsed(window.scrollY > window.innerHeight * 0.38);
-    };
-
-    syncLogoState();
-    window.addEventListener("scroll", syncLogoState, {passive: true});
-    return () => window.removeEventListener("scroll", syncLogoState);
-  }, []);
-
-  useLayoutEffect(() => {
-    const logo = logoRef.current;
-    const fullLogo = fullLogoRef.current;
-    if (!logo || !fullLogo) return undefined;
-
-    const syncExpandedWidth = () => {
-      logo.style.setProperty(
-        "--logo-expanded-width",
-        `${Math.ceil(fullLogo.getBoundingClientRect().width)}px`
-      );
-    };
-
-    syncExpandedWidth();
-    const resizeObserver = new ResizeObserver(syncExpandedWidth);
-    resizeObserver.observe(fullLogo);
-    return () => resizeObserver.disconnect();
-  }, []);
-
   return (
     <div className="app-shell">
       <a className="skip-link" href="#main-content">
@@ -3495,19 +3464,8 @@ function App() {
           page === "landing" ? "site-header landing-header" : "site-header"
         }
       >
-        <a
-          ref={logoRef}
-          className={isLogoCollapsed ? "logo collapsed" : "logo"}
-          href="/#/home"
-          onClick={() => setMenuOpen(false)}
-          aria-label="Seungchang Han"
-        >
-          <span ref={fullLogoRef} className="logo-full" aria-hidden="true">
-            Seungchang Han
-          </span>
-          <span className="logo-short" aria-hidden="true">
-            SH
-          </span>
+        <a className="logo" href="/#/home" onClick={() => setMenuOpen(false)}>
+          Seungchang Han
         </a>
         <button
           ref={menuButtonRef}
