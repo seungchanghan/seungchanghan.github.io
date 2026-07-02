@@ -611,25 +611,16 @@ em {
   place-items: center;
 }
 
-.choice-logo-text {
-  color: var(--accent);
-  font-family: Georgia, "Times New Roman", serif;
-  font-size: 0.66rem;
-  font-weight: 780;
-  letter-spacing: 0;
-  line-height: 1.05;
-  text-align: center;
-}
-
-.choice-logo-text span {
-  display: block;
-}
-
 .choice-logo-image img {
   display: block;
   width: 38px;
   height: 38px;
   object-fit: contain;
+}
+
+.choice-logo-personal img {
+  width: 56px;
+  height: 56px;
 }
 
 .landing-choice strong,
@@ -3461,13 +3452,14 @@ footer a {
     height: 50px;
   }
 
-  .choice-logo-text {
-    font-size: 0.5rem;
-  }
-
   .choice-logo-image img {
     width: 28px;
     height: 28px;
+  }
+
+  .choice-logo-personal img {
+    width: 42px;
+    height: 42px;
   }
 
   .landing-choice small {

@@ -7,6 +7,7 @@ import funBgThermoUrl from "./assets/fun-bg-thermo.webp";
 import funBgTimeUrl from "./assets/fun-bg-time.webp";
 import funBgTpdUrl from "./assets/fun-bg-tpd.webp";
 import contactBackgroundUrl from "./assets/contact-bg.webp";
+import hscLogoUrl from "./assets/hsc-logo.png";
 import ringeLabLogoUrl from "./assets/ringelab-logo.webp";
 import heroBackgroundUrl from "../user-input/main.webp";
 
@@ -3366,9 +3367,11 @@ function LandingPage() {
             onClick={handlePersonalClick}
             ref={personalChoiceRef}
           >
-            <span className="choice-logo choice-logo-text" aria-hidden="true">
-              <span>Seungchang</span>
-              <span>Han</span>
+            <span
+              className="choice-logo choice-logo-image choice-logo-personal"
+              aria-hidden="true"
+            >
+              <img src={hscLogoUrl} alt="" />
             </span>
             <span>
               <strong>Academic portfolio</strong>
