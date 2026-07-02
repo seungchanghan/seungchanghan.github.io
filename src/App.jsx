@@ -3367,7 +3367,8 @@ function LandingPage() {
             ref={personalChoiceRef}
           >
             <span className="choice-logo choice-logo-text" aria-hidden="true">
-              Seungchang Han
+              <span>Seungchang</span>
+              <span>Han</span>
             </span>
             <span>
               <strong>Academic portfolio</strong>

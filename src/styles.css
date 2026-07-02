@@ -582,7 +582,6 @@ em {
 }
 
 .landing-choice.personal {
-  grid-template-columns: minmax(132px, auto) minmax(0, 1fr) 28px;
   background:
     linear-gradient(
       135deg,
@@ -613,16 +612,17 @@ em {
 }
 
 .choice-logo-text {
-  width: auto;
-  min-width: 128px;
-  padding-inline: 16px;
-  border-radius: 999px;
   color: var(--accent);
-  font-size: 0.86rem;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 0.66rem;
   font-weight: 780;
   letter-spacing: 0;
+  line-height: 1.05;
   text-align: center;
-  white-space: nowrap;
+}
+
+.choice-logo-text span {
+  display: block;
 }
 
 .choice-logo-image img {
@@ -3456,19 +3456,13 @@ footer a {
     gap: 12px;
   }
 
-  .landing-choice.personal {
-    grid-template-columns: minmax(116px, auto) minmax(0, 1fr) 22px;
-  }
-
   .choice-logo {
     width: 50px;
     height: 50px;
   }
 
   .choice-logo-text {
-    min-width: 116px;
-    padding-inline: 12px;
-    font-size: 0.76rem;
+    font-size: 0.5rem;
   }
 
   .choice-logo-image img {
