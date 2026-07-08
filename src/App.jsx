@@ -3362,6 +3362,23 @@ function LandingPage() {
 
         <div className="landing-choice-grid" aria-label="Destination links">
           <a
+            className="landing-choice lab"
+            href="https://www.ringelab.com/"
+            target="_blank"
+            rel="noreferrer"
+            ref={labChoiceRef}
+          >
+            <span className="choice-logo choice-logo-image" aria-hidden="true">
+              <img src={ringeLabLogoUrl} alt="" />
+            </span>
+            <span>
+              <strong>Ringe Lab</strong>
+              <small>Led by Stefan Ringe</small>
+            </span>
+            <ArrowIcon />
+          </a>
+
+          <a
             className="landing-choice personal"
             href="/#/home"
             onClick={handlePersonalClick}
@@ -3376,23 +3393,6 @@ function LandingPage() {
             <span>
               <strong>Academic portfolio</strong>
               <small>Computational materials research</small>
-            </span>
-            <ArrowIcon />
-          </a>
-
-          <a
-            className="landing-choice lab"
-            href="https://www.ringelab.com/"
-            target="_blank"
-            rel="noreferrer"
-            ref={labChoiceRef}
-          >
-            <span className="choice-logo choice-logo-image" aria-hidden="true">
-              <img src={ringeLabLogoUrl} alt="" />
-            </span>
-            <span>
-              <strong>Ringe Lab</strong>
-              <small>Led by Stefan Ringe</small>
             </span>
             <ArrowIcon />
           </a>
