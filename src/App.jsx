@@ -1953,8 +1953,8 @@ function AvailabilityCalendar({
     <section className="availability-calendar-panel">
       <div className="meeting-section-heading">
         <div>
-          <p className="eyebrow">Step 2 · Availability calendar</p>
-          <h2>See the overlap</h2>
+          <p className="eyebrow">Availability calendar</p>
+          <h2>When people are free</h2>
         </div>
         <span>{displayTimeZone.replaceAll("_", " ")}</span>
       </div>
@@ -2292,7 +2292,7 @@ function MeetingPlanner() {
   }, [commonIntervals]);
 
   return (
-    <div className="meeting-planner">
+    <>
       <p className="experiment-description">
         Add available dates and times in your own time zone, then send the
         updated URL. Each person adds another layer; daylight-saving changes are
@@ -2300,7 +2300,7 @@ function MeetingPlanner() {
       </p>
 
       <div className="meeting-share-bar" ref={shareBarRef}>
-        <p>Times display in each viewer&apos;s local time zone.</p>
+        <p>Times are shown in each viewer&apos;s local time.</p>
         <div className="meeting-share-actions">
           <button
             className="button primary compact-button"
@@ -2319,7 +2319,7 @@ function MeetingPlanner() {
         <form className="availability-form" onSubmit={addAvailability}>
           <div className="control-heading">
             <div>
-              <p className="eyebrow">Step 1 · Your availability</p>
+              <p className="eyebrow">Your availability</p>
               <h2>
                 {editingParticipantId ? "Edit your times" : "Add your times"}
               </h2>
@@ -2436,11 +2436,8 @@ function MeetingPlanner() {
           <div className="meeting-result-section participant-section">
             <div className="meeting-section-heading">
               <div>
-                <p className="eyebrow">Step 3 · Responses</p>
-                <h2>
-                  {meeting.participants.length} response
-                  {meeting.participants.length === 1 ? "" : "s"}
-                </h2>
+                <p className="eyebrow">Responses</p>
+                <h2>{meeting.participants.length} people added</h2>
               </div>
             </div>
             {meeting.participants.length > 0 ? (
@@ -2484,7 +2481,7 @@ function MeetingPlanner() {
           </div>
         </div>
       </div>
-    </div>
+    </>
   );
 }
 
