@@ -1105,6 +1105,7 @@ em {
 .fun-experiment {
   position: relative;
   min-width: 0;
+  scroll-margin-top: 88px;
   border: 1px solid var(--line);
   border-radius: 16px;
   overflow: clip;
@@ -2346,7 +2347,7 @@ input[type="range"] {
   display: grid;
   height: 100%;
   gap: 18px;
-  grid-template-rows: auto minmax(0, 1fr);
+  grid-template-rows: minmax(0, 1fr);
 }
 
 .availability-form,
@@ -2672,6 +2673,48 @@ input[type="range"] {
   font-size: 0.62rem;
 }
 
+.calendar-best-overlap {
+  display: grid;
+  padding: 10px 12px;
+  margin: -8px 0 12px;
+  border: 1px solid color-mix(in srgb, var(--accent) 38%, var(--line));
+  border-radius: 9px;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: start;
+  gap: 12px;
+  background: color-mix(in srgb, var(--accent) 9%, var(--tool-subpanel));
+}
+
+.calendar-best-overlap > span {
+  color: var(--accent);
+  font-size: 0.62rem;
+  font-weight: 780;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.calendar-best-overlap > div {
+  display: grid;
+  min-width: 0;
+  gap: 4px;
+}
+
+.calendar-best-overlap strong {
+  color: var(--ink);
+  font-size: 0.66rem;
+  line-height: 1.35;
+}
+
+.calendar-overlap-note {
+  padding: 9px 12px;
+  margin: -8px 0 12px;
+  border: 1px dashed var(--line);
+  border-radius: 9px;
+  color: var(--muted);
+  font-size: 0.66rem;
+  text-align: center;
+}
+
 .availability-calendar-legend i {
   width: 18px;
   height: 8px;
@@ -2762,6 +2805,13 @@ input[type="range"] {
   box-shadow:
     inset 0 0 0 1px color-mix(in srgb, var(--accent) 88%, transparent),
     inset 0 -3px 0 color-mix(in srgb, var(--accent) 92%, transparent);
+}
+
+.calendar-slot.best {
+  z-index: 1;
+  box-shadow:
+    inset 0 0 0 2px color-mix(in srgb, var(--accent) 92%, transparent),
+    inset 0 -4px 0 color-mix(in srgb, var(--accent) 96%, transparent);
 }
 
 .calendar-slot span {

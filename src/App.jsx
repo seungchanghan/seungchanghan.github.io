@@ -1846,7 +1846,14 @@ function getZonedDateValue(timestamp, timeZone) {
   ].join("-");
 }
 
-function AvailabilityCalendar({participants, displayTimeZone}) {
+function AvailabilityCalendar({
+  participants,
+  displayTimeZone,
+  participantTimeZones,
+  onDisplayTimeZoneChange,
+  bestIntervals,
+  formatInterval
+}) {
   const calendar = useMemo(() => {
     const participantIntervals = participants.map(participant => ({
       id: participant.id,
@@ -1873,7 +1880,7 @@ function AvailabilityCalendar({participants, displayTimeZone}) {
     });
 
     const dates = [...dateValues].sort();
-    const availableForCell = (dateValue, rowIndex) => {
+    const getCellInterval = (dateValue, rowIndex) => {
       const date = getDateParts(dateValue);
       const startMinutes = rowIndex * 30;
       const endMinutes = startMinutes + 30;
@@ -1894,6 +1901,12 @@ function AvailabilityCalendar({participants, displayTimeZone}) {
         },
         displayTimeZone
       );
+
+      return {start, end};
+    };
+
+    const availableForCell = (dateValue, rowIndex) => {
+      const {start, end} = getCellInterval(dateValue, rowIndex);
 
       return participantIntervals
         .filter(participant =>
@@ -1923,7 +1936,7 @@ function AvailabilityCalendar({participants, displayTimeZone}) {
       (_, index) => firstRow + index
     );
 
-    return {dates, rows, availableForCell};
+    return {dates, rows, availableForCell, getCellInterval};
   }, [displayTimeZone, participants]);
 
   const formatDateHeader = dateValue => {
@@ -1945,6 +1958,34 @@ function AvailabilityCalendar({participants, displayTimeZone}) {
         </div>
         <span>{displayTimeZone.replaceAll("_", " ")}</span>
       </div>
+      {participantTimeZones.length > 0 ? (
+        <div className="timezone-toggle" aria-label="Display time zone">
+          {participantTimeZones.map(zone => (
+            <button
+              className={zone === displayTimeZone ? "active" : ""}
+              type="button"
+              key={zone}
+              onClick={() => onDisplayTimeZoneChange(zone)}
+            >
+              {zone.replaceAll("_", " ")}
+            </button>
+          ))}
+        </div>
+      ) : null}
+      {bestIntervals.length > 0 ? (
+        <div className="calendar-best-overlap" aria-label="Best overlap">
+          <span>Best overlap</span>
+          <div>
+            {bestIntervals.map(interval => (
+              <strong key={`${interval.start}-${interval.end}`}>
+                {formatInterval(interval)}
+              </strong>
+            ))}
+          </div>
+        </div>
+      ) : participants.length >= 2 ? (
+        <p className="calendar-overlap-note">No common time yet.</p>
+      ) : null}
       {calendar.dates.length > 0 ? (
         <>
           <div className="availability-calendar-legend">
@@ -1976,11 +2017,20 @@ function AvailabilityCalendar({participants, displayTimeZone}) {
                 ...calendar.dates.map(dateValue => {
                   const names = calendar.availableForCell(dateValue, rowIndex);
                   const strength = names.length / participants.length;
+                  const cellInterval = calendar.getCellInterval(
+                    dateValue,
+                    rowIndex
+                  );
+                  const isBest = bestIntervals.some(
+                    interval =>
+                      interval.start < cellInterval.end &&
+                      interval.end > cellInterval.start
+                  );
                   return (
                     <div
                       className={`calendar-slot${names.length ? " available" : ""}${
                         names.length === participants.length ? " all" : ""
-                      }`}
+                      }${isBest ? " best" : ""}`}
                       key={`${dateValue}-${rowIndex}`}
                       style={{"--availability-strength": strength}}
                       title={
@@ -2011,6 +2061,7 @@ function AvailabilityCalendar({participants, displayTimeZone}) {
 }
 
 function MeetingPlanner() {
+  const shareBarRef = useRef(null);
   const initialMeeting = useMemo(
     () =>
       getMeetingDataFromUrl() ?? {
@@ -2192,6 +2243,12 @@ function MeetingPlanner() {
       setCopyState("Link copied");
     } catch {
       window.prompt("Copy this meeting link", shareUrl);
+    } finally {
+      window.requestAnimationFrame(() => {
+        shareBarRef.current
+          ?.closest(".fun-experiment")
+          ?.scrollIntoView({behavior: "smooth", block: "start"});
+      });
     }
   };
 
@@ -2237,7 +2294,7 @@ function MeetingPlanner() {
         calculated from the selected date and time zone.
       </p>
 
-      <div className="meeting-share-bar">
+      <div className="meeting-share-bar" ref={shareBarRef}>
         <p>Times are shown in each viewer&apos;s local time.</p>
         <div className="meeting-share-actions">
           <button
@@ -2364,55 +2421,13 @@ function MeetingPlanner() {
         <AvailabilityCalendar
           participants={meeting.participants}
           displayTimeZone={displayTimeZone}
+          participantTimeZones={participantTimeZones}
+          onDisplayTimeZoneChange={setDisplayTimeZone}
+          bestIntervals={bestIntervals}
+          formatInterval={formatInterval}
         />
 
         <div className="meeting-results">
-          <div className="meeting-result-section">
-            <div className="meeting-section-heading">
-              <div>
-                <p className="eyebrow">Best overlap</p>
-              </div>
-              <span>{displayTimeZone.replaceAll("_", " ")}</span>
-            </div>
-            {participantTimeZones.length > 0 ? (
-              <div className="timezone-toggle" aria-label="Display time zone">
-                {participantTimeZones.map(zone => (
-                  <button
-                    className={zone === displayTimeZone ? "active" : ""}
-                    type="button"
-                    key={zone}
-                    onClick={() => setDisplayTimeZone(zone)}
-                  >
-                    {zone.replaceAll("_", " ")}
-                  </button>
-                ))}
-              </div>
-            ) : null}
-            {meeting.participants.length < 2 ? (
-              <p className="empty-meeting-state">
-                Add at least two people to calculate shared availability.
-              </p>
-            ) : bestIntervals.length > 0 ? (
-              <ol className="overlap-list">
-                {bestIntervals.map(interval => (
-                  <li key={`${interval.start}-${interval.end}`}>
-                    <div className="overlap-summary">
-                      <strong>{formatInterval(interval)}</strong>
-                      <span>
-                        {Math.round((interval.end - interval.start) / 60000)}{" "}
-                        min
-                      </span>
-                    </div>
-                  </li>
-                ))}
-              </ol>
-            ) : (
-              <p className="empty-meeting-state">
-                No common time yet. Add more options or adjust the week.
-              </p>
-            )}
-          </div>
-
           <div className="meeting-result-section participant-section">
             <div className="meeting-section-heading">
               <div>
