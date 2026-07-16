@@ -837,16 +837,18 @@ function isValidTimeZone(value) {
 
 function TimeZoneCombobox({value, onChange, options}) {
   const [isOpen, setIsOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
   const comboRef = useRef(null);
-  const normalizedValue = value.trim().toLowerCase();
+  const normalizedQuery = searchQuery
+    .trim()
+    .toLowerCase()
+    .replaceAll(/[_/]+/g, " ");
   const filteredOptions = useMemo(() => {
-    if (!normalizedValue) return options.slice(0, 80);
-    return options
-      .filter(zone =>
-        zone.replaceAll("_", " ").toLowerCase().includes(normalizedValue)
-      )
-      .slice(0, 80);
-  }, [normalizedValue, options]);
+    if (!normalizedQuery) return options;
+    return options.filter(zone =>
+      zone.replaceAll(/[_/]+/g, " ").toLowerCase().includes(normalizedQuery)
+    );
+  }, [normalizedQuery, options]);
 
   useEffect(() => {
     if (!isOpen) return undefined;
@@ -863,7 +865,13 @@ function TimeZoneCombobox({value, onChange, options}) {
 
   const chooseTimeZone = zone => {
     onChange(zone);
+    setSearchQuery("");
     setIsOpen(false);
+  };
+
+  const openAllTimeZones = () => {
+    setSearchQuery("");
+    setIsOpen(true);
   };
 
   return (
@@ -878,9 +886,10 @@ function TimeZoneCombobox({value, onChange, options}) {
           aria-autocomplete="list"
           aria-expanded={isOpen}
           aria-controls="meeting-time-zone-options"
-          onFocus={() => setIsOpen(true)}
+          onFocus={openAllTimeZones}
           onChange={event => {
             onChange(event.target.value);
+            setSearchQuery(event.target.value);
             setIsOpen(true);
           }}
         />
@@ -889,7 +898,13 @@ function TimeZoneCombobox({value, onChange, options}) {
           type="button"
           aria-label="Show time zones"
           aria-expanded={isOpen}
-          onClick={() => setIsOpen(open => !open)}
+          onClick={() => {
+            if (isOpen) {
+              setIsOpen(false);
+              return;
+            }
+            openAllTimeZones();
+          }}
         >
           <span aria-hidden="true">⌄</span>
         </button>
@@ -2356,7 +2371,6 @@ function MeetingPlanner() {
             <div className="meeting-section-heading">
               <div>
                 <p className="eyebrow">Best overlap</p>
-                <h2>Times everyone can make</h2>
               </div>
               <span>{displayTimeZone.replaceAll("_", " ")}</span>
             </div>
@@ -3041,9 +3055,7 @@ function ThermochemistryTool() {
 }
 
 function CodexWeatherNote() {
-  const [statusCopy, setStatusCopy] = useState(
-    "Operational · No active incidents"
-  );
+  const [statusCopy, setStatusCopy] = useState("Checking live status");
 
   useEffect(() => {
     const controller = new AbortController();
@@ -3067,11 +3079,7 @@ function CodexWeatherNote() {
           setStatusCopy(`Issue reported · ${codexIssues[0].name}`);
           return;
         }
-        if (data.status?.indicator && data.status.indicator !== "none") {
-          setStatusCopy(data.status.description ?? "OpenAI issue reported");
-          return;
-        }
-        setStatusCopy("Operational · No active incidents");
+        setStatusCopy("Operational");
       })
       .catch(error => {
         if (error.name !== "AbortError") setStatusCopy("Status unavailable");
@@ -3087,14 +3095,14 @@ function CodexWeatherNote() {
           href="https://www.willcodexquotareset.com/"
           target="_blank"
           rel="noreferrer"
-          title="Unofficial reset forecast snapshot from Jul 16, 2026"
+          title="Unofficial forecast snapshot verified Jul 16, 2026 at 14:56 KST; the source API does not permit cross-origin browser reads"
         >
-          Codex reset chance: <strong>88%</strong>
+          Codex reset forecast: <strong>95% snapshot</strong>
         </a>
       </p>
       <p>
         <a href="https://status.openai.com/" target="_blank" rel="noreferrer">
-          OpenAI/Codex status: <strong>{statusCopy}</strong>
+          Codex status: <strong>{statusCopy}</strong>
         </a>
       </p>
     </aside>

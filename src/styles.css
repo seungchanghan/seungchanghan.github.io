@@ -2327,12 +2327,9 @@ input[type="range"] {
 
 .meeting-layout {
   display: grid;
-  grid-template-columns: minmax(430px, 0.95fr) minmax(330px, 1.05fr) minmax(
-      280px,
-      0.78fr
-    );
+  grid-template-columns: minmax(0, 1.08fr) minmax(0, 1.02fr) minmax(0, 0.9fr);
   gap: 18px;
-  align-items: start;
+  align-items: stretch;
 }
 
 .availability-form,
@@ -2347,7 +2344,9 @@ input[type="range"] {
 
 .meeting-results {
   display: grid;
+  height: 100%;
   gap: 18px;
+  grid-template-rows: auto minmax(0, 1fr);
 }
 
 .availability-form,
@@ -2358,6 +2357,25 @@ input[type="range"] {
   border-radius: 16px;
   background: var(--tool-panel);
   backdrop-filter: blur(8px);
+}
+
+.availability-calendar-panel {
+  display: flex;
+  flex-direction: column;
+}
+
+.availability-calendar-panel > .empty-meeting-state,
+.participant-section > .empty-meeting-state {
+  display: grid;
+  min-height: 180px;
+  flex: 1;
+  place-items: center;
+}
+
+.participant-section {
+  display: flex;
+  min-height: 0;
+  flex-direction: column;
 }
 
 .identity-fields {
@@ -2378,10 +2396,7 @@ input[type="range"] {
   padding: 14px;
   border: 1px solid var(--line);
   border-radius: 10px;
-  grid-template-columns: minmax(168px, 1.25fr) minmax(116px, 0.85fr) minmax(
-      116px,
-      0.85fr
-    );
+  grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.85fr) minmax(0, 0.85fr);
   gap: 9px;
   align-items: start;
   background: var(--tool-subpanel);
@@ -2676,9 +2691,9 @@ input[type="range"] {
   overflow: auto;
   border: 1px solid var(--line);
   border-radius: 10px;
-  grid-template-columns: 52px repeat(
+  grid-template-columns: 48px repeat(
       var(--calendar-day-count),
-      minmax(78px, 1fr)
+      minmax(72px, 1fr)
     );
   background: var(--tool-subpanel);
 }
@@ -2738,13 +2753,15 @@ input[type="range"] {
 .calendar-slot.available {
   background: color-mix(
     in srgb,
-    var(--accent) calc(var(--availability-strength) * 72%),
+    var(--accent) calc(14% + var(--availability-strength) * 82%),
     var(--tool-subpanel)
   );
 }
 
 .calendar-slot.all {
-  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent) 76%, transparent);
+  box-shadow:
+    inset 0 0 0 1px color-mix(in srgb, var(--accent) 88%, transparent),
+    inset 0 -3px 0 color-mix(in srgb, var(--accent) 92%, transparent);
 }
 
 .calendar-slot span {
