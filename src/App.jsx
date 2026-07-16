@@ -264,7 +264,9 @@ const EV_MOLAR_J = EV_J * N_AVOGADRO;
 const K_B_EV = K_BOLTZMANN / EV_J;
 
 function formatScientific(value, digits = 6) {
-  if (!Number.isFinite(value)) return value > 0 ? "Infinity" : "-Infinity";
+  if (Number.isNaN(value)) return "Invalid";
+  if (value === Infinity) return "Infinity";
+  if (value === -Infinity) return "-Infinity";
   if (
     Math.abs(value) >= 1e5 ||
     (Math.abs(value) > 0 && Math.abs(value) < 1e-3)
@@ -272,6 +274,23 @@ function formatScientific(value, digits = 6) {
     return value.toExponential(digits);
   }
   return Number(value.toPrecision(digits + 1)).toString();
+}
+
+function solveFirstOrderPeakParameter(logArgument) {
+  let value =
+    logArgument > 1
+      ? logArgument - Math.log(logArgument)
+      : Math.max(Number.MIN_VALUE, Math.exp(logArgument));
+
+  for (let attempt = 0; attempt < 12; attempt += 1) {
+    const residual = value + Math.log(value) - logArgument;
+    const candidate = value - residual / (1 + 1 / value);
+    const next = candidate > 0 ? candidate : value / 2;
+    if (Math.abs(next - value) < 1e-13 * Math.max(1, value)) return next;
+    value = next;
+  }
+
+  return value;
 }
 
 function parseNumber(value, fallback = 0) {
@@ -351,25 +370,38 @@ function calculateRedhead({peakTemperature, heatingRate, betaUnit, prefactor}) {
     };
   }
   const logArgument = (nu * tp) / beta;
+  if (!Number.isFinite(logArgument) || logArgument <= 0) {
+    return {
+      rows: [],
+      details: [],
+      notes: ["The Redhead logarithm argument must be finite and positive."]
+    };
+  }
   const lnArgument = Math.log(logArgument);
   const eJmol = R_GAS * tp * (Math.log(logArgument) - 3.64);
+  const exactPeakParameter = solveFirstOrderPeakParameter(lnArgument);
+  const exactEJmol = R_GAS * tp * exactPeakParameter;
+  const approximationDifference = ((eJmol - exactEJmol) / exactEJmol) * 100;
 
   return {
     rows: [
-      ["Edes / kJ mol^-1", eJmol / 1000],
-      ["Edes / eV molecule^-1", eJmol / EV_MOLAR_J],
-      ["Edes / kcal mol^-1", eJmol / KCAL_J],
-      ["Edes / J mol^-1", eJmol]
+      ["Redhead Edes / kJ mol^-1", eJmol / 1000],
+      ["Exact peak Edes / kJ mol^-1", exactEJmol / 1000],
+      ["Redhead Edes / eV molecule^-1", eJmol / EV_MOLAR_J],
+      ["Exact peak Edes / eV molecule^-1", exactEJmol / EV_MOLAR_J],
+      ["Redhead Edes / kcal mol^-1", eJmol / KCAL_J],
+      ["Approximation difference / %", approximationDifference]
     ],
     details: [
       ["Tp / K", tp],
       ["beta / K s^-1", beta],
       ["nu / s^-1", nu],
-      ["ln(nu Tp / beta)", lnArgument]
+      ["ln(nu Tp / beta)", lnArgument],
+      ["exact Edes / J mol^-1", exactEJmol]
     ],
     notes: [
       prefactor === ""
-        ? "Prefactor was set by nu = kB Tp / h."
+        ? "Prefactor uses nu = kB Tp / h, equivalent to a transition-state estimate with no activation-entropy factor."
         : "Prefactor was supplied by the user; nu = kB Tp / h was not used.",
       ...(eJmol <= 0
         ? [
@@ -418,10 +450,11 @@ function parseNumberList(text) {
 
 function vibrationalThermo(frequencies, unit, temperature) {
   const inputModes = parseFrequencies(frequencies);
-  const realModes = inputModes
-    .filter(value => value >= 0)
-    .map(value => frequencyToCmInv(value, unit))
-    .filter(value => value >= 0);
+  const convertedModes = inputModes.map(value => frequencyToCmInv(value, unit));
+  const imaginaryCount = convertedModes.filter(value => value < 0).length;
+  const zeroCount = convertedModes.filter(value => value === 0).length;
+  const realModes = convertedModes.filter(value => value > 0);
+  const lowFrequencyModes = realModes.filter(value => value < 50);
   const vibEv = realModes.map(cmInvToEv);
   const zpe = 0.5 * vibEv.reduce((sum, value) => sum + value, 0);
   const thermal = vibEv.reduce((sum, value) => {
@@ -438,7 +471,9 @@ function vibrationalThermo(frequencies, unit, temperature) {
   return {
     inputCount: inputModes.length,
     modeCount: realModes.length,
-    ignoredCount: inputModes.filter(value => value < 0).length,
+    imaginaryCount,
+    zeroCount,
+    lowFrequencyModes,
     realModes,
     vibEv,
     zpe,
@@ -457,6 +492,7 @@ function calculateThermochemistry({
   pressure,
   symmetryNumber,
   molecularMass,
+  atomCount,
   geometry,
   rotationalTemperatures,
   spin
@@ -465,21 +501,42 @@ function calculateThermochemistry({
     return {modeCount: 0, rows: [], notes: ["Temperature must be positive."]};
   }
   const vib = vibrationalThermo(frequencies, unit, temperature);
-  if (vib.modeCount === 0) {
+  if (vib.imaginaryCount > 0) {
     return {
-      modeCount: 0,
+      modeCount: vib.modeCount,
       rows: [],
-      notes: ["No real vibrational modes remain."]
+      notes: [
+        `Found ${vib.imaginaryCount} imaginary mode(s). Confirm a stable minimum or remove only modes with a physically justified workflow.`
+      ]
+    };
+  }
+  if (vib.zeroCount > 0) {
+    return {
+      modeCount: vib.modeCount,
+      rows: [],
+      notes: [
+        `Found ${vib.zeroCount} zero-frequency mode(s). Harmonic entropy diverges at zero frequency.`
+      ]
     };
   }
   const notes = [
     "Vibrational energies use epsilon = h c nu-tilde and are evaluated in eV.",
-    ...(vib.ignoredCount > 0
-      ? [`Ignored ${vib.ignoredCount} negative/imaginary mode(s).`]
+    ...(vib.lowFrequencyModes.length > 0
+      ? [
+          `${vib.lowFrequencyModes.length} mode(s) below 50 cm^-1 use the harmonic approximation; consider a hindered-rotor/translator or qRRHO treatment.`
+        ]
       : [])
   ];
 
   if (mode === "harmonic") {
+    if (vib.modeCount === 0) {
+      return {
+        mode,
+        modeCount: 0,
+        rows: [],
+        notes: ["Harmonic adsorbate mode requires at least one positive mode."]
+      };
+    }
     const thermalU = vib.thermal;
     const fNoZpe = thermalU - vib.ts;
     const fullF = vib.zpe + fNoZpe;
@@ -502,19 +559,38 @@ function calculateThermochemistry({
   }
 
   const pressurePa = pressure;
+  const atoms = Number(atomCount);
   const sigma =
     geometry === "monatomic" ? 1 : Math.max(1, Number(symmetryNumber));
   const massKg = (molecularMass * 1e-3) / N_AVOGADRO;
   const spinMultiplicity = 2 * spin + 1;
   const rotationalTheta = parseNumberList(rotationalTemperatures);
+  const expectedModeCount =
+    geometry === "monatomic"
+      ? 0
+      : geometry === "linear"
+        ? 3 * atoms - 5
+        : 3 * atoms - 6;
+  const atomCountIsValid =
+    Number.isInteger(atoms) &&
+    ((geometry === "monatomic" && atoms === 1) ||
+      (geometry === "linear" && atoms >= 2) ||
+      (geometry === "nonlinear" && atoms >= 3));
+  const rotationalInputsAreValid =
+    geometry === "monatomic" ||
+    (geometry === "linear" &&
+      rotationalTheta.length === 1 &&
+      rotationalTheta[0] > 0) ||
+    (geometry === "nonlinear" &&
+      rotationalTheta.length === 3 &&
+      rotationalTheta.every(value => value > 0));
   const validIdealInputs =
     pressurePa > 0 &&
     molecularMass > 0 &&
+    atomCountIsValid &&
     sigma > 0 &&
     spinMultiplicity > 0 &&
-    (geometry === "monatomic" ||
-      (geometry === "linear" && rotationalTheta.length >= 1) ||
-      (geometry === "nonlinear" && rotationalTheta.length >= 3));
+    rotationalInputsAreValid;
 
   if (!validIdealInputs) {
     return {
@@ -523,7 +599,18 @@ function calculateThermochemistry({
       rows: [],
       notes: [
         ...notes,
-        "Ideal-gas E -> G requires positive pressure, molecular mass, symmetry number, spin multiplicity, and rotational temperature input for the selected geometry."
+        "Ideal-gas E -> G requires a physically valid atom count, positive pressure and mass, valid spin/symmetry, and exactly one positive rotational temperature for a linear molecule or three for a nonlinear molecule."
+      ]
+    };
+  }
+  if (vib.modeCount !== expectedModeCount) {
+    return {
+      mode,
+      modeCount: vib.modeCount,
+      rows: [],
+      notes: [
+        ...notes,
+        `${geometry} ${atoms}-atom geometry requires ${expectedModeCount} vibrational mode(s), but ${vib.modeCount} were supplied.`
       ]
     };
   }
@@ -909,21 +996,6 @@ function getDateParts(dateValue, dayOffset = 0) {
     month: date.getUTCMonth() + 1,
     day: date.getUTCDate()
   };
-}
-
-function getPainScore(interval, timeZone) {
-  const midpoint = new Date((interval.start + interval.end) / 2);
-  const {hour, minute} = getZonedParts(midpoint, timeZone);
-  const localHour = hour + minute / 60;
-  const distanceFromThree = Math.abs(localHour - 3);
-  const circularDistance = Math.min(distanceFromThree, 24 - distanceFromThree);
-  return Math.round((1 - Math.min(circularDistance, 12) / 12) ** 2 * 100);
-}
-
-function getPainLevel(score) {
-  if (score >= 67) return "high";
-  if (score >= 34) return "medium";
-  return "low";
 }
 
 function slotToInterval(slot, timeZone) {
@@ -1750,6 +1822,179 @@ function CaffeineChart({curves, intakes, eliminationHalfLife, halfLifeRange}) {
   );
 }
 
+function getZonedDateValue(timestamp, timeZone) {
+  const {year, month, day} = getZonedParts(new Date(timestamp), timeZone);
+  return [
+    year,
+    String(month).padStart(2, "0"),
+    String(day).padStart(2, "0")
+  ].join("-");
+}
+
+function AvailabilityCalendar({participants, displayTimeZone}) {
+  const calendar = useMemo(() => {
+    const participantIntervals = participants.map(participant => ({
+      id: participant.id,
+      name: participant.name,
+      intervals: mergeIntervals(
+        participant.slots.map(slot =>
+          slotToInterval(slot, participant.timeZone)
+        )
+      )
+    }));
+    const dateValues = new Set();
+
+    participantIntervals.forEach(participant => {
+      participant.intervals.forEach(interval => {
+        const firstDate = getZonedDateValue(interval.start, displayTimeZone);
+        const lastDate = getZonedDateValue(interval.end - 1, displayTimeZone);
+        let dateValue = firstDate;
+        dateValues.add(dateValue);
+        while (dateValue < lastDate) {
+          dateValue = offsetDate(dateValue, 1);
+          dateValues.add(dateValue);
+        }
+      });
+    });
+
+    const dates = [...dateValues].sort();
+    const availableForCell = (dateValue, rowIndex) => {
+      const date = getDateParts(dateValue);
+      const startMinutes = rowIndex * 30;
+      const endMinutes = startMinutes + 30;
+      const start = zonedDateTimeToUtc(
+        {
+          ...date,
+          hour: Math.floor(startMinutes / 60),
+          minute: startMinutes % 60
+        },
+        displayTimeZone
+      );
+      const endDate = getDateParts(dateValue, endMinutes >= 1440 ? 1 : 0);
+      const end = zonedDateTimeToUtc(
+        {
+          ...endDate,
+          hour: Math.floor((endMinutes % 1440) / 60),
+          minute: endMinutes % 60
+        },
+        displayTimeZone
+      );
+
+      return participantIntervals
+        .filter(participant =>
+          participant.intervals.some(
+            interval => interval.start < end && interval.end > start
+          )
+        )
+        .map(participant => participant.name);
+    };
+
+    const occupiedRows = [];
+    for (let rowIndex = 0; rowIndex < 48; rowIndex += 1) {
+      if (
+        dates.some(dateValue => availableForCell(dateValue, rowIndex).length)
+      ) {
+        occupiedRows.push(rowIndex);
+      }
+    }
+    const firstRow = occupiedRows.length
+      ? Math.max(0, occupiedRows[0] - 2)
+      : 16;
+    const lastRow = occupiedRows.length
+      ? Math.min(47, occupiedRows.at(-1) + 2)
+      : 35;
+    const rows = Array.from(
+      {length: lastRow - firstRow + 1},
+      (_, index) => firstRow + index
+    );
+
+    return {dates, rows, availableForCell};
+  }, [displayTimeZone, participants]);
+
+  const formatDateHeader = dateValue => {
+    const {year, month, day} = parseDateValue(dateValue);
+    return new Intl.DateTimeFormat("en-US", {
+      weekday: "short",
+      month: "short",
+      day: "numeric",
+      timeZone: "UTC"
+    }).format(new Date(Date.UTC(year, month - 1, day)));
+  };
+
+  return (
+    <section className="availability-calendar-panel">
+      <div className="meeting-section-heading">
+        <div>
+          <p className="eyebrow">Availability calendar</p>
+          <h2>When people are free</h2>
+        </div>
+        <span>{displayTimeZone.replaceAll("_", " ")}</span>
+      </div>
+      {calendar.dates.length > 0 ? (
+        <>
+          <div className="availability-calendar-legend">
+            <span>Fewer available</span>
+            <i aria-hidden="true" />
+            <i className="strong" aria-hidden="true" />
+            <span>Everyone available</span>
+          </div>
+          <div
+            className="availability-calendar-grid"
+            style={{"--calendar-day-count": calendar.dates.length}}
+          >
+            <div className="calendar-corner" />
+            {calendar.dates.map(dateValue => (
+              <div className="calendar-date-header" key={dateValue}>
+                {formatDateHeader(dateValue)}
+              </div>
+            ))}
+            {calendar.rows.flatMap(rowIndex => {
+              const minutes = rowIndex * 30;
+              const timeLabel = `${String(Math.floor(minutes / 60)).padStart(
+                2,
+                "0"
+              )}:${String(minutes % 60).padStart(2, "0")}`;
+              return [
+                <div className="calendar-time-label" key={`time-${rowIndex}`}>
+                  {rowIndex % 2 === 0 ? timeLabel : ""}
+                </div>,
+                ...calendar.dates.map(dateValue => {
+                  const names = calendar.availableForCell(dateValue, rowIndex);
+                  const strength = names.length / participants.length;
+                  return (
+                    <div
+                      className={`calendar-slot${names.length ? " available" : ""}${
+                        names.length === participants.length ? " all" : ""
+                      }`}
+                      key={`${dateValue}-${rowIndex}`}
+                      style={{"--availability-strength": strength}}
+                      title={
+                        names.length
+                          ? `${timeLabel}: ${names.join(", ")}`
+                          : `${timeLabel}: no availability`
+                      }
+                    >
+                      {names.length ? (
+                        <span>
+                          {names.length}/{participants.length}
+                        </span>
+                      ) : null}
+                    </div>
+                  );
+                })
+              ];
+            })}
+          </div>
+        </>
+      ) : (
+        <p className="empty-meeting-state">
+          Availability will appear here after the first response.
+        </p>
+      )}
+    </section>
+  );
+}
+
 function MeetingPlanner() {
   const initialMeeting = useMemo(
     () =>
@@ -1969,17 +2214,6 @@ function MeetingPlanner() {
     );
   }, [commonIntervals]);
 
-  const getParticipantPainScores = interval =>
-    meeting.participants.map(participant => {
-      const score = getPainScore(interval, participant.timeZone);
-      return {
-        id: participant.id,
-        name: participant.name,
-        score,
-        level: getPainLevel(score)
-      };
-    });
-
   return (
     <>
       <p className="experiment-description">
@@ -2112,6 +2346,11 @@ function MeetingPlanner() {
           </div>
         </form>
 
+        <AvailabilityCalendar
+          participants={meeting.participants}
+          displayTimeZone={displayTimeZone}
+        />
+
         <div className="meeting-results">
           <div className="meeting-result-section">
             <div className="meeting-section-heading">
@@ -2141,37 +2380,17 @@ function MeetingPlanner() {
               </p>
             ) : bestIntervals.length > 0 ? (
               <ol className="overlap-list">
-                {bestIntervals.map(interval => {
-                  const painScores = getParticipantPainScores(interval);
-                  return (
-                    <li key={`${interval.start}-${interval.end}`}>
-                      <div className="overlap-summary">
-                        <strong>{formatInterval(interval)}</strong>
-                        <span>
-                          {Math.round((interval.end - interval.start) / 60000)}{" "}
-                          min
-                        </span>
-                      </div>
-                      <div
-                        className="pain-meter-list"
-                        aria-label="Participant pain scores"
-                      >
-                        {painScores.map(item => (
-                          <div className="pain-meter" key={item.id}>
-                            <span>{item.name}</span>
-                            <div className="pain-track" aria-hidden="true">
-                              <span
-                                className={`pain-fill ${item.level}`}
-                                style={{"--pain-score": `${item.score}%`}}
-                              />
-                            </div>
-                            <strong>{item.score}</strong>
-                          </div>
-                        ))}
-                      </div>
-                    </li>
-                  );
-                })}
+                {bestIntervals.map(interval => (
+                  <li key={`${interval.start}-${interval.end}`}>
+                    <div className="overlap-summary">
+                      <strong>{formatInterval(interval)}</strong>
+                      <span>
+                        {Math.round((interval.end - interval.start) / 60000)}{" "}
+                        min
+                      </span>
+                    </div>
+                  </li>
+                ))}
               </ol>
             ) : (
               <p className="empty-meeting-state">
@@ -2469,7 +2688,12 @@ function RedheadTool() {
               </span>
             </span>
             <span className="equation-line muted">
-              default: nu = k<sub>B</sub>T<sub>p</sub> / h
+              exact peak check: x + ln(x) = ln(nu T<sub>p</sub> / beta), x = E
+              <sub>des</sub> / RT<sub>p</sub>
+            </span>
+            <span className="equation-line muted">
+              default: nu = k<sub>B</sub>T<sub>p</sub> / h assumes no activation
+              entropy factor
             </span>
           </EquationBlock>
         </form>
@@ -2493,10 +2717,12 @@ function RedheadTool() {
             </p>
             <p>
               If nu is blank, the page uses nu = kB Tp / h at the peak
-              temperature. The 3.64 constant is the standard Redhead analytical
-              approximation. Use full kinetic fitting when coverage dependence,
-              readsorption, transport limitation, or non-first-order kinetics
-              are relevant.
+              temperature, corresponding to a transition-state estimate without
+              an activation-entropy factor. The 3.64 constant is the standard
+              Redhead analytical approximation; the exact first-order peak
+              condition is reported alongside it. Use full kinetic fitting when
+              coverage dependence, readsorption, transport limitation, or
+              non-first-order kinetics are relevant.
             </p>
             <p>
               This estimate is appropriate for comparing rough magnitudes or
@@ -2523,6 +2749,7 @@ function ThermochemistryTool() {
   const [thermoPressure, setThermoPressure] = useState("101325");
   const [symmetryNumber, setSymmetryNumber] = useState(1);
   const [molecularMass, setMolecularMass] = useState("28.0101");
+  const [atomCount, setAtomCount] = useState("3");
   const [geometry, setGeometry] = useState("linear");
   const [rotationalTemperatures, setRotationalTemperatures] = useState("2.77");
   const [spin, setSpin] = useState("0");
@@ -2537,6 +2764,7 @@ function ThermochemistryTool() {
         pressure: parseNumber(thermoPressure, 101325),
         symmetryNumber: Number(symmetryNumber),
         molecularMass: parseNumber(molecularMass, 28.0101),
+        atomCount: parseNumber(atomCount),
         geometry,
         rotationalTemperatures,
         spin: parseNumber(spin, 0)
@@ -2549,6 +2777,7 @@ function ThermochemistryTool() {
       thermoPressure,
       symmetryNumber,
       molecularMass,
+      atomCount,
       geometry,
       rotationalTemperatures,
       spin
@@ -2648,12 +2877,27 @@ function ThermochemistryTool() {
                   />
                 </label>
                 <label>
+                  Atom count
+                  <input
+                    type="number"
+                    min="1"
+                    step="1"
+                    value={atomCount}
+                    onChange={event => setAtomCount(event.target.value)}
+                  />
+                </label>
+                <label>
                   Geometry
                   <select
                     value={geometry}
                     onChange={event => {
                       const nextGeometry = event.target.value;
                       setGeometry(nextGeometry);
+                      if (nextGeometry === "monatomic") setAtomCount("1");
+                      if (nextGeometry === "linear" && Number(atomCount) < 2)
+                        setAtomCount("2");
+                      if (nextGeometry === "nonlinear" && Number(atomCount) < 3)
+                        setAtomCount("3");
                       setRotationalTemperatures(current => {
                         const values = parseNumberList(current);
                         if (nextGeometry === "nonlinear" && values.length < 3) {
@@ -2745,6 +2989,10 @@ function ThermochemistryTool() {
                 <span className="equation-line muted">
                   sigma lowers rotational entropy, adding kBT ln sigma to G.
                 </span>
+                <span className="equation-line muted">
+                  required modes: 0 (monatomic), 3N - 5 (linear), or 3N - 6
+                  (nonlinear)
+                </span>
               </>
             )}
             <span className="equation-line muted">
@@ -2781,7 +3029,9 @@ function ThermochemistryTool() {
                 ASE thermochemistry
               </a>
               ; potential energy is treated as 0 eV so displayed values are
-              corrections relative to electronic energy.
+              corrections relative to electronic energy. Imaginary and zero
+              modes stop the calculation; modes below 50 cm^-1 are flagged
+              because their harmonic entropy can be unreliable.
             </p>
           </section>
         </section>
@@ -2790,11 +3040,69 @@ function ThermochemistryTool() {
   );
 }
 
-function ForFunPage() {
-  const hasSharedMeeting = useMemo(() => Boolean(getMeetingDataFromUrl()), []);
-  const [openExperiment, setOpenExperiment] = useState(
-    hasSharedMeeting ? "02" : "01"
+function CodexWeatherNote() {
+  const [statusCopy, setStatusCopy] = useState(
+    "Operational · No active incidents"
   );
+
+  useEffect(() => {
+    const controller = new AbortController();
+
+    fetch("https://status.openai.com/api/v2/summary.json", {
+      headers: {Accept: "application/json"},
+      signal: controller.signal
+    })
+      .then(response => {
+        if (!response.ok)
+          throw new Error(`Status API returned ${response.status}`);
+        return response.json();
+      })
+      .then(data => {
+        const codexIssues = (data.components ?? []).filter(
+          component =>
+            /codex|vs code|cli/i.test(component.name) &&
+            component.status !== "operational"
+        );
+        if (codexIssues.length > 0) {
+          setStatusCopy(`Issue reported · ${codexIssues[0].name}`);
+          return;
+        }
+        if (data.status?.indicator && data.status.indicator !== "none") {
+          setStatusCopy(data.status.description ?? "OpenAI issue reported");
+          return;
+        }
+        setStatusCopy("Operational · No active incidents");
+      })
+      .catch(error => {
+        if (error.name !== "AbortError") setStatusCopy("Status unavailable");
+      });
+
+    return () => controller.abort();
+  }, []);
+
+  return (
+    <aside className="codex-weather-note" aria-label="Codex service weather">
+      <p>
+        <a
+          href="https://www.willcodexquotareset.com/"
+          target="_blank"
+          rel="noreferrer"
+          title="Unofficial reset forecast snapshot from Jul 16, 2026"
+        >
+          Codex reset chance: <strong>88%</strong>
+        </a>
+      </p>
+      <p>
+        <a href="https://status.openai.com/" target="_blank" rel="noreferrer">
+          OpenAI/Codex status: <strong>{statusCopy}</strong>
+        </a>
+      </p>
+    </aside>
+  );
+}
+
+function ForFunPage() {
+  const [openExperiment, setOpenExperiment] = useState("01");
   const [intakes, setIntakes] = useState(defaultIntakes);
   const [eliminationHalfLife, setEliminationHalfLife] = useState(6);
   const [halfLifeRange, setHalfLifeRange] = useState(1);
@@ -2910,11 +3218,22 @@ function ForFunPage() {
       <div className="experiment-list">
         <ExperimentAccordion
           index="01"
+          title="Across time"
+          summary="Plan meetings across time zones"
+          backgroundImage={funBgTimeUrl}
+          isOpen={openExperiment === "01"}
+          onToggle={() => toggleExperiment("01")}
+        >
+          <MeetingPlanner />
+        </ExperimentAccordion>
+
+        <ExperimentAccordion
+          index="02"
           title="Caffeine curve"
           summary="Estimate active caffeine remaining throughout the day"
           backgroundImage={funBgCoffeeUrl}
-          isOpen={openExperiment === "01"}
-          onToggle={() => toggleExperiment("01")}
+          isOpen={openExperiment === "02"}
+          onToggle={() => toggleExperiment("02")}
         >
           <p className="experiment-description">
             A browser version of the two-compartment model in{" "}
@@ -3125,17 +3444,6 @@ function ForFunPage() {
         </ExperimentAccordion>
 
         <ExperimentAccordion
-          index="02"
-          title="Across time"
-          summary="Plan meetings across time zones"
-          backgroundImage={funBgTimeUrl}
-          isOpen={openExperiment === "02"}
-          onToggle={() => toggleExperiment("02")}
-        >
-          <MeetingPlanner />
-        </ExperimentAccordion>
-
-        <ExperimentAccordion
           index="03"
           title="Energy equivalents"
           summary="Convert energy and spectral units"
@@ -3168,6 +3476,7 @@ function ForFunPage() {
           <ThermochemistryTool />
         </ExperimentAccordion>
       </div>
+      <CodexWeatherNote />
     </section>
   );
 }
