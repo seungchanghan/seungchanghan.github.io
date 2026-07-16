@@ -2273,9 +2273,7 @@ input[type="range"] {
   padding: 14px 18px;
   margin: 0 4px 18px;
   border: 1px solid var(--line);
-  border-right-color: color-mix(in srgb, var(--accent) 34%, var(--line));
-  border-left-color: color-mix(in srgb, var(--accent) 34%, var(--line));
-  border-radius: 12px;
+  border-radius: 16px;
   align-items: center;
   justify-content: space-between;
   gap: 20px;
