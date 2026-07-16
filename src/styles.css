@@ -2268,15 +2268,16 @@ input[type="range"] {
 
 .meeting-share-bar {
   display: flex;
-  min-height: 72px;
-  padding: 14px 18px;
-  margin-bottom: 18px;
-  border: 1px solid var(--line);
-  border-radius: 12px;
+  min-height: 60px;
+  padding: 10px 4px;
+  margin-bottom: 14px;
+  border-top: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
   align-items: center;
   justify-content: space-between;
   gap: 20px;
-  background: var(--tool-panel);
+  background: color-mix(in srgb, var(--surface) 72%, transparent);
+  backdrop-filter: blur(10px);
 }
 
 .identity-fields label,
@@ -2329,8 +2330,14 @@ input[type="range"] {
 .meeting-layout {
   display: grid;
   grid-template-columns: minmax(0, 1.08fr) minmax(0, 1.02fr) minmax(0, 0.9fr);
-  gap: 18px;
+  overflow: visible;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  gap: 0;
   align-items: stretch;
+  background: color-mix(in srgb, var(--surface) 94%, transparent);
+  box-shadow: 0 18px 46px rgba(29, 36, 33, 0.08);
+  backdrop-filter: blur(14px);
 }
 
 .availability-form,
@@ -2353,22 +2360,23 @@ input[type="range"] {
 .availability-form,
 .availability-calendar-panel,
 .meeting-result-section {
-  padding: 26px;
-  border: 1px solid var(--line);
-  border-radius: 16px;
-  background: var(--tool-panel);
-  backdrop-filter: blur(8px);
+  padding: 22px;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  backdrop-filter: none;
 }
 
 .availability-calendar-panel {
   display: flex;
+  border-left: 1px solid var(--line);
   flex-direction: column;
 }
 
 .availability-calendar-panel > .empty-meeting-state,
 .participant-section > .empty-meeting-state {
   display: grid;
-  min-height: 180px;
+  min-height: 128px;
   flex: 1;
   place-items: center;
 }
@@ -2376,12 +2384,30 @@ input[type="range"] {
 .participant-section {
   display: flex;
   min-height: 0;
+  border-left: 1px solid var(--line);
   flex-direction: column;
+}
+
+.meeting-planner .control-heading,
+.meeting-planner .meeting-section-heading {
+  margin-bottom: 18px;
+}
+
+.meeting-planner .control-heading h2,
+.meeting-planner .meeting-section-heading h2 {
+  font-size: clamp(1.35rem, 2vw, 1.72rem);
+  line-height: 1.08;
+  letter-spacing: -0.025em;
+}
+
+.meeting-planner .eyebrow {
+  font-size: 0.59rem;
+  letter-spacing: 0.1em;
 }
 
 .identity-fields {
   display: grid;
-  margin-bottom: 18px;
+  margin-bottom: 14px;
   grid-template-columns: 0.75fr 1.25fr;
   gap: 10px;
 }
@@ -2394,13 +2420,13 @@ input[type="range"] {
 .availability-row {
   position: relative;
   display: grid;
-  padding: 14px;
-  border: 1px solid var(--line);
-  border-radius: 10px;
+  padding: 12px;
+  border: 0;
+  border-radius: 8px;
   grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.85fr) minmax(0, 0.85fr);
   gap: 9px;
   align-items: start;
-  background: var(--tool-subpanel);
+  background: color-mix(in srgb, var(--muted) 6%, var(--surface));
 }
 
 .selected-date {
@@ -2647,7 +2673,7 @@ input[type="range"] {
 
 .availability-submit-actions {
   display: flex;
-  margin-top: 18px;
+  margin-top: 14px;
   align-items: center;
   gap: 16px;
 }
@@ -2733,7 +2759,7 @@ input[type="range"] {
   min-width: 0;
   overflow: auto;
   border: 1px solid var(--line);
-  border-radius: 10px;
+  border-radius: 7px;
   grid-template-columns: 48px repeat(
       var(--calendar-day-count),
       minmax(72px, 1fr)
@@ -2871,12 +2897,14 @@ input[type="range"] {
 }
 
 .empty-meeting-state {
-  padding: 28px 20px;
+  padding: 24px 16px;
   margin: 0;
-  border: 1px dashed var(--line);
-  border-radius: 10px;
+  border: 0;
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--muted) 4%, transparent);
   color: var(--muted);
   font-size: var(--tool-note-size);
+  line-height: 1.6;
   text-align: center;
 }
 
@@ -3216,6 +3244,12 @@ footer a {
     grid-template-columns: 1fr;
   }
 
+  .availability-calendar-panel,
+  .participant-section {
+    border-top: 1px solid var(--line);
+    border-left: 0;
+  }
+
   .digitizer-grid {
     grid-template-columns: 1fr;
   }
@@ -3494,6 +3528,17 @@ footer a {
     flex-direction: column;
   }
 
+  .meeting-share-bar {
+    padding: 12px 0;
+    gap: 12px;
+  }
+
+  .availability-form,
+  .availability-calendar-panel,
+  .meeting-result-section {
+    padding: 18px;
+  }
+
   .meeting-share-actions {
     justify-content: space-between;
   }
@@ -3641,7 +3686,7 @@ footer a {
   .availability-form,
   .availability-calendar-panel,
   .meeting-result-section {
-    padding: 20px;
+    padding: 16px;
   }
 
   .identity-fields,
