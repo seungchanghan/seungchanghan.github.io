@@ -3115,9 +3115,9 @@ function CodexWeatherNote() {
           href="https://www.willcodexquotareset.com/"
           target="_blank"
           rel="noreferrer"
-          title="Unofficial forecast snapshot verified Jul 16, 2026 at 14:56 KST; the source API does not permit cross-origin browser reads"
+          title="Open the unofficial Codex reset forecast"
         >
-          Codex reset forecast: <strong>95% snapshot</strong>
+          <strong>Check forecast</strong>
         </a>
       </p>
       <p>
