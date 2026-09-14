@@ -82,7 +82,7 @@ const experience = [
 
 const awards = [
   {
-    period: "",
+    period: "August 2026",
     title: "Grand Prize, Outstanding Research Paper Award",
     event: "BK21 FOUR Research Group for Chemistry Education"
   },
