@@ -72,7 +72,7 @@ const experience = [
   {
     organization: "Institute for Basic Science (IBS)",
     role: "Researcher",
-    period: "March 2023 - August 2023",
+    period: "March 2022 - August 2022",
     notes: [
       "Quantum chemical modeling of interfaces using density functional theory",
       "Machine learning approaches for canonical algorithms"
