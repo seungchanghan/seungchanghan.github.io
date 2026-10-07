@@ -31,7 +31,7 @@ const contactLocation =
 const profileDetails = [
   {
     label: "Role",
-    value: "Ph.D. Student in Physical Chemistry and Integrative Data Science"
+    value: "Ph.D. Student in Physical Chemistry and Interdisciplinary Data Science"
   },
   {
     label: "Institution",
@@ -52,7 +52,7 @@ const profileDetails = [
 const education = [
   {
     institution: "Korea University",
-    degree: "Ph.D. Student, Physical Chemistry and Integrative Data Science",
+    degree: "Ph.D. Student, Physical Chemistry and Interdisciplinary Data Science",
     period: "September 2022 - present"
   },
   {
